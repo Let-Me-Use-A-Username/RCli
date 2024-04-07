@@ -1,0 +1,16 @@
+Parser resources:
+Writting a parser:
+https://supunsetunga.medium.com/writing-a-parser-getting-started-44ba70bb6cc9
+
+
+Input Reader: Provides input to the lexer. <br>
+1. peek
+2. consumer
+3. isEOF
+
+Lexer/Tokenizer: Converts the character stream to token stream <br>
+1. peek
+2. consume
+
+Parser: Gets token from lexer, and compares it against its grammar.<br>
+1. Parse
