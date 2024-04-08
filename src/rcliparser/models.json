@@ -1,0 +1,7 @@
+{
+    "commands": {
+        "core":["create", "delete", "update", "read", "list"],
+        "sub":[],
+        "flags":[]
+    }
+}

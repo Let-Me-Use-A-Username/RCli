@@ -14,10 +14,13 @@
 
 ### Basic Commands of RCli
 <ul>
-	<li> Create</li>
+	<li> Create </li>
     <li> Delete </li>
 	<li> Copy </li>
     <li> Move </li>
+    <li> Update </li>
+    <li> Read </li>
+    <li> List </li>
 </ul>
 
 <p>A command can be used to invoke an event on an object, the current invocable objects are: </p>
