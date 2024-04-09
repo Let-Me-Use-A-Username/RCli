@@ -1,0 +1,21 @@
+{
+    "core": {
+        "commands":["CREATE", "DELETE", "UPDATE", "READ", "LIST"],
+        "next":["sub", "object", "flag"]
+    },
+    "sub": {
+        "commands":[],
+        "next": ["sub", "object", "flag"]
+
+    },
+    "object": {
+        "commands":["FILE", "DIRECTORY"],
+        "next": ["flag"]
+
+    },
+    "flag": {
+        "commands":[],
+        "next": null
+
+    }
+}
