@@ -13,7 +13,8 @@ the synactic analyzer will check the structure.
 <br>SUBJECTS TO CONSIDER
 ============================
 - pipeline (redirecting data to other destinations)
-- write "this is a nice day" pipeline file.txt 
+    - write "this is a nice day" pipeline file.txt 
+    - used characters ">" or "|"
 
 
 ============================
