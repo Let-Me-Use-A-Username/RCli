@@ -20,45 +20,66 @@ the synactic analyzer will check the structure.
 ============================
 <br>GRAMMAR COMPONENTS
 ============================
-core command -> main issued commands
-    - create file
-    - move directory
-    - etc
+core command = main issued commands<br>
+    - create file/directory<br>
+    - delete file/directory<br>
+    - copy file/directory<br>
+    - move file/directory<br>
+    - update file/directory<br>
+    - read file<br>
+    - list directory<br>
 
-sub command -> core command of a sub module
-    - ai for example has a command chat, create etc,  to invoke ai chat the core command is ai the    sub command is the command to issue to the previous object
+sub command = core command of a sub module<br>
+    - ai for example has a command chat, create etc,  to invoke "ai chat" the core command is "ai" the sub command is "chat"<br>
     - sub command could also be a form of pipeline
 
-object -> referenced object of a core or sub command
+object = referenced object of a core or sub command<br>
+    - File<br>
+    - Directory
 
-flag -> core , sub, or object flags
+flag = core , sub, or object flags<br>
+    - path
     
 
-============================
-<br>BASIC GRAMMAR
-============================
-Basic grammar syntax example:
-(create file -p "C://Desktop")
-
-core command -> object
-core command -> object flag
-core command -> object flag*
-
-object -> flag* 
-(zero to inf)
-
-flag -> {}
 
 ============================
-<br>NESTED GRAMMAR
+<br>SYNTAX
 ============================
-Nested grammar syntax example:
-(ai chat "string input")
+(list --hidden)
+(directory is the current working dir)
+core -> flag
 
-core command -> sub command flag
-core command -> sub command flag*
+(create "read.me" -p "C://Dekstop")
+core -> object -> flag
 
-core command -> 
+(ai input -p "path/to/file")
+core -> sub -> flag
+
+(ai input "path/to/file" -f json)
+core -> sub -> object -> flag
+
+(create "read.me")
+core -> object<br>
+
+(create "read.me" -p 111) (read write execute)
+core -> object flag*
+
+(copy "content.txt" > "other_file")
+core -> sub 
+or
+copy -> object -> sub -> object
+
+============================
+<br>ADVANCED GRAMMAR
+============================
+Advanced grammar syntax examples:
+
+(ai chat -m Ultra -i "string input")
+core -> sub -> flag -> flag
+
+(create project "project name" -w rust, gradle)
+core -> flag
+
 
 ============================
 <br>GRAMMAR GOAL
