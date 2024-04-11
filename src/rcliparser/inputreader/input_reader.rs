@@ -20,7 +20,7 @@ impl Peekable for UserInput{
         if index < self.vector_length{
             return Ok(self.vector_input[index].clone())
         }
-        return Err("ERROR: Unable to peek.");
+        return Err("?");
     }
 
     //Peeks next character
@@ -32,7 +32,7 @@ impl Peekable for UserInput{
             self.peek_index += 1;
             return res;
         }
-        return Err("ERROR: Unable to peek next");
+        return Err("?");
     }
 }
 

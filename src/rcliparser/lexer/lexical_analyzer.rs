@@ -10,16 +10,11 @@ use crate::input_reader::Peekable;
 use crate::input_reader::Consumable;
 
 
-
 pub fn analyze(input: &mut UserInput){
     let commands : Vec<Command> = grammar_reader::load_grammar();
-
-    while input.peek_next() != Err("?"){
-        let res = validate(input, commands);
-    }
 }
 
-fn validate(input: &mut UserInput, command: Vec<Command>) -> Result<bool, bool>{
+fn validate(input: &mut UserInput, command: Command) -> Result<bool, bool>{
     let part = input.peek_next().unwrap();
     match command.command_type{
         CommandType::Core=> {

@@ -7,7 +7,7 @@
 ### Rust CLI objects:
 <ul>
 	<li> <strong>Window</strong> - Ratatui </li>
-    <li> <strong>Input Parser</strong> - CLAP </li>
+    <li> <strong>Input Parser</strong> </li>
 	<li> <strong>Input consumer</strong></li>
     <li> <strong>Command execution</strong></li>
 </ul>
@@ -28,4 +28,11 @@
 <ul>
     <li>File</li>
     <li>Directory</li>
+</ul>
+
+
+### RCli integrations
+<ul>
+    <li>todo-app</li>
+    <li>virtual-assistant</li>
 </ul>

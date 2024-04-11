@@ -1,7 +1,9 @@
+RETHINK GRAMMAR
+
 grammar_reader:
-    1) return hashmap instead of vector
+    1) return hashmap instead of vector (?)
 
 lexical_analyzer:
-    for string in input:
-        next = input.peek_next()
-        if string is valid_command and  
+    1) output vector of commands for parser to interpret 
+        - if order of commands is correct
+        - if command is valid

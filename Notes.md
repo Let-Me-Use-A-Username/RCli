@@ -86,11 +86,6 @@ core -> flag
 ============================
 <br>
 
-Supports commands like:
-- create readme.txt -p "C://Desktop"
-- copy RustProjects/playground RustProjects/otherDirectory
-
-============================
 Goal: Ideally the parser will receive a form of "command" to 
 execute the order that was given.
 The "commands" could be functions that with some generics 
