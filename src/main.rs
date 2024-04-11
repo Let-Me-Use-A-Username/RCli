@@ -11,5 +11,5 @@ mod lexical_analyzer;
 
 fn main() {
     println!("HJello");
-    lexical_analyzer::analyze();
+    //lexical_analyzer::analyze();
 }
