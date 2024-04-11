@@ -1,13 +1,7 @@
+grammar_reader:
+    1) return hashmap instead of vector
 
-1) Input Reader: Provides input to the lexer. <br>
-- peek
-- consumer
-- isEOF
-
-2) Lexer/Tokenizer: Converts the character stream to token stream <br>
-- validate
-- construct
-
-3) Parser: Gets token from lexer, and compares it against its grammar.<br>
-- Parse
-
+lexical_analyzer:
+    for string in input:
+        next = input.peek_next()
+        if string is valid_command and  

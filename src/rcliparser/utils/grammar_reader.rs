@@ -4,16 +4,24 @@ use serde::{Deserialize, Serialize};
 
 const GRAMMAR_PATH: &str = "src\\rcliparser\\grammar.json";
 
+#[derive(Serialize, Deserialize, Debug)]
+pub enum CommandType{
+    Core,
+    Sub,
+    Object,
+    Flag
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Command{
-    command_type: String,
-    command: Vec<String>,
-    next: Vec<String>
+    pub command_type: CommandType,
+    pub command: Vec<String>,
+    pub next: Vec<String>
 }
 
 impl fmt::Debug for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Command {{ command_type: {}, command: {:?}, next: {:?}, }}", 
+        write!(f, "Command {{ command_type: {:?}, command: {:?}, next: {:?}, }}", 
             self.command_type, self.command, self.next)
     }
 }
@@ -25,25 +33,25 @@ pub fn load_grammar() -> Vec<Command>{
     let mut commands: Vec<Command> = Vec::new();
 
     let core = Command {
-        command_type: "core".to_string(),
+        command_type: CommandType::Core,
         command: serde_json::from_value(grammar["core"]["commands"].clone()).unwrap(),
         next: serde_json::from_value(grammar["core"]["next"].clone()).unwrap()
     };
 
     let sub = Command {
-        command_type: "sub".to_string(),
+        command_type: CommandType::Sub,
         command: serde_json::from_value(grammar["sub"]["commands"].clone()).unwrap(),
         next: serde_json::from_value(grammar["sub"]["next"].clone()).unwrap()
     };
 
     let object = Command {
-        command_type: "object".to_string(),
+        command_type: CommandType::Object,
         command: serde_json::from_value(grammar["object"]["commands"].clone()).unwrap(),
         next: serde_json::from_value(grammar["object"]["next"].clone()).unwrap()
     };
 
     let flag = Command {
-        command_type: "flag".to_string(),
+        command_type: CommandType::Flag,
         command: serde_json::from_value(grammar["flag"]["commands"].clone()).unwrap(),
         next: serde_json::from_value(grammar["flag"]["next"].clone()).unwrap()
     };

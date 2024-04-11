@@ -2,7 +2,7 @@ use std::fmt;
 
 pub struct UserInput{
     pub vector_input: Vec<String>,
-    pub vector_length: usize,
+    vector_length: usize,
     pub core_command: String,
     pub sub_commands: Vec<String>,
     pub peek_index: usize,
