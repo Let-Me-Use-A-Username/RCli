@@ -4,7 +4,7 @@ pub struct UserInput{
     pub vector_input: Vec<String>,
     vector_length: usize,
     pub core_command: String,
-    pub sub_commands: Vec<String>,
+    pub rest_commands: Vec<String>,
     pub peek_index: usize,
     pub consume_index: usize
 }
@@ -18,7 +18,11 @@ impl Peekable for UserInput{
     //Peek at index
     fn peek(&self, index: usize) -> Result<String, &'static str>{
         if index < self.vector_length{
-            return Ok(self.vector_input[index].clone())
+            let peek_item = self.vector_input[index].clone();
+
+            if !self.is_eof(&peek_item){
+                return Ok(peek_item)
+            }
         }
         return Err("?");
     }
@@ -38,7 +42,7 @@ impl Peekable for UserInput{
 
 pub trait Consumable {
     fn consume(&mut self) -> Result<String, &'static str>;
-    fn is_eof(&self, character: String) -> bool;
+    fn is_eof(&self, character: &String) -> bool;
 }
 
 impl Consumable for UserInput{
@@ -49,14 +53,16 @@ impl Consumable for UserInput{
 
         if con_index < vec_length{
             let item = self.vector_input[self.consume_index].clone();
-            self.consume_index += 1;
-            return Ok(item);
+            if !self.is_eof(&item) {
+                self.consume_index += 1;
+                return Ok(item);
+            }
         }
         return Err("ERROR: Unable to consume");
     }
 
     //Checks for EOF
-    fn is_eof(&self, character: String) -> bool{
+    fn is_eof(&self, character: &String) -> bool{
         if character == "?"{
             return true;
         }
@@ -68,7 +74,7 @@ impl Consumable for UserInput{
 impl fmt::Debug for UserInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "UserInput {{ vector_input: {:?}, vector_length: {}, core_command: {}, sub_commands: {:?}, peek_index: {}, consume_index: {} }}", 
-            self.vector_input, self.vector_length, self.core_command, self.sub_commands, self.peek_index, self.consume_index)
+            self.vector_input, self.vector_length, self.core_command, self.rest_commands, self.peek_index, self.consume_index)
     }
 }
 
@@ -101,7 +107,7 @@ pub fn accept_input(input: &str) -> UserInput{
         vector_input:string_parts, 
         vector_length:size, 
         core_command:main, 
-        sub_commands:rest, 
+        rest_commands:rest, 
         peek_index:0, 
         consume_index:0};
 }
@@ -122,10 +128,10 @@ mod tests {
         assert_eq!(input.vector_input[5], "?");
         assert_eq!(input.vector_length, 6);
         assert_eq!(input.core_command, "This");
-        assert_eq!(input.sub_commands[0], "is");
-        assert_eq!(input.sub_commands[1], "a");
-        assert_eq!(input.sub_commands[2], "string");
-        assert_eq!(input.sub_commands[3], "message");
+        assert_eq!(input.rest_commands[0], "is");
+        assert_eq!(input.rest_commands[1], "a");
+        assert_eq!(input.rest_commands[2], "string");
+        assert_eq!(input.rest_commands[3], "message");
         assert_eq!(input.peek_index, 0);
         assert_eq!(input.consume_index, 0);
     }

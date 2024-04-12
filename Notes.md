@@ -25,7 +25,6 @@ core command = main issued commands<br>
     - delete file/directory<br>
     - copy file/directory<br>
     - move file/directory<br>
-    - update file/directory<br>
     - read file<br>
     - list directory<br>
 
@@ -43,42 +42,44 @@ flag = core , sub, or object flags<br>
 
 
 ============================
-<br>SYNTAX
+<br>BNF SYNTAX
 ============================
-(list --hidden)
-(directory is the current working dir)
-core -> flag
+BASIC INVOCATION:
 
-(create "read.me" -p "C://Dekstop")
-core -> object -> flag
+CREATE/DELETE:
+	1) create C://Desktop/readme.txt
+	2) create readme.txt
+		<command> ::= <core> <object>
+LIST:
+	1)list "C://Desktop"
+		<command> ::= <core> <object>
+	2)list --hidden
+	    <command> ::= <core> <object> <flag> :: object here is the current directory
 
-(ai input -p "path/to/file")
-core -> sub -> flag
+COPY:
+	1)copy readme.txt -p "C://Desktop/readme.txt"
+    2)copy "C://Desktop/readme.txt" -p "C://Files"
+		<command> ::= <core> <object> <flag>
+		
+MOVE:
+	1)move readme.txt -p "C://Desktop"
+		<command> ::= <core> <object> <flag>
+	2)move "C://Desktop/readme.txt" -p "C://Files"	
+		<command> ::= <core> <object> <flag>
 
-(ai input "path/to/file" -f json)
-core -> sub -> object -> flag
 
-(create "read.me")
-core -> object<br>
+READ
+	1)read readme.txt
+		<command> ::= <core> <object>
 
-(create "read.me" -p 111) (read write execute)
-core -> object flag*
 
-(copy "content.txt" > "other_file")
-core -> sub 
-or
-copy -> object -> sub -> object
-
-============================
-<br>ADVANCED GRAMMAR
-============================
-Advanced grammar syntax examples:
-
-(ai chat -m Ultra -i "string input")
-core -> sub -> flag -> flag
-
-(create project "project name" -w rust, gradle)
-core -> flag
+ADVANCED INVOCATION:
+1)ai chat -m Ultra
+	<command> ::= <core> <sub> <flag>
+2)ai read "C://Desktop/readme.txt" -t json -m Ultra
+    <command> ::= <core> <sub> <object> <flag> <flag>
+3)todo show_week
+	<command> ::= <core> <sub>
 
 
 ============================
@@ -88,5 +89,6 @@ core -> flag
 
 Goal: Ideally the parser will receive a form of "command" to 
 execute the order that was given.
+<br>
 The "commands" could be functions that with some generics 
 match the core commands specified to the user.

@@ -1,18 +1,24 @@
 {
-    "core": {
-        "commands":["create", "delete", "copy", "move", "update", "read", "list"],
-        "next":["sub", "object", "flag"]
-    },
-    "sub": {
-        "commands":[],
-        "next": ["object", "flag"]
-    },
-    "object": {
-        "commands":["FILE", "DIRECTORY"],
-        "next": ["sub", "flag"]
-    },
-    "flag": {
-        "commands":[],
-        "next": ["flag"]
+    "command_type": {
+        "core": {
+            "commands":["create", "delete", "copy", "move", "read", "list"],
+            "next":["sub", "object"],
+            "isTerminal": false
+        },
+        "sub": {
+            "commands":[],
+            "next": ["object", "flag"],
+            "isTerminal": false
+        },
+        "object": {
+            "commands":["file", "directory", "()"],
+            "next": ["flag"],
+            "isTerminal": true
+        },
+        "flag": {
+            "commands":[],
+            "next": ["flag", "()"],
+            "isTerminal": true
+        }
     }
 }

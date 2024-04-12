@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+use regex::Regex;
+
 #[path="../utils/grammar_reader.rs"]
 mod grammar_reader;
+
 use grammar_reader::Command;
 use grammar_reader::CommandType;
 
@@ -10,31 +14,48 @@ use crate::input_reader::Peekable;
 use crate::input_reader::Consumable;
 
 
-pub fn analyze(input: &mut UserInput){
-    let commands : Vec<Command> = grammar_reader::load_grammar();
+#[derive(PartialEq)]
+enum TOKEN_COMMANDS{
+    CREATE,
+    DELETE,
+    INVALID
 }
 
-fn validate(input: &mut UserInput, command: Command) -> Result<bool, bool>{
-    let part = input.peek_next().unwrap();
-    match command.command_type{
-        CommandType::Core=> {
-            if command.command.iter().any(|com| com == &input.core_command){
-                let res = input.consume().unwrap();
-                
-            }
-            return Ok(true);
+
+pub fn analyze(input: &mut UserInput){
+    let commands : HashMap<String, Command> = grammar_reader::load_grammar();
+    let core: Vec<String> = commands.get("core").unwrap().command.clone();
+
+    let mut tokens: Vec<TOKEN_COMMANDS> = Vec::new();
+
+    //STEP 1: Valid core command
+    if core.contains(&input.core_command){
+        let core_token: Option<TOKEN_COMMANDS> = validate_command(&input.core_command);
+
+        if core_token.is_some(){
+            tokens.push(core_token.unwrap());
+        }
+        else {
+            todo!("throw error")
+        }
+        //STEP 2: valid object. Match readme.txt with regex. Match ../Desktop/Files with regex?
+        let re = Regex::new(r"[/]\w*[.].*").unwrap();
+        let Some(val) = re.captures(&input.peek_next().ok());
+        
+    }
+
+}
+
+fn validate_command(command: &String) -> Option<TOKEN_COMMANDS>{
+    match command.as_str() {
+        "create" => {
+            return Some(TOKEN_COMMANDS::CREATE)
         },
-        CommandType::Sub=> {
-            return Ok(true);
-        },
-        CommandType::Object=> {
-            return Ok(true);
-        },
-        CommandType::Flag=> {
-            return Ok(true);
-        },
-        _=> {
-            return Err(false);
+        "delete" =>{
+            return Some(TOKEN_COMMANDS::DELETE)
+        }
+        _ => {
+            return None;
         }
     }
 }
