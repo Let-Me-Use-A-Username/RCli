@@ -1,9 +1,11 @@
-RETHINK GRAMMAR
-
-grammar_reader:
-    1) return hashmap instead of vector (?)
+General:
+    -Change big if statemets to patterns
+    -Handle errors
+    -reformat whence the parser works to a certain acceptable degree
 
 lexical_analyzer:
-    1) output vector of commands for parser to interpret 
-        - if order of commands is correct
-        - if command is valid
+    -Output vector of commands for parser to interpret 
+        -If order of commands is correct
+
+parser:
+    -Validate command

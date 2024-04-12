@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(PartialEq)]
 pub struct UserInput{
     pub vector_input: Vec<String>,
     vector_length: usize,
@@ -58,7 +59,7 @@ impl Consumable for UserInput{
                 return Ok(item);
             }
         }
-        return Err("ERROR: Unable to consume");
+        return Err("?");
     }
 
     //Checks for EOF
