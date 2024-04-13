@@ -7,17 +7,18 @@ pub struct UserInput{
     pub core_command: String,
     pub rest_commands: Vec<String>,
     pub peek_index: usize,
-    pub consume_index: usize
+    pub consume_index: usize,
+    pub analyzed: bool
 }
 
 pub trait Peekable {
-    fn peek(&self, index: usize) -> Result<String, &'static str>;
+    fn peek(&mut self, index: usize) -> Result<String, &'static str>;
     fn peek_next(&mut self) -> Result<String, &'static str>;
 }
 
 impl Peekable for UserInput{
     //Peek at index
-    fn peek(&self, index: usize) -> Result<String, &'static str>{
+    fn peek(&mut self, index: usize) -> Result<String, &'static str>{
         if index < self.vector_length{
             let peek_item = self.vector_input[index].clone();
 
@@ -25,6 +26,7 @@ impl Peekable for UserInput{
                 return Ok(peek_item)
             }
         }
+        self.analyzed = true;
         return Err("?");
     }
 
@@ -110,7 +112,8 @@ pub fn accept_input(input: &str) -> UserInput{
         core_command:main, 
         rest_commands:rest, 
         peek_index:0, 
-        consume_index:0};
+        consume_index:0,
+        analyzed: false};
 }
 
 
@@ -120,19 +123,13 @@ mod tests {
 
     #[test]
     fn test_input(){
-        let input = accept_input("This is a string message");
-        assert_eq!(input.vector_input[0], "This");
-        assert_eq!(input.vector_input[1], "is");
-        assert_eq!(input.vector_input[2], "a");
-        assert_eq!(input.vector_input[3], "string");
-        assert_eq!(input.vector_input[4], "message");
-        assert_eq!(input.vector_input[5], "?");
-        assert_eq!(input.vector_length, 6);
-        assert_eq!(input.core_command, "This");
-        assert_eq!(input.rest_commands[0], "is");
-        assert_eq!(input.rest_commands[1], "a");
-        assert_eq!(input.rest_commands[2], "string");
-        assert_eq!(input.rest_commands[3], "message");
+        let input = accept_input("create readme.txt");
+        assert_eq!(input.vector_input[0], "create");
+        assert_eq!(input.vector_input[1], "readme.txt");
+        assert_eq!(input.vector_input[2], "?");
+        assert_eq!(input.vector_length, 3);
+        assert_eq!(input.core_command, "create");
+        assert_eq!(input.rest_commands[0], "readme.txt");
         assert_eq!(input.peek_index, 0);
         assert_eq!(input.consume_index, 0);
     }
@@ -140,26 +137,34 @@ mod tests {
 
     #[test]
     fn test_peek(){
-        let input = accept_input("This is a string message");
-        assert_eq!(input.peek(0), Ok("This".to_string()));
-        assert_eq!(input.peek(1), Ok("is".to_string()));
-        assert_eq!(input.peek(2), Ok("a".to_string()));
-        assert_eq!(input.peek(3), Ok("string".to_string()));
-        assert_eq!(input.peek(4), Ok("message".to_string()));
-        assert_eq!(input.peek(5), Ok("?".to_string()));
-        assert_eq!(input.peek(6), Err("ERROR: Unable to peek."));
+        let mut input = accept_input("create ./Desktop/Some/Dir");
+        assert_eq!(input.peek(0), Ok("create".to_string()));
+        assert_eq!(input.peek(1), Ok("./Desktop/Some/Dir".to_string()));
+        assert_eq!(input.peek(2), Err("?"));
+    }
+
+    #[test]
+    fn test_peek_next(){
+        let mut input = accept_input("list Desktop/Some/Dir --hidden");
+        assert_eq!(input.peek_next(), Ok("list".to_string()));
+        assert_eq!(input.peek_index, 1);
+        assert_eq!(input.peek_next(), Ok("Desktop/Some/Dir".to_string()));
+        assert_eq!(input.peek_index, 2);
+        assert_eq!(input.peek_next(), Ok("--hidden".to_string()));
+        assert_eq!(input.peek_index, 3);
+        assert_eq!(input.peek_next(), Err("?"));
+        assert_eq!(input.peek_index, 3);
     }
 
     #[test]
     fn test_consume(){
-        let mut input = accept_input("This is a string message");
-        assert_eq!(input.consume(), Ok("This".to_string()));
-        assert_eq!(input.consume(), Ok("is".to_string()));
-        assert_eq!(input.consume(), Ok("a".to_string()));
-        assert_eq!(input.consume(), Ok("string".to_string()));
-        assert_eq!(input.consume(), Ok("message".to_string()));
-        assert_eq!(input.peek(5), Ok("?".to_string()));
-        assert_eq!(input.peek(6), Err("ERROR: Unable to peek."));
+        let mut input = accept_input("list --hidden");
+        assert_eq!(input.consume(), Ok("list".to_string()));
+        assert_eq!(input.consume_index, 1);
+        assert_eq!(input.consume(), Ok("--hidden".to_string()));
+        assert_eq!(input.consume_index, 2);
+        assert_eq!(input.consume(), Err("?"));
+        assert_eq!(input.consume_index, 2);
     }
 }
 
