@@ -17,22 +17,28 @@ use crate::input_reader::Consumable;
 #[derive(PartialEq, Debug)]
 pub enum TokenCommands{
     CREATE,
-    DELETE,
-    INVALID
+    DELETE
 }
 
 #[derive(PartialEq, Debug)]
 pub enum TokenObjects{
     FILE,
-    DIRECTORY,
-    INVALID
+    DIRECTORY
+}
+
+
+#[derive(PartialEq, Debug)]
+pub enum TokenFlag{
+    TERMINAL,
+    NONTERMINAL
 }
 
 
 #[derive(PartialEq, Debug)]
 pub enum Tokens{
     TokenCommands(TokenCommands),
-    TokenObjects(TokenObjects)
+    TokenObjects(TokenObjects),
+    TokenFlag(TokenFlag)
 }
 
 
@@ -55,8 +61,10 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
         //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
         let file_matcher = Regex::new(r"[/]?\w+[.]{1}.*").unwrap();
         let directory_match = Regex::new(r"[/]\w+$").unwrap();
+        let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
-        let next_command = input.peek(1).unwrap();
+        let mut next_command = input.peek(1).unwrap();
+
         let file_found = file_matcher.captures(&next_command.as_str());
         let dir_found = directory_match.captures(&next_command.as_str());
         
@@ -64,21 +72,37 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
         if file_found.is_some(){
             let file_object = validate_object(file_found.unwrap().get(0).unwrap().as_str());
             tokens.push(Tokens::TokenObjects(file_object.unwrap()));
+            //if file found increment input
+            next_command = input.peek_next().unwrap();
         }
         else if dir_found.is_some(){
             //file not found. But found dir. Check flags
             let dir_object = validate_object(dir_found.unwrap().get(0).unwrap().as_str());
             tokens.push(Tokens::TokenObjects(dir_object.unwrap()));
+            //if dir found increment input
+            next_command = input.peek_next().unwrap();
         }
         //STEP 3: valid flag(s)
-        //At this points, we either have a file, a dir or nothing. All are acceptable
-        //Note to self. There are commands that do not require an object, so having CORE -> FLAG is valid.
-        //Additionally CORE -> OBJECT -> FLAG is also valid, so we only need to check for valid flags
-        todo!("check flags");
+        //If no file found and no dir found then depending on the command the dir is the current working directory
+        //see if flag is terminal (--hidden) or not (-p)
+        while !next_command.eq("?"){
+            let flag_found = flag_match.captures(&next_command.as_str());
+
+            if flag_found.is_some(){
+                let flag_object = validate_flag(flag_found.unwrap().get(0).unwrap().as_str());
+                //if terminal flag stop loop
+                if flag_object.unwrap().eq(TokenFlag::TERMINAL){
+                    break;
+                }
+                //else push nonterminal flag and push the flag value
+                tokens.push(Tokens::TokenFlag(flag_object.unwrap()));
+                next_command = input.peek_next().unwrap();
+            }
+        }
     }
     return tokens;
-
 }
+
 
 fn validate_command(command: &String) -> Option<TokenCommands>{
     match command.as_str() {
@@ -94,6 +118,7 @@ fn validate_command(command: &String) -> Option<TokenCommands>{
     }
 }
 
+
 fn validate_object(object: &str) -> Option<TokenObjects>{
     if object.contains("."){
         return Some(TokenObjects::FILE)
@@ -106,19 +131,17 @@ fn validate_object(object: &str) -> Option<TokenObjects>{
     }
 }
 
-// #[cfg(test)]
-// mod tests{
-//     use super::*;
-//     use crate::lexical_analyzer::UserInput;
 
-
-//     #[test]
-//     fn test_validation(){
-//         let mut create_input = input_reader::accept_input("create readme.txt");
-//         let mut create_input_with_dir = input_reader::accept_input("create ./path/to/file/readme.txt");
-//         let mut create_dir = input_reader::accept_input("create ./path/to/dir");
-
-//         let tokens = analyze(&mut create_input);
-//         assert_eq!(, vec![Tokens::TokenCommands::CREATE, Tokens::TokenObjects::FILE])
-//     }
-// }
+fn validate_flag(flag: &str) -> Option<TokenFlag>{
+    match flag{
+        "terminal" if flag.starts_with("--") => {
+            return Some(TokenFlag::TERMINAL);
+        },
+        "nonterminal" if flag.starts_with("-") => {
+            return Some(TokenFlag::NONTERMINAL);
+        }
+        _ => {
+            return None;
+        }
+    }
+}

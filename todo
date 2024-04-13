@@ -1,11 +1,18 @@
 General:
     -Change big if statemets to patterns
     -Handle errors
-    -reformat whence the parser works to a certain acceptable degree
+    -Reformat when the parser works to a certain acceptable degree
+    -Implement tree
+
+input_reader:
+    -Make better tests
 
 lexical_analyzer:
-    -Output vector of commands for parser to interpret 
-        -If order of commands is correct
+    -Change check to tree structure and descend(?)
+    -If file not found and dir not found then dir is current working directory(?)
+        -Next command is flag either way
+    -Maybe FlagObjects should be a struct
+    -Tests
 
 parser:
     -Validate command
