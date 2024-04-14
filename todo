@@ -2,19 +2,8 @@ General:
     -Change big if statemets to patterns
     -Handle errors
     -Reformat when the parser works to a certain acceptable degree
-    -Implement tree
-
-input_reader:
-    -Make better tests
-
-lexical_analyzer:
-    -validate_object():
-        -use regex?
-    -If file not found and dir not found then dir is current working directory(?)
-        -Next command is flag either way
-    -Maybe FlagObjects should be a struct
-    -Tests
 
 parser:
     -Check command structure with tree
     -Validate command tree
+    -If file not found and dir not found then dir is current working directory(?)

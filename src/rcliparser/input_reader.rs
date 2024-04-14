@@ -61,6 +61,7 @@ impl Consumable for UserInput{
                 return Ok(item);
             }
         }
+        self.analyzed = true;
         return Err("?");
     }
 

@@ -70,10 +70,10 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
         let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
         let mut next_command = input.consume();
-        let command_string = next_command.clone().unwrap_or("?");
+        let mut command_string = next_command.clone().unwrap_or("?".to_string());
 
-        let file_found = file_matcher.captures(command_string);
-        let dir_found = directory_match.captures(command_string);
+        let file_found = file_matcher.captures(&command_string.as_str());
+        let dir_found = directory_match.captures(&command_string.as_str());
         
         //if file found
         if file_found.is_some(){
@@ -86,22 +86,25 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
         }
 
         //STEP 3: valid flag(s)
-        //If no file found and no dir found then depending on the command the dir is the current working directory
-        //see if flag is terminal (--hidden) or not (-p)
+        //match for terminal non terminal flags
         loop{
-            let flag_found = flag_match.captures(next_command.clone().unwrap().as_str());
-
+            let flag_found = flag_match.captures(&command_string);
+            
             if flag_found.is_some(){
                 let flag_object = validate_flag(flag_found.unwrap().get(0).unwrap().as_str());
-                //if terminal flag stop loop
+                //if terminal flag stop loops
                 if flag_object.clone().unwrap().eq(&TokenFlag::FlagType(FlagType::TERMINAL)){
                     tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, next_command.unwrap())));
                     break;
                 }
                 //else push nonterminal flag and push the flag value
                 tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
-                next_command = input.consume();
             }
+            if input.analyzed{
+                break;
+            }
+            next_command = input.consume();
+            command_string = next_command.clone().unwrap_or("?".to_string());
         };
     }
     return tokens;
@@ -155,22 +158,31 @@ mod lexical_tests {
     use crate::rcliparser::input_reader::accept_input;
 
     #[test]
-    fn validate_analyzer() {
+    fn validate_create() {
         println!("Testing input <create readme.txt>.");
         let mut input: UserInput = accept_input("create readme.txt");
         let tokens: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::FILE)];
         assert_eq!(analyze(&mut input), tokens);
-        
+    }
+
+    #[test]
+    fn validate_create_dir(){
         println!("Testing input <create ./Desktop/Some/Dir>.");
         let mut input2 = accept_input("create ./Desktop/Some/Dir");
         let tokens2: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::DIRECTORY)];
         assert_eq!(analyze(&mut input2), tokens2);
-
+    }
+        
+    #[test]
+    fn validate_list_dir(){
         println!("Testing input <list ./Desktop/Some/Dir --hidden>.");
         let mut input4 = accept_input("list ./Desktop/Some/Dir --hidden");
         let tokens4: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenObjects(TokenObjects::DIRECTORY), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
         assert_eq!(analyze(&mut input4), tokens4);
+    }
 
+    #[test]
+    fn validate_flag_hidden(){
         println!("Testing input <list --hidden>.");
         let mut input3 = accept_input("list --hidden");
         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
