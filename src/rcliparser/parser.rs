@@ -1,25 +1,19 @@
+#[warn(unused_imports)]
 use super::input_reader::accept_input;
-use super::input_reader::UserInput;
-use super::input_reader::Peekable;
-use super::input_reader::Consumable;
 
 use super::lexical_analyzer::analyze;
-use super::lexical_analyzer::Tokens;
-
-use super::utils::bsftree::Tree;
-use super::utils::bsftree::Node;
 
 
 pub fn parse(user_input: String){
     let mut input = accept_input(user_input.as_str());
     let tokens = analyze(&mut input);
-    create_tree(tokens);
+    //create_tree(tokens);
 }
 
-fn create_tree(tokens: Vec<Tokens>){
-    let node = Node("data");
-    let tree = Tree::new(node);
-}
+// fn create_tree(tokens: Vec<Tokens>){
+//     let node = Node("data");
+//     let tree = Tree::new(node);
+// }
 
 #[cfg(test)]
 mod test{

@@ -1,71 +1,54 @@
 use std::collections::HashMap;
+use crate::rcliparser::lexical_analyzer::Tokens;
 
 use rand::Rng;
 
-pub struct Tree<T>{
+pub struct Tree{
     id: String,
-    root: Node<T>,
-    rows: HashMap<i32, Vec<Node<T>>>,
-    nodes: Vec<Node<T>>
+    root: Node,
+    rows: HashMap<i32, Vec<Node>>,
+    height: i32,
+    level: i32,
+    size: usize
 }
 
-impl<T> Tree<T>{
-    pub fn new(head: Node<T>) -> Tree<T>{
-        let id: String = rand::thread_rng().gen::<u32>().to_string();
-        let root: Node<T> = head;
-        let mut rows = HashMap::new();
-        rows.insert(0, vec![root]);
-        let nodes: Vec<Node<T>> = vec![root];
-        Tree {
-            id: id,
-            root: root,
-            rows: rows,
-            nodes: nodes
-        }
+impl Tree{
+    pub fn new(head: Tokens){
+
     }
+    
+    // fn insert(&mut self, position: i32, node: Node, parent: Node){
+    // }
+    
+    // fn get_node(&self, data: Option<T>) -> Option<T> {
+    //     todo!("todo");
+    // }
+
+    // fn get_row(&self, index: usize) -> Option<Vec<T>> {
+    //     todo!("todo");
+    // }
+
+    // fn get_children(&self, data: Option<T>) -> Option<Vec<T>> {
+    //     todo!("todo");
+    // }
 }
 
-
-struct Node<T>{
-    id: String, 
-    children: Option<Vec<Node<T>>>,
-    data: Option<T>,
+struct Node{
+    node_type: NodeType,
+    data: Option<Tokens>
 }
 
-impl<T> Node<T>{
-    pub fn new(head: T, children: Option<Vec<Node<T>>>) -> Self{
-        let id: String = rand::thread_rng().gen::<u32>().to_string();
-        match children{
-            Some(Vec<Node<T>>) => {
-
-            },
-            None() => {
-
-            }
-        }
-        let children: Option<Vec<Node<T>>> = children;
-        let data = Some(head).or(None);
-        Node {
-            id: id,
-            children: children,
-            data: data
-        }
-    }
+enum NodeType{
+    LeafNode,
+    StructNode
 }
-
-
 
 #[cfg(test)]
 mod test{
     use super::*;
 
     #[test]
-    fn test_tree(){
-        parse("create readme.txt".to_string());
-        parse("create ./path/to/readme.txt".to_string());
-        parse("list path/to/file".to_string());
-        parse("list path/to/file --hidden".to_string());
-        parse("list --hidden".to_string());
+    fn test_tree_create(){
     }
     
 }

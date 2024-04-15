@@ -2,14 +2,13 @@ use std::collections::HashMap;
 use regex::Regex;
 
 use super::input_reader::Consumable;
-use super::input_reader::Peekable;
 use super::input_reader::UserInput;
 
 use super::utils::grammar_reader;
 use super::utils::grammar_reader::Command;
 
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenCommands{
     CREATE,
     DELETE,
@@ -19,28 +18,28 @@ pub enum TokenCommands{
     LIST
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenObjects{
     FILE,
     DIRECTORY
 }
 
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum FlagType{
     TERMINAL,
     NONTERMINAL
 }
 
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenFlag{
     FLAG(FlagType, String),
     FlagType(FlagType)
 }
 
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub enum Tokens{
     TokenCommands(TokenCommands),
     TokenObjects(TokenObjects),
