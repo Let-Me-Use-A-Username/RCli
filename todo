@@ -3,6 +3,12 @@ General:
     -Handle errors
     -Reformat when the parser works to a certain acceptable degree
 
+Tree:
+    -IDEA, load grammar from grammar reader and create a tree based on what variable can be next
+        -Hashmap that has Token:CoreCommands as keys and Token:Objects, Token:Flags as a vector
+            -if the input tokens match the syntax
+            -parse the tokens that were the original input
+
 parser:
     -Check command structure with tree
     -Validate command tree

@@ -25,7 +25,7 @@ mod test{
         parse("create ./path/to/readme.txt".to_string());
         parse("list path/to/file".to_string());
         parse("list path/to/file --hidden".to_string());
-        parse("list --hidden".to_string());
+        parse("list -c ./path/to/file".to_string());
     }
     
 }

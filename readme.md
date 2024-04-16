@@ -8,8 +8,8 @@
 <ul>
 	<li> <strong>Window</strong> - Ratatui </li>
     <li> <strong>Input Parser</strong> </li>
-	<li> <strong>Input consumer</strong></li>
-    <li> <strong>Command execution</strong></li>
+	<li> <strong>Lexical Analyzer</strong></li>
+    <li> <strong>Parser</strong></li>
 </ul>
 
 ### Basic Commands of RCli

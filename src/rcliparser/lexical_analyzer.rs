@@ -20,8 +20,8 @@ pub enum TokenCommands{
 
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenObjects{
-    FILE,
-    DIRECTORY
+    FILE(String),
+    DIRECTORY(String)
 }
 
 
@@ -71,22 +71,24 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
         let mut next_command = input.consume();
         let mut command_string = next_command.clone().unwrap_or("?".to_string());
 
-        let file_found = file_matcher.captures(&command_string.as_str());
-        let dir_found = directory_match.captures(&command_string.as_str());
         
-        //if file found
-        if file_found.is_some(){
-            tokens.push(Tokens::TokenObjects(TokenObjects::FILE));
-        }
-        //if dir found
-        if dir_found.is_some(){
-            tokens.push(Tokens::TokenObjects(TokenObjects::DIRECTORY));
-            
-        }
-
-        //STEP 3: valid flag(s)
-        //match for terminal non terminal flags
         loop{
+            let file_found = file_matcher.captures(&command_string.as_str());
+            let dir_found = directory_match.captures(&command_string.as_str());
+            
+            //if file found
+            if file_found.is_some(){
+                tokens.push(Tokens::TokenObjects(TokenObjects::FILE(command_string.clone())));
+                
+            }
+            //if dir found
+            if dir_found.is_some(){
+                tokens.push(Tokens::TokenObjects(TokenObjects::DIRECTORY(command_string.clone())));
+                
+            }
+
+            //STEP 3: valid flag(s)
+            //match for terminal non terminal flags
             let flag_found = flag_match.captures(&command_string);
             
             if flag_found.is_some(){
@@ -160,7 +162,7 @@ mod lexical_tests {
     fn validate_create() {
         println!("Testing input <create readme.txt>.");
         let mut input: UserInput = accept_input("create readme.txt");
-        let tokens: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::FILE)];
+        let tokens: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string()))];
         assert_eq!(analyze(&mut input), tokens);
     }
 
@@ -168,7 +170,7 @@ mod lexical_tests {
     fn validate_create_dir(){
         println!("Testing input <create ./Desktop/Some/Dir>.");
         let mut input2 = accept_input("create ./Desktop/Some/Dir");
-        let tokens2: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::DIRECTORY)];
+        let tokens2: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string()))];
         assert_eq!(analyze(&mut input2), tokens2);
     }
         
@@ -176,7 +178,7 @@ mod lexical_tests {
     fn validate_list_dir(){
         println!("Testing input <list ./Desktop/Some/Dir --hidden>.");
         let mut input4 = accept_input("list ./Desktop/Some/Dir --hidden");
-        let tokens4: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenObjects(TokenObjects::DIRECTORY), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
+        let tokens4: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
         assert_eq!(analyze(&mut input4), tokens4);
     }
 
@@ -185,6 +187,14 @@ mod lexical_tests {
         println!("Testing input <list --hidden>.");
         let mut input3 = accept_input("list --hidden");
         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
+        assert_eq!(analyze(&mut input3), tokens3);
+    }
+
+    #[test]
+    fn validate_flag_tuple(){
+        println!("Testing input <copy readme.txt -d ./Desktop/Pathto/file >.");
+        let mut input3 = accept_input("copy readme.txt -d ./Desktop/Pathto/file ");
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, "-d".to_string())), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Pathto/file".to_string()))];
         assert_eq!(analyze(&mut input3), tokens3);
     }
 }

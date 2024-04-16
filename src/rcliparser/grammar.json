@@ -16,7 +16,7 @@
             "isTerminal": true
         },
         "flag": {
-            "commands":["--hidden"],
+            "commands":["--hidden", "-d"],
             "next": ["flag", "()"],
             "isTerminal": true
         }
