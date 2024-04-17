@@ -6,10 +6,10 @@
 ---
 ### Rust CLI objects:
 <ul>
-	<li> <strong>Window</strong> - Ratatui </li>
     <li> <strong>Input Parser</strong> </li>
 	<li> <strong>Lexical Analyzer</strong></li>
     <li> <strong>Parser</strong></li>
+	<li> <strong>Window</strong> - Ratatui </li>
 </ul>
 
 ### Basic Commands of RCli

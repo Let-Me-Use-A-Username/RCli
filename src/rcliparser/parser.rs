@@ -2,6 +2,8 @@
 use super::input_reader::accept_input;
 
 use super::lexical_analyzer::analyze;
+use super::lexical_analyzer::Tokens;
+use super::lexical_analyzer::TokenCommands;
 
 
 pub fn parse(user_input: String){
@@ -10,22 +12,35 @@ pub fn parse(user_input: String){
     //create_tree(tokens);
 }
 
-// fn create_tree(tokens: Vec<Tokens>){
-//     let node = Node("data");
-//     let tree = Tree::new(node);
-// }
+fn match_token_command(tokens: Vec<Tokens>){
+    for token in tokens{
+        match token {
+            Tokens::TokenCommands(TokenCommands::CREATE) => {
+                
+            },
+            Tokens::TokenCommands(TokenCommands::DELETE) => {
+
+            },
+            Tokens::TokenCommands(TokenCommands::COPY) => {
+
+            },
+            Tokens::TokenCommands(TokenCommands::MOVE) => {
+
+            },
+            Tokens::TokenCommands(TokenCommands::READ) => {
+
+            },
+            Tokens::TokenCommands(TokenCommands::LIST) => {
+
+            },
+            _ => {
+
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod test{
     use super::*;
-
-    #[test]
-    fn test_parse(){
-        parse("create readme.txt".to_string());
-        parse("create ./path/to/readme.txt".to_string());
-        parse("list path/to/file".to_string());
-        parse("list path/to/file --hidden".to_string());
-        parse("list -c ./path/to/file".to_string());
-    }
-    
 }

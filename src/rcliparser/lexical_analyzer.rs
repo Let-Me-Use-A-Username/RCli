@@ -6,6 +6,7 @@ use super::input_reader::UserInput;
 
 use super::utils::grammar_reader;
 use super::utils::grammar_reader::Command;
+use super::utils::grammar_reader::CommandType;
 
 
 #[derive(PartialEq, Debug, Clone, Eq)]
@@ -39,7 +40,7 @@ pub enum TokenFlag{
 }
 
 
-#[derive(PartialEq, Debug, Clone, Eq)]
+#[derive(PartialEq, Debug, Clone, Eq,)]
 pub enum Tokens{
     TokenCommands(TokenCommands),
     TokenObjects(TokenObjects),
@@ -48,20 +49,23 @@ pub enum Tokens{
 
 
 pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
-    let commands : HashMap<String, Command> = grammar_reader::load_grammar();
-    let core: Vec<String> = commands.get("core").unwrap().command.clone();
+    let commands : HashMap<CommandType, Command> = grammar_reader::load_grammar();
+    let core_commands: Vec<String> = commands.get(&CommandType::Core).unwrap().command.clone();
 
     let mut tokens: Vec<Tokens> = Vec::new();
+    //validates if token stream is correct by checking against the `next` filed in Command struct
+    let mut token_validator: Vec<CommandType> = Vec::new();
 
     //STEP 1: Valid core command
-    if core.contains(&input.core_command){
+    if core_commands.contains(&input.core_command){
         let core_token: Option<TokenCommands> = validate_command(&input.consume().unwrap_or("?".to_string()));
         
         if core_token.is_some(){
             tokens.push(Tokens::TokenCommands(core_token.unwrap()));
+            token_validator = (&commands.get(&CommandType::Core).unwrap().next.clone()).clone();
         }
         else {
-            todo!("throw error")
+            todo!("throw error, no core command provided")
         }
         //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
         let file_matcher = Regex::new(r"[/]?\w+[.]{1}.*").unwrap();
@@ -79,12 +83,21 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
             //if file found
             if file_found.is_some(){
                 tokens.push(Tokens::TokenObjects(TokenObjects::FILE(command_string.clone())));
-                
             }
             //if dir found
             if dir_found.is_some(){
                 tokens.push(Tokens::TokenObjects(TokenObjects::DIRECTORY(command_string.clone())));
-                
+            }
+            
+            //we re-check to see if the token format is correct
+            if file_found.is_some() | dir_found.is_some(){
+                if token_validator.contains(&CommandType::Object){
+                    token_validator.clear();
+                    token_validator = (&commands.get(&CommandType::Object).unwrap().next.clone()).clone();
+                }
+                else {
+                    todo!("throw error, incorrect format");
+                }
             }
 
             //STEP 3: valid flag(s)
@@ -99,14 +112,25 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
                     break;
                 }
                 //else push nonterminal flag and push the flag value
-                tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
+                if token_validator.contains(&CommandType::Flag){
+                    tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
+                    token_validator.clear();
+                    token_validator = (&commands.get(&CommandType::Flag).unwrap().next.clone()).clone();
+                }
+                else{
+                    todo!("throw error, incorrect format");
+                }
             }
+            //or if input analyzed break
             if input.analyzed{
                 break;
             }
             next_command = input.consume();
             command_string = next_command.clone().unwrap_or("?".to_string());
         };
+    }
+    else{
+        todo!("Throw error, unknown core command");
     }
     return tokens;
 }
@@ -195,6 +219,33 @@ mod lexical_tests {
         println!("Testing input <copy readme.txt -d ./Desktop/Pathto/file >.");
         let mut input3 = accept_input("copy readme.txt -d ./Desktop/Pathto/file ");
         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, "-d".to_string())), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Pathto/file".to_string()))];
+        assert_eq!(analyze(&mut input3), tokens3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn validate_token_chain_double_core_command(){
+        println!("Testing input <copy copy>.");
+        let mut input3 = accept_input("copy copy");
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
+        assert_eq!(analyze(&mut input3), tokens3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn validate_token_chain_core_after_object(){
+        println!("Testing input <copy readme.txt copy>.");
+        let mut input3 = accept_input("copy readme.txt copy");
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
+        assert_eq!(analyze(&mut input3), tokens3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn validate_token_chain_only_object(){
+        println!("Testing input <readme.txt>.");
+        let mut input3 = accept_input("readme.txt");
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
         assert_eq!(analyze(&mut input3), tokens3);
     }
 }

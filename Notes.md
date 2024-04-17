@@ -1,13 +1,7 @@
-Idea: Lexer will parse the input to see if 
-the structure of the command(tree or grammar) is correct. If it is, then it will
-be passed to the parser to be executed.
-
-This will be done by using a form of grammar. When inputting the 
-command the lexer will check against a grammar to see its validity.
-Grammar will have some form of tree Or perhaps context-free?
-
-Note: Perhaps the lexical analyzer will pattern check whilst 
-the synactic analyzer will check the structure.
+Input reader reads string input from source.
+Lexer parses the input and creates a token stream by verifying
+the commands, object and flags, and also the syntax.
+Parser parses the token stream to produce a command.
 
 ============================
 <br>SUBJECTS TO CONSIDER

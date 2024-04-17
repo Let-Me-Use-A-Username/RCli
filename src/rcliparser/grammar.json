@@ -17,7 +17,7 @@
         },
         "flag": {
             "commands":["--hidden", "-d"],
-            "next": ["flag", "()"],
+            "next": ["flag", "object", "()"],
             "isTerminal": true
         }
     }
