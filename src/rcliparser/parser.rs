@@ -13,31 +13,55 @@ pub fn parse(user_input: String){
 }
 
 fn match_token_command(tokens: Vec<Tokens>){
-    for token in tokens{
-        match token {
-            Tokens::TokenCommands(TokenCommands::CREATE) => {
-                
-            },
-            Tokens::TokenCommands(TokenCommands::DELETE) => {
+    let parameters = Vec::from_iter(tokens[1..].iter().cloned());
+    
+    match tokens.get(0).unwrap() {
+        Tokens::TokenCommands(TokenCommands::CREATE) => {
+            rcli_create(parameters);
+        },
+        Tokens::TokenCommands(TokenCommands::DELETE) => {
+            rcli_delete()
+        },
+        Tokens::TokenCommands(TokenCommands::COPY) => {
+            rcli_copy()
+        },
+        Tokens::TokenCommands(TokenCommands::MOVE) => {
+            rcli_move()
+        },
+        Tokens::TokenCommands(TokenCommands::READ) => {
+            rcli_read()
+        },
+        Tokens::TokenCommands(TokenCommands::LIST) => {
+            rcli_list()
+        },
+        _ => {
 
-            },
-            Tokens::TokenCommands(TokenCommands::COPY) => {
-
-            },
-            Tokens::TokenCommands(TokenCommands::MOVE) => {
-
-            },
-            Tokens::TokenCommands(TokenCommands::READ) => {
-
-            },
-            Tokens::TokenCommands(TokenCommands::LIST) => {
-
-            },
-            _ => {
-
-            }
         }
     }
+}
+
+fn rcli_create(parameters: Vec<Tokens>){
+    
+}
+
+fn rcli_delete(){
+
+}
+
+fn rcli_copy(){
+
+}
+
+fn rcli_move(){
+
+}
+
+fn rcli_read(){
+
+}
+
+fn rcli_list(){
+
 }
 
 #[cfg(test)]
