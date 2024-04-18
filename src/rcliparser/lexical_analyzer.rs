@@ -16,7 +16,8 @@ pub enum TokenCommands{
     COPY,
     MOVE,
     READ,
-    LIST
+    LIST,
+    INVALID
 }
 
 #[derive(PartialEq, Debug, Clone, Eq)]
@@ -45,6 +46,15 @@ pub enum Tokens{
     TokenCommands(TokenCommands),
     TokenObjects(TokenObjects),
     TokenFlag(TokenFlag)
+}
+
+#[derive(PartialEq, Debug, Clone, Eq,)]
+pub struct TokenStream{
+    command: TokenCommands,
+    file: Vec<Tokens>,
+    directory: Vec<Tokens>,
+    flags: Vec<Tokens>,
+    tokens: Vec<Tokens>
 }
 
 

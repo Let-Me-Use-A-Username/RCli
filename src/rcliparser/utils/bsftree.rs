@@ -45,7 +45,7 @@ mod test{
 
     #[test]
     fn test_node_create(){
-
+        let token_node = Node::new(COPY);
     }
 
     #[test]

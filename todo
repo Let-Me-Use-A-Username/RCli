@@ -1,10 +1,25 @@
+RCli:
+    -Logger to log output
+        -parser operations
+
 General:
     -Change big if statemets to patterns
-    -Handle errors better
-        -change the unwraping of UserInput
+    -Handle errors better in general
+        -Example:change the unwraping of UserInput
     -Reformat when the parser works to a certain acceptable degree
 
+
 parser:
+    -Instead of creating a new struct in parser, use the TokenStream from the lexer
+    -match_token_command:
+        -Change the way the first element is removed or find something better
+
+
+invoker:
     -If file not found and dir not found then dir is current working directory(?)
     -create a thread per operation
     -filesysem operations:https://doc.rust-lang.org/rust-by-example/std_misc.html
+    -conditional check for function:https://doc.rust-lang.org/rust-by-example/attribute/cfg.html
+
+    -Instead of matching the operation, use a tree that has 
+    the operation at the end and simply calls the function 
