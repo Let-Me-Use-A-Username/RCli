@@ -10,16 +10,17 @@ General:
 
 
 parser:
-    -Instead of creating a new struct in parser, use the TokenStream from the lexer
-    -match_token_command:
-        -Change the way the first element is removed or find something better
+    -create a vector with function calls?
 
 
 invoker:
     -If file not found and dir not found then dir is current working directory(?)
     -create a thread per operation
+     
     -filesysem operations:https://doc.rust-lang.org/rust-by-example/std_misc.html
     -conditional check for function:https://doc.rust-lang.org/rust-by-example/attribute/cfg.html
+    -processes:https://doc.rust-lang.org/std/process/index.html
+    -fn trait:https://doc.rust-lang.org/std/ops/trait.Fn.html
 
     -Instead of matching the operation, use a tree that has 
     the operation at the end and simply calls the function 

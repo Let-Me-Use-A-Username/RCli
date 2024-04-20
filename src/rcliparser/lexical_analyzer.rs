@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use regex::Regex;
 
 use super::input_reader::Consumable;
@@ -48,17 +49,8 @@ pub enum Tokens{
     TokenFlag(TokenFlag)
 }
 
-#[derive(PartialEq, Debug, Clone, Eq,)]
-pub struct TokenStream{
-    command: TokenCommands,
-    file: Vec<Tokens>,
-    directory: Vec<Tokens>,
-    flags: Vec<Tokens>,
-    tokens: Vec<Tokens>
-}
-
-
-pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
+//Analyze returns a queue(FIFO)
+pub fn analyze(input: &mut UserInput) -> VecDeque<Tokens>{
     let commands : HashMap<CommandType, Command> = grammar_reader::load_grammar();
     let core_commands: Vec<String> = commands.get(&CommandType::Core).unwrap().command.clone();
 
@@ -142,7 +134,7 @@ pub fn analyze(input: &mut UserInput) -> Vec<Tokens>{
     else{
         todo!("Throw error, unknown core command");
     }
-    return tokens;
+    return VecDeque::from(tokens);
 }
 
 

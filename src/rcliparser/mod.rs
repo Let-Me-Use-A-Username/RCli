@@ -4,5 +4,5 @@ mod utils {
 }
 mod input_reader;
 mod lexical_analyzer;
-mod parser;
+pub mod parser;
 mod invoker;
