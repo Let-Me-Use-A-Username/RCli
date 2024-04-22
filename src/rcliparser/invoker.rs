@@ -1,5 +1,6 @@
-use std::fs::{self, DirBuilder, File, OpenOptions};
+use std::fs::{self, DirBuilder, File, FileType, OpenOptions};
 use std::io::{Error, ErrorKind};
+use std::path::Path;
 
 use super::lexical_analyzer::Tokens;
 
@@ -19,10 +20,10 @@ fn handle_error(error: &Error){
     }
 
 }
-
-fn create_file(file_name: String) -> Result<File, Error>{
+  
+fn create_file(file_path: &Path) -> Result<File, Error>{
     //could not need the open() clause unless pipelining
-    let file = OpenOptions::new().write(true).create(true).open(file_name);
+    let file = OpenOptions::new().write(true).create(true).open(file_path);
 
     match file{
         Ok(res) => {
@@ -39,7 +40,7 @@ fn create_file(file_name: String) -> Result<File, Error>{
     }
 }
 
-fn create_dir(path: String, recursive: bool) -> Result<(), Error>{
+fn create_dir(path: &Path, recursive: bool) -> Result<(), Error>{
     let mut builder = DirBuilder::new();
     builder.recursive(recursive);
 
@@ -60,6 +61,7 @@ fn create_dir(path: String, recursive: bool) -> Result<(), Error>{
     }
 }
 
-fn list_dir(dir_path: String, hidden: bool){
+fn list_dir(dir_path: &Path, hidden: bool){
     let dir_entries = fs::read_dir(dir_path);
+
 }

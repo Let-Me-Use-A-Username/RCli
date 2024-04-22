@@ -10,7 +10,10 @@ General:
 
 
 parser:
-    -create a vector with function calls?
+    -create a tree from the tokens and then pass the tree to the invoker in order to handle the call
+        -perhaps create a column for each possible invocation of the core command
+        -for example 1)create readme.txt, 2)create /path/to/dir, 3) create "smt" -p permissions
+    -tree at the end has a funciton call value with parameters
 
 
 invoker:
@@ -21,6 +24,3 @@ invoker:
     -conditional check for function:https://doc.rust-lang.org/rust-by-example/attribute/cfg.html
     -processes:https://doc.rust-lang.org/std/process/index.html
     -fn trait:https://doc.rust-lang.org/std/ops/trait.Fn.html
-
-    -Instead of matching the operation, use a tree that has 
-    the operation at the end and simply calls the function 

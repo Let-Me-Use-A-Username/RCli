@@ -12,7 +12,7 @@
         },
         "object": {
             "commands":["file", "directory", "()"],
-            "next": ["flag"],
+            "next": ["flag", "()"],
             "isTerminal": true
         },
         "flag": {
