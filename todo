@@ -1,26 +1,21 @@
-RCli:
-    -Logger to log output
+Project:
+    -Todo:Logger to log output
         -parser operations
+    -Note:Consider wether a global object is needed to keep the current working 
+          directory, current and last operation
 
-General:
-    -Change big if statemets to patterns
-    -Handle errors better in general
+RCLi:
+    -Todo:Change big if statemets to patterns
+    -Todo:Handle errors better in general
         -Example:change the unwraping of UserInput
-    -Reformat when the parser works to a certain acceptable degree
+    -Todo:Reformat when the parser works to a certain acceptable degree
 
 
 parser:
-    -create a tree from the tokens and then pass the tree to the invoker in order to handle the call
-        -perhaps create a column for each possible invocation of the core command
-        -for example 1)create readme.txt, 2)create /path/to/dir, 3) create "smt" -p permissions
-    -tree at the end has a funciton call value with parameters
+    -Note:consider whether matching commands is better than tree implementation
 
 
 invoker:
-    -If file not found and dir not found then dir is current working directory(?)
-    -create a thread per operation
-     
-    -filesysem operations:https://doc.rust-lang.org/rust-by-example/std_misc.html
-    -conditional check for function:https://doc.rust-lang.org/rust-by-example/attribute/cfg.html
-    -processes:https://doc.rust-lang.org/std/process/index.html
-    -fn trait:https://doc.rust-lang.org/std/ops/trait.Fn.html
+    -Todo:Create all the basic operations
+    -Note:If file not found and dir not found then dir is current working directory(?)
+    -Todo:create a thread per operation

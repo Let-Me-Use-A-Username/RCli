@@ -13,7 +13,7 @@ Each node has data, level, siblings and children.
 Nodes can have children and siblings without the Tree knowing. Is this desired(???)
 */
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Tree<T>{
     root: Node<T>,
     parent: Option<Box<Tree<T>>>,
@@ -51,6 +51,13 @@ impl<T> Tree<T>{
 
         let mut self_subtrees = self.subtrees.as_mut().unwrap();
         self_subtrees.push(subtree);
+    }
+}
+
+impl<T> fmt::Debug for Tree<T> where T: Debug {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Tree Entity: \n{{ root: {:?}\n, parent: {:?}\n, subtrees: {:?}\n}}", 
+            self.root, self.parent, self.subtrees)
     }
 }
 
@@ -113,7 +120,7 @@ impl<T> Node<T>{
 
 impl<T> fmt::Debug for Node<T> where T: Debug {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Note {{ data: {:?}, level: {}, children: {:?}, siblings: {:?}}}", 
+        write!(f, "Node entity: \n{{ data: {:?}\n, level: {}\n, children: {:?}\n, siblings: {:?}\n}}", 
             self.data, self.level, self.children, self.siblings)
     }
 }

@@ -1,7 +1,7 @@
 {
     "command_type": {
         "core": {
-            "commands":["create", "delete", "copy", "move", "read", "list"],
+            "commands":["create", "delete", "copy", "move", "read", "list", "cd"],
             "next":["sub", "object"],
             "isTerminal": false
         },
@@ -16,7 +16,7 @@
             "isTerminal": true
         },
         "flag": {
-            "commands":["--hidden", "-d"],
+            "commands":["--hidden", "-d", "-la"],
             "next": ["flag", "object", "()"],
             "isTerminal": true
         }

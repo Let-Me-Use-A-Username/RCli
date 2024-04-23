@@ -4,5 +4,5 @@ mod rcliparser;
 
 fn main() {
     println!("HJello");
-    rcliparser::parser::parse("create readme.txt".to_string());
+    rcliparser::parser::match_parse("list C:/Users/AlexanderMcLean/Desktop".to_string())
 }

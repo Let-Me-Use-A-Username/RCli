@@ -18,6 +18,7 @@ pub enum TokenCommands{
     MOVE,
     READ,
     LIST,
+    CD,
     INVALID
 }
 
@@ -47,6 +48,25 @@ pub enum Tokens{
     TokenCommands(TokenCommands),
     TokenObjects(TokenObjects),
     TokenFlag(TokenFlag)
+}
+
+//Trait to downcast tokens to tokenobject enum in order to extract string value
+impl TryFrom<Tokens> for TokenObjects{
+    type Error = &'static str;  
+
+    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
+        match value{
+            Tokens::TokenObjects(TokenObjects::DIRECTORY(dir)) => {
+                Ok(TokenObjects::DIRECTORY(dir))
+            },
+            Tokens::TokenObjects(TokenObjects::FILE(file)) => {
+                Ok(TokenObjects::FILE(file))
+            },
+            _ => {
+                Err("Convertion failed")
+            }
+        }
+    }
 }
 
 //Analyze returns a queue(FIFO)
@@ -158,6 +178,9 @@ fn validate_command(command: &str) -> Option<TokenCommands>{
         "list" => {
             return Some(TokenCommands::LIST)
         },
+        "cd" => {
+            return Some(TokenCommands::CD)
+        }
         _ => {
             return None;
         }

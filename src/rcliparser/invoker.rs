@@ -1,12 +1,50 @@
-use std::fs::{self, DirBuilder, File, FileType, OpenOptions};
+use std::collections::VecDeque;
+use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
-use std::path::Path;
+use std::path::{Path};
 
 use super::lexical_analyzer::Tokens;
+use super::lexical_analyzer::TokenCommands;
+use super::lexical_analyzer::TokenObjects;
 
 
-pub fn invoke(token: Tokens){
+pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
+    let path: Result<TokenObjects, _> = parameters.pop_front().unwrap().try_into();
+    
+    match core{
+        TokenCommands::CREATE => {
 
+            if path.is_err(){
+                handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
+                return;
+            }
+
+            create(&path.ok().unwrap());
+        },
+        TokenCommands::DELETE => todo!(),
+        TokenCommands::COPY => todo!(),
+        TokenCommands::MOVE => todo!(),
+        TokenCommands::READ => todo!(),
+        TokenCommands::LIST => {
+            
+            if path.is_err(){
+                handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
+                return;
+            }
+
+            match &path.ok().unwrap(){
+                TokenObjects::DIRECTORY(dir) => {
+                    list(&Path::new(dir) , false);
+                },
+                _ => {
+                    todo!("throw error");
+                }
+            }
+            
+        },
+        TokenCommands::CD => todo!(),
+        TokenCommands::INVALID => todo!(),
+    }
 }
 
 fn handle_error(error: &Error){
@@ -17,6 +55,29 @@ fn handle_error(error: &Error){
         _ => {
 
         }
+    }
+
+}
+
+fn create(path: &TokenObjects){
+    println!("path: {:?}", path);
+    match path{
+        TokenObjects::FILE(file) => {
+            let res = create_file(Path::new(file));
+            if res.is_ok(){
+                //todo!("log message created");
+                return;
+            }
+            handle_error(&res.err().unwrap());
+        },
+        TokenObjects::DIRECTORY(dir) => {
+            let res = create_dir(Path::new(dir), false);
+            if res.is_ok(){
+                //todo!("log message created");
+                return;
+            }
+            handle_error(&res.err().unwrap());
+        },
     }
 
 }
@@ -61,7 +122,17 @@ fn create_dir(path: &Path, recursive: bool) -> Result<(), Error>{
     }
 }
 
-fn list_dir(dir_path: &Path, hidden: bool){
-    let dir_entries = fs::read_dir(dir_path);
+fn list(dir_path: &Path, hidden: bool){
+    let mut outputbuffer: Vec<String> = vec![];
 
+    let paths = fs::read_dir(dir_path).unwrap();
+
+    for path in paths{
+        outputbuffer.push(path.unwrap().path().display().to_string().replace("\\", "/"));
+    }
+
+    for obj in outputbuffer{
+        println!("{:?}", obj);
+    }
+    
 }
