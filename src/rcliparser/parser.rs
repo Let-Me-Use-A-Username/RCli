@@ -11,6 +11,7 @@ use super::lexical_analyzer::Tokens;
 use super::lexical_analyzer::TokenObjects;
 use super::lexical_analyzer::TokenCommands;
 
+
 pub fn tree_parse(user_input: String) -> Result<bsftree::Tree<Tokens>, String>{
     let mut input = accept_input(user_input.as_str());
     let mut tokens = analyze(&mut input);

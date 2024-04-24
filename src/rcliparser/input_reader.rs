@@ -94,7 +94,7 @@ pub fn accept_input(input: &str) -> UserInput{
     let mut string_parts: Vec<String> = Vec::new();
 
     for part in input_parts.clone(){
-        string_parts.push(part.to_string())
+        string_parts.push(part.trim().to_string())
     }
     
     let size = input_parts.len();

@@ -1,7 +1,7 @@
 {
     "command_type": {
         "core": {
-            "commands":["create", "delete", "copy", "move", "read", "list", "cd"],
+            "commands":["create", "delete", "copy", "move", "read", "list", "cd", "exit"],
             "next":["sub", "object"],
             "isTerminal": false
         },

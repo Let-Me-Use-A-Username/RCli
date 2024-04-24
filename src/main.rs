@@ -1,8 +1,10 @@
 #[warn(non_snake_case)]
 
 mod rcliparser;
+mod rcliterminal;
 
 fn main() {
     println!("HJello");
-    rcliparser::parser::match_parse("list C:/Users/AlexanderMcLean/Desktop".to_string())
+    rcliterminal::terminal::start_terminal();
+
 }

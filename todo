@@ -1,8 +1,7 @@
 Project:
     -Todo:Logger to log output
         -parser operations
-    -Note:Consider wether a global object is needed to keep the current working 
-          directory, current and last operation
+        -terminal operations
 
 RCLi:
     -Todo:Change big if statemets to patterns
@@ -16,6 +15,9 @@ parser:
 
 
 invoker:
-    -Todo:Create all the basic operations
-    -Note:If file not found and dir not found then dir is current working directory(?)
+    -Note:Right now the second parameter is always a  path, what happens if it is a flag?
     -Todo:create a thread per operation
+
+
+terminal:
+    -change user interface to ratatui

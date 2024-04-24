@@ -1,24 +1,63 @@
 use std::collections::VecDeque;
+use std::env;
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
-use std::path::{Path};
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+use once_cell::sync::Lazy;
+
+use crate::main;
 
 use super::lexical_analyzer::Tokens;
 use super::lexical_analyzer::TokenCommands;
 use super::lexical_analyzer::TokenObjects;
 
+//Mutex locked current_directory that is mainly used when traversing directories
+static CURRENT_DIRECTORY: Lazy<Mutex<PathBuf>> = Lazy::new(|| {
+    Mutex::new(PathBuf::new())
+});
+
+//setter for current_directory
+fn set_working_directory(path: PathBuf) {
+    *CURRENT_DIRECTORY.lock().unwrap() = path.canonicalize().unwrap();
+}
+
 
 pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
-    let path: Result<TokenObjects, _> = parameters.pop_front().unwrap().try_into();
-    
+    //set the current directory in case the core command is on local dir and full path isnt specified
+    set_working_directory(env::current_dir().unwrap());
+    let current_dir_string =  CURRENT_DIRECTORY.lock().unwrap().display().to_string();
+
+    //current problem: first parameter is always path, has to be changed
+    //if path is something invalid , then it is set to current working directory
+    let mut path: Result<TokenObjects, _> = parameters.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
+
+
+    //todo! change, this is stupid way to get full path
+    path = match path {
+        Ok(valid) => {
+            match valid{
+                TokenObjects::FILE(file) => {
+                    Ok(TokenObjects::FILE(fs::canonicalize(file).unwrap().display().to_string()))
+                },
+                TokenObjects::DIRECTORY(dir) => {
+                    Ok(TokenObjects::DIRECTORY(fs::canonicalize(dir).unwrap().display().to_string()))
+                },
+            }
+        },
+
+        //if token object isn't properly structured. I.E. not valid file or directory throw error
+        Err(_) => {
+            handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
+            return;
+        },
+    };
+
+    println!("{:?}", path.clone().unwrap());
+
     match core{
         TokenCommands::CREATE => {
-
-            if path.is_err(){
-                handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
-                return;
-            }
-
             create(&path.ok().unwrap());
         },
         TokenCommands::DELETE => todo!(),
@@ -26,12 +65,8 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
         TokenCommands::MOVE => todo!(),
         TokenCommands::READ => todo!(),
         TokenCommands::LIST => {
-            
-            if path.is_err(){
-                handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
-                return;
-            }
-
+            //todo! check for hidden flag
+            //https://users.rust-lang.org/t/read-windows-hidden-file-attribute/51180/6
             match &path.ok().unwrap(){
                 TokenObjects::DIRECTORY(dir) => {
                     list(&Path::new(dir) , false);
@@ -42,10 +77,22 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
             }
             
         },
-        TokenCommands::CD => todo!(),
+        TokenCommands::CD => {
+            match &path.ok().unwrap(){
+                TokenObjects::DIRECTORY(dir) => {
+                    traverse_directory(&Path::new(dir));
+                },
+                _ => {
+                    todo!("throw error");
+                }
+            }
+            
+        },
+        TokenCommands::EXIT => todo!(),
         TokenCommands::INVALID => todo!(),
     }
 }
+
 
 fn handle_error(error: &Error){
     match error.kind(){
@@ -60,7 +107,6 @@ fn handle_error(error: &Error){
 }
 
 fn create(path: &TokenObjects){
-    println!("path: {:?}", path);
     match path{
         TokenObjects::FILE(file) => {
             let res = create_file(Path::new(file));
@@ -132,7 +178,14 @@ fn list(dir_path: &Path, hidden: bool){
     }
 
     for obj in outputbuffer{
-        println!("{:?}", obj);
+        println!("{}", obj);
     }
-    
+}
+
+fn traverse_directory(path: &Path){
+    //todo! check if path like .. , ./ and . have to be checked by hand or if Rust understands them
+    let mut pathbuffer = PathBuf::new();
+    pathbuffer.push(path);
+
+    set_working_directory(pathbuffer)
 }

@@ -19,6 +19,7 @@ pub enum TokenCommands{
     READ,
     LIST,
     CD,
+    EXIT,
     INVALID
 }
 
@@ -180,6 +181,9 @@ fn validate_command(command: &str) -> Option<TokenCommands>{
         },
         "cd" => {
             return Some(TokenCommands::CD)
+        },
+        "exit" => {
+            return Some(TokenCommands::EXIT)
         }
         _ => {
             return None;
