@@ -3,56 +3,24 @@ use std::env;
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 
-use once_cell::sync::Lazy;
-
-use crate::main;
+use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::lexical_analyzer::Tokens;
 use super::lexical_analyzer::TokenCommands;
 use super::lexical_analyzer::TokenObjects;
 
-//Mutex locked current_directory that is mainly used when traversing directories
-static CURRENT_DIRECTORY: Lazy<Mutex<PathBuf>> = Lazy::new(|| {
-    Mutex::new(PathBuf::new())
-});
 
-//setter for current_directory
-fn set_working_directory(path: PathBuf) {
-    *CURRENT_DIRECTORY.lock().unwrap() = path.canonicalize().unwrap();
-}
-
-
-pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
+pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_instance: &mut Terminal){
     //set the current directory in case the core command is on local dir and full path isnt specified
-    set_working_directory(env::current_dir().unwrap());
-    let current_dir_string =  CURRENT_DIRECTORY.lock().unwrap().display().to_string();
+    terminal_instance.change_current_directory(env::current_dir().unwrap());
+    let current_dir_string =  terminal_instance.get_current_directory_to_string();
 
     //current problem: first parameter is always path, has to be changed
     //if path is something invalid , then it is set to current working directory
-    let mut path: Result<TokenObjects, _> = parameters.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
+    let path: Result<TokenObjects, _> = parameters.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
 
-
-    //todo! change, this is stupid way to get full path
-    path = match path {
-        Ok(valid) => {
-            match valid{
-                TokenObjects::FILE(file) => {
-                    Ok(TokenObjects::FILE(fs::canonicalize(file).unwrap().display().to_string()))
-                },
-                TokenObjects::DIRECTORY(dir) => {
-                    Ok(TokenObjects::DIRECTORY(fs::canonicalize(dir).unwrap().display().to_string()))
-                },
-            }
-        },
-
-        //if token object isn't properly structured. I.E. not valid file or directory throw error
-        Err(_) => {
-            handle_error(&Error::new(ErrorKind::InvalidData, path.err().unwrap()));
-            return;
-        },
-    };
+    //interpret . .. ./ path files
 
     println!("{:?}", path.clone().unwrap());
 
@@ -80,7 +48,7 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>){
         TokenCommands::CD => {
             match &path.ok().unwrap(){
                 TokenObjects::DIRECTORY(dir) => {
-                    traverse_directory(&Path::new(dir));
+                    traverse_directory(&Path::new(dir), terminal_instance);
                 },
                 _ => {
                     todo!("throw error");
@@ -182,10 +150,10 @@ fn list(dir_path: &Path, hidden: bool){
     }
 }
 
-fn traverse_directory(path: &Path){
+fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){
     //todo! check if path like .. , ./ and . have to be checked by hand or if Rust understands them
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
 
-    set_working_directory(pathbuffer)
+    terminal_instance.change_current_directory(pathbuffer);
 }

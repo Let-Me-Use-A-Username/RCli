@@ -1,3 +1,11 @@
+CurrentProblem:
+    -invoker
+        -Todo:When trying to cd in a local directory "Desktop" it is not found due to regex
+        however if prompted ./Desktop it does find it
+    -singlenton
+        -Note:consider whether the path has to be saved as canonical or not
+            -also whether is should be displayed as one
+
 Project:
     -Todo:Logger to log output
         -parser operations
@@ -10,14 +18,19 @@ RCLi:
     -Todo:Reformat when the parser works to a certain acceptable degree
 
 
+lexical:
+    -Todo:rewrite tests since the singlenton broke them
+
+
 parser:
     -Note:consider whether matching commands is better than tree implementation
 
 
 invoker:
     -Note:Right now the second parameter is always a  path, what happens if it is a flag?
-    -Todo:create a thread per operation
 
 
 terminal:
-    -change user interface to ratatui
+    -Note:Every terminal instance should be a singlenton.
+        -Therefore when a new terminal is started it is assigned a new singlenton.
+    -Todo:change user interface to ratatui

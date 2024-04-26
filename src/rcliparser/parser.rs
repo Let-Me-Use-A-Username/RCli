@@ -1,4 +1,6 @@
-use std::collections::VecDeque;
+use std::ops::DerefMut;
+
+use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::invoker;
 
@@ -6,15 +8,32 @@ use super::input_reader::accept_input;
 use super::utils::bsftree;
 
 use super::lexical_analyzer::analyze;
-use super::lexical_analyzer::TokenFlag;
 use super::lexical_analyzer::Tokens;
-use super::lexical_analyzer::TokenObjects;
 use super::lexical_analyzer::TokenCommands;
 
 
-pub fn tree_parse(user_input: String) -> Result<bsftree::Tree<Tokens>, String>{
+pub fn match_parse(user_input: String, teminal_instance: &mut Terminal){
     let mut input = accept_input(user_input.as_str());
-    let mut tokens = analyze(&mut input);
+    let mut tokens = analyze(&mut input, teminal_instance);
+
+    //pop command or insert invalid
+    let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
+
+    //token order has already be checked (lexical analyzer) so no need to re check
+    match command{
+        Tokens::TokenCommands(core) => {
+            //invoke the core command with the parameters
+            invoker::invoke(core, tokens, teminal_instance);
+        },
+        _ => todo!("throw error")
+    }
+}
+
+
+//Needs testing, is more refined than matching.. I think
+pub fn tree_parse(user_input: String, teminal_instance: &mut Terminal) -> Result<bsftree::Tree<Tokens>, String>{
+    let mut input = accept_input(user_input.as_str());
+    let mut tokens = analyze(&mut input, teminal_instance);
     
     //pop command or insert invalid
     let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
@@ -57,25 +76,6 @@ pub fn tree_parse(user_input: String) -> Result<bsftree::Tree<Tokens>, String>{
 }
 
 
-pub fn match_parse(user_input: String){
-    let mut input = accept_input(user_input.as_str());
-    let mut tokens = analyze(&mut input);
-
-    //pop command or insert invalid
-    let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
-
-    //token order has already be checked (lexical analyzer) so no need to re check
-    match command{
-        Tokens::TokenCommands(core) => {
-            //invoke the core command with the parameters
-            invoker::invoke(core, tokens);
-        },
-        _ => todo!("throw error")
-    }
-}
-
-
 #[cfg(test)]
 mod test{
-    use super::*;
 }

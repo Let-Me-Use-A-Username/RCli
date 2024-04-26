@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 const GRAMMAR_PATH: &str = "src\\rcliparser\\grammar.json";
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CommandType{
     Core,
     Sub,
@@ -28,7 +28,7 @@ impl fmt::Debug for Command {
 }
 
 
-pub fn load_grammar() -> HashMap< CommandType, Command>{
+pub fn load_grammar() -> HashMap<CommandType, Command>{
     let grammar_file = File::open(GRAMMAR_PATH).unwrap();
     let grammar: serde_json::Value = serde_json::from_reader(grammar_file).unwrap();
     let mut commands: HashMap<CommandType, Command> = HashMap::new();

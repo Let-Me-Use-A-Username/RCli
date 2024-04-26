@@ -1,18 +1,24 @@
-
 use std::{env, io};
 use std::io::Write;
 
-use super::super::rcliparser::parser::match_parse;
+use super::super::rcliparser::parser;
+use super::super::rcliparser::utils::grammar_reader;
+use crate::rcliterminal::terminal_singlenton;
+use crate::rcliterminal::terminal_singlenton::Terminal;
 
 pub fn start_terminal(){
+    //load grammar
+    let grammar = grammar_reader::load_grammar();
+    //load singlenton
+    let instance: &mut Terminal = terminal_singlenton::singlenton(grammar);
 
+    //singlenton loop
     'terminal: loop  {
         println!("============RCLI TERMINAL============");
-        println!("=====================================");
         let mut input = String::new();
 
         //display cwd
-        print!("{}>", env::current_dir().unwrap().display().to_string());
+        print!("{}>", instance.current_directory.lock().unwrap().display());
         io::stdout().flush().unwrap();
 
         let user_input = std::io::stdin().read_line(&mut input);
@@ -21,12 +27,14 @@ pub fn start_terminal(){
         match user_input {
             Ok(_) => {
                 println!("{}", input);
-                match_parse(input);
+                //
+                parser::match_parse(input, instance);
             },
-            Err(input_error) => todo!(),
+            Err(input_error) => {
+                //todo! handle error
+                break 'terminal;
+            },
         }
-
-        
 
         println!("=====================================");
     }
