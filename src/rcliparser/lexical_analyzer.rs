@@ -52,6 +52,46 @@ pub enum Tokens{
     TokenFlag(TokenFlag)
 }
 
+//Trait to downcast tokens to tokencommand enum in order to extract string value
+impl TryFrom<Tokens> for TokenCommands{
+    type Error = &'static str;  
+
+    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
+        match value{
+            Tokens::TokenCommands(TokenCommands::CREATE) => {
+                Ok(TokenCommands::CREATE)
+            },
+            Tokens::TokenCommands(TokenCommands::DELETE) => {
+                Ok(TokenCommands::DELETE)
+            },
+            Tokens::TokenCommands(TokenCommands::COPY) => {
+                Ok(TokenCommands::COPY)
+            },
+            Tokens::TokenCommands(TokenCommands::MOVE) => {
+                Ok(TokenCommands::MOVE)
+            },
+            Tokens::TokenCommands(TokenCommands::READ) => {
+                Ok(TokenCommands::READ)
+            },
+            Tokens::TokenCommands(TokenCommands::LIST) => {
+                Ok(TokenCommands::LIST)
+            },
+            Tokens::TokenCommands(TokenCommands::CD) => {
+                Ok(TokenCommands::CD)
+            },
+            Tokens::TokenCommands(TokenCommands::EXIT) => {
+                Ok(TokenCommands::EXIT)
+            },
+            Tokens::TokenCommands(TokenCommands::INVALID) => {
+                Ok(TokenCommands::INVALID)
+            },
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+}
+
 //Trait to downcast tokens to tokenobject enum in order to extract string value
 impl TryFrom<Tokens> for TokenObjects{
     type Error = &'static str;  
@@ -65,7 +105,23 @@ impl TryFrom<Tokens> for TokenObjects{
                 Ok(TokenObjects::FILE(file))
             },
             _ => {
-                Err("Convertion failed")
+                unreachable!()
+            }
+        }
+    }
+}
+
+//Trait to downcast tokens to tokenflag enum in order to extract string value
+impl TryFrom<Tokens> for TokenFlag{
+    type Error = &'static str;  
+
+    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
+        match value{
+            Tokens::TokenFlag(TokenFlag::FLAG(flagtype, flagvalue)) => {
+                Ok(TokenFlag::FLAG(flagtype, flagvalue))
+            },
+            _ => {
+                unreachable!()
             }
         }
     }
@@ -73,7 +129,7 @@ impl TryFrom<Tokens> for TokenObjects{
 
 //Analyze returns a queue(FIFO)
 pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Tokens>{
-    let commands: HashMap<CommandType, Command> = terminal_instance.grammar.lock().unwrap().clone();
+    let commands: HashMap<CommandType, Command> = terminal_instance.get_instance_grammar();
     let core_commands: Vec<String> = commands.get(&CommandType::Core).unwrap().command.clone();
 
     let mut tokens: Vec<Tokens> = Vec::new();

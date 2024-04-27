@@ -1,7 +1,17 @@
 CurrentProblem:
-    -invoker traverse_directory
-        -for some reason canonicalize doesn't work when directory is below root for example
-        when trying to do cd .. in dir C:/Projects it will not go further up. This has to be resolved
+    -Todo:singlenton:why .. doesnt work but ../ does
+    -Todo:parser:transfer path finder from invoker to parser
+    -Todo:parser:find flags before invoking
+
+    -Note:consider whether matching commands is better than tree implementation
+        -Depends on how easy it is to interpret the token stream
+        
+    -Idea:Create a new grammar that interprets command calls
+    and verifies whether a token stream is a suitable command call
+        -contains core command , object and flags
+            -core command exists anyawy
+            -object is either given or current dir
+            -flags...
 
 Project:
     -Todo:Logger to log output
@@ -22,7 +32,7 @@ lexical:
 
 
 parser:
-    -Note:consider whether matching commands is better than tree implementation
+    
 
 
 invoker:

@@ -60,7 +60,8 @@ display \\?\ at the beginning.
 ============================
 <br>
 Local directories have to be specified by using ./ <br>
+
 Parent directories have to be specified by using ../ <br>
-Paths that are like ./Path/to/dir/readme will have to be 
-interpreted differently based on the operating system. In unix
-this will be a file, in windows this will be a directory
+
+Local directories are interpreted as ./Desktop
+Parent directories are interpreted as ../Users/Desktop

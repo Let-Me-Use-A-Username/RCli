@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::env;
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
@@ -14,11 +13,8 @@ use super::lexical_analyzer::TokenObjects;
 pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_instance: &mut Terminal){
     let current_dir_string =  terminal_instance.get_current_directory_to_string();
 
-    //current problem: first parameter is always path, has to be changed
     //if path is something invalid , then it is set to current working directory
     let path: Result<TokenObjects, _> = parameters.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
-
-    //interpret . .. ./ path files
 
     println!("OBJECT: {:?}", path.clone().unwrap());
 
@@ -46,20 +42,6 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_in
         TokenCommands::CD => {
             match &path.ok().unwrap(){
                 TokenObjects::DIRECTORY(dir) => {
-                    //stupid implementation. Problem has to do with canonicalize not setting the correct path.
-                    
-                    //perhaps use pathbuf.parent() to traverse or check directories
-                    // match dir.as_str(){
-                    //     "../" | ".." => {
-                    //         let parent_dir = terminal_instance.get_current_directory();
-
-
-                    //         traverse_directory(&Path::new(parent_dir.parent().unwrap()), terminal_instance);
-                    //     },
-                    //     _ => {
-                    //         traverse_directory(&Path::new(dir), terminal_instance);
-                    //     }
-                    // }
                     traverse_directory(&Path::new(dir), terminal_instance);
                 },
                 _ => {
@@ -166,5 +148,5 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
 
-    terminal_instance.change_current_directory(pathbuffer);
+    terminal_instance.set_current_directory(pathbuffer);
 }

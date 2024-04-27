@@ -5,28 +5,28 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 use super::invoker;
 
 use super::input_reader::accept_input;
+
 use super::utils::bsftree;
 
 use super::lexical_analyzer::analyze;
 use super::lexical_analyzer::Tokens;
 use super::lexical_analyzer::TokenCommands;
+use super::lexical_analyzer::TokenObjects;
+use super::lexical_analyzer::TokenFlag;
 
 
-pub fn match_parse(user_input: String, teminal_instance: &mut Terminal){
+pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     let mut input = accept_input(user_input.as_str());
-    let mut tokens = analyze(&mut input, teminal_instance);
+    let mut tokens = analyze(&mut input, terminal_instance);
 
     //pop command or insert invalid
     let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
 
-    //token order has already be checked (lexical analyzer) so no need to re check
-    match command{
-        Tokens::TokenCommands(core) => {
-            //invoke the core command with the parameters
-            invoker::invoke(core, tokens, teminal_instance);
-        },
-        _ => todo!("throw error")
-    }
+    //let path: Result<TokenObjects, _> = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
+
+    //if tokens not empty
+    //let flag: Result<TokenFlag, _> = tokens.pop_front().unwrap().try_into();
+    invoker::invoke(command.try_into().unwrap(), tokens, terminal_instance);
 }
 
 

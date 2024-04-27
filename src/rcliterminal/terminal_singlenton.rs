@@ -1,26 +1,26 @@
 use uuid::Uuid;
 use std::collections::HashMap;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
 use crate::rcliparser::utils::grammar_reader::Command;
 use crate::rcliparser::utils::grammar_reader::CommandType;
 
-//singlenton terminal instance
+//singlenton terminal instance_id
 pub struct Terminal{
-    pub(crate) instance: Mutex<Uuid>,
-    pub(crate) current_directory: Mutex<PathBuf>,
-    pub(crate) grammar: Mutex<HashMap<CommandType, Command>>
+    instance_id: Mutex<Uuid>,
+    current_directory: Mutex<PathBuf>,
+    grammar: Mutex<HashMap<CommandType, Command>>
 }
 
 /*
-Terminal methods.
+Terminal singlenton methods.
 At the moment only path changing functions.
 */
 impl Terminal{
-    pub fn change_current_directory(&mut self, path: PathBuf){
+    pub fn set_current_directory(&mut self, path: PathBuf){
         let mut current_dir = self.current_directory.lock().unwrap();
         
         let path_exists = match path.canonicalize() {
@@ -29,7 +29,7 @@ impl Terminal{
                 *current_dir = res.clone();
                 //set it as current directory
                 let operation_results = env::set_current_dir(res);
-                //handle error in case the operation fails
+                //todo! handle error in case the operation fails
                 match operation_results {
                     Ok(_) => return,
                     Err(_) => todo!(),
@@ -40,6 +40,14 @@ impl Terminal{
                 println!("SINGLENTON ERROR: Path not found {:?}", error);
             },
         };
+    }
+
+    pub fn get_instance_id(&self) -> Uuid{
+        return  *self.instance_id.lock().unwrap();
+    }
+
+    pub fn get_instance_grammar(&self) -> HashMap<CommandType, Command>{
+        return self.grammar.lock().unwrap().clone();
     }
 
     pub fn get_current_directory_to_string(&self) -> String{
@@ -61,7 +69,7 @@ pub fn singlenton(input_grammar: HashMap<CommandType, Command>) -> &'static mut 
     unsafe{
         ONCE.call_once(|| {
             let singlenton_instance: Terminal = Terminal{
-                instance: Mutex::new(Uuid::new_v4()),
+                instance_id: Mutex::new(Uuid::new_v4()),
                 current_directory: Mutex::new(env::current_dir().unwrap()),
                 grammar: Mutex::new(input_grammar)
             };

@@ -14,7 +14,7 @@ pub fn start_terminal(){
     let instance: &mut Terminal = terminal_singlenton::singlenton(grammar);
 
     //set the current directory in case the core command is on local dir and full path isnt specified
-    instance.change_current_directory(env::current_dir().unwrap());
+    instance.set_current_directory(env::current_dir().unwrap());
 
     //singlenton loop
     'terminal: loop  {
@@ -23,7 +23,7 @@ pub fn start_terminal(){
 
         //display cwd
         //todo! this replace in dir_disply might cause problems
-        let dir_display = instance.current_directory.lock().unwrap().clone().display().to_string().replace("\\\\?\\", "");
+        let dir_display = instance.get_current_directory_to_string().replace("\\\\?\\", "");
         print!("{}>", dir_display);
         io::stdout().flush().unwrap();
 
