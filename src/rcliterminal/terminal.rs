@@ -1,3 +1,4 @@
+use std::mem::discriminant;
 use std::{env, io};
 use std::io::Write;
 
@@ -12,13 +13,18 @@ pub fn start_terminal(){
     //load singlenton
     let instance: &mut Terminal = terminal_singlenton::singlenton(grammar);
 
+    //set the current directory in case the core command is on local dir and full path isnt specified
+    instance.change_current_directory(env::current_dir().unwrap());
+
     //singlenton loop
     'terminal: loop  {
         println!("============RCLI TERMINAL============");
         let mut input = String::new();
 
         //display cwd
-        print!("{}>", instance.current_directory.lock().unwrap().display());
+        //todo! this replace in dir_disply might cause problems
+        let dir_display = instance.current_directory.lock().unwrap().clone().display().to_string().replace("\\\\?\\", "");
+        print!("{}>", dir_display);
         io::stdout().flush().unwrap();
 
         let user_input = std::io::stdin().read_line(&mut input);
@@ -26,8 +32,6 @@ pub fn start_terminal(){
         //accept input
         match user_input {
             Ok(_) => {
-                println!("{}", input);
-                //
                 parser::match_parse(input, instance);
             },
             Err(input_error) => {

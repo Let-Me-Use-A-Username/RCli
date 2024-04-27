@@ -1,7 +1,7 @@
 use uuid::Uuid;
 use std::collections::HashMap;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
@@ -22,17 +22,32 @@ At the moment only path changing functions.
 impl Terminal{
     pub fn change_current_directory(&mut self, path: PathBuf){
         let mut current_dir = self.current_directory.lock().unwrap();
-        *current_dir = path.clone().canonicalize().unwrap();
-        let res = env::set_current_dir(path);
-
-        match res {
-            Ok(_) => return,
-            Err(_) => todo!(),
-        }
+        
+        let path_exists = match path.canonicalize() {
+            //check if path is valid
+            Ok(res) => {
+                *current_dir = res.clone();
+                //set it as current directory
+                let operation_results = env::set_current_dir(res);
+                //handle error in case the operation fails
+                match operation_results {
+                    Ok(_) => return,
+                    Err(_) => todo!(),
+                }
+            },
+            //path not found
+            Err(error) => {
+                println!("SINGLENTON ERROR: Path not found {:?}", error);
+            },
+        };
     }
 
     pub fn get_current_directory_to_string(&self) -> String{
         return self.current_directory.lock().unwrap().display().to_string()
+    }
+
+    pub fn get_current_directory(&self) -> PathBuf{
+        return self.current_directory.lock().unwrap().to_path_buf()
     }
 }
 

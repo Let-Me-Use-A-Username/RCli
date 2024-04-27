@@ -1,10 +1,7 @@
 CurrentProblem:
-    -invoker
-        -Todo:When trying to cd in a local directory "Desktop" it is not found due to regex
-        however if prompted ./Desktop it does find it
-    -singlenton
-        -Note:consider whether the path has to be saved as canonical or not
-            -also whether is should be displayed as one
+    -invoker traverse_directory
+        -for some reason canonicalize doesn't work when directory is below root for example
+        when trying to do cd .. in dir C:/Projects it will not go further up. This has to be resolved
 
 Project:
     -Todo:Logger to log output
@@ -16,6 +13,8 @@ RCLi:
     -Todo:Handle errors better in general
         -Example:change the unwraping of UserInput
     -Todo:Reformat when the parser works to a certain acceptable degree
+        -Todo:Add shorthand invocation. list -> ls
+    -Todo:When rcli works fully in windows, make Unix variation. MacOS?
 
 
 lexical:

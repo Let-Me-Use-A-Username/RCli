@@ -1,39 +1,9 @@
-Input reader reads string input from source.
-Lexer parses the input and creates a token stream by verifying
-the commands, object and flags, and also the syntax.
-Parser parses the token stream to produce a command.
-
 ============================
 <br>SUBJECTS TO CONSIDER
 ============================
 - pipeline (redirecting data to other destinations)
     - write "this is a nice day" pipeline file.txt 
     - used characters ">" or "|"
-
-
-============================
-<br>GRAMMAR COMPONENTS
-============================
-core command = main issued commands<br>
-    - create file/directory<br>
-    - delete file/directory<br>
-    - copy file/directory<br>
-    - move file/directory<br>
-    - read file<br>
-    - list directory<br>
-
-sub command = core command of a sub module<br>
-    - ai for example has a command chat, create etc,  to invoke "ai chat" the core command is "ai" the sub command is "chat"<br>
-    - sub command could also be a form of pipeline
-
-object = referenced object of a core or sub command<br>
-    - File<br>
-    - Directory
-
-flag = core , sub, or object flags<br>
-    - path
-    
-
 
 ============================
 <br>BNF SYNTAX
@@ -77,12 +47,20 @@ ADVANCED INVOCATION:
 
 
 ============================
-<br>GRAMMAR GOAL
+<br>Coding Notes
 ============================
 <br>
+Singlenton: Currently the paths are displayed like the file
+explorer would show them. However they way paths are used internally
+is canonicalized, meaning we use WIN32 namespaces and so paths
+display \\?\ at the beginning.
 
-Goal: Ideally the parser will receive a form of "command" to 
-execute the order that was given.
+============================
+<br>Path Interpretation
+============================
 <br>
-The "commands" could be functions that with some generics 
-match the core commands specified to the user.
+Local directories have to be specified by using ./ <br>
+Parent directories have to be specified by using ../ <br>
+Paths that are like ./Path/to/dir/readme will have to be 
+interpreted differently based on the operating system. In unix
+this will be a file, in windows this will be a directory

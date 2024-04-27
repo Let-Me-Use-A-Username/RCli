@@ -12,8 +12,6 @@ use super::lexical_analyzer::TokenObjects;
 
 
 pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_instance: &mut Terminal){
-    //set the current directory in case the core command is on local dir and full path isnt specified
-    terminal_instance.change_current_directory(env::current_dir().unwrap());
     let current_dir_string =  terminal_instance.get_current_directory_to_string();
 
     //current problem: first parameter is always path, has to be changed
@@ -22,7 +20,7 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_in
 
     //interpret . .. ./ path files
 
-    println!("{:?}", path.clone().unwrap());
+    println!("OBJECT: {:?}", path.clone().unwrap());
 
     match core{
         TokenCommands::CREATE => {
@@ -48,6 +46,20 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_in
         TokenCommands::CD => {
             match &path.ok().unwrap(){
                 TokenObjects::DIRECTORY(dir) => {
+                    //stupid implementation. Problem has to do with canonicalize not setting the correct path.
+                    
+                    //perhaps use pathbuf.parent() to traverse or check directories
+                    // match dir.as_str(){
+                    //     "../" | ".." => {
+                    //         let parent_dir = terminal_instance.get_current_directory();
+
+
+                    //         traverse_directory(&Path::new(parent_dir.parent().unwrap()), terminal_instance);
+                    //     },
+                    //     _ => {
+                    //         traverse_directory(&Path::new(dir), terminal_instance);
+                    //     }
+                    // }
                     traverse_directory(&Path::new(dir), terminal_instance);
                 },
                 _ => {
@@ -142,7 +154,7 @@ fn list(dir_path: &Path, hidden: bool){
     let paths = fs::read_dir(dir_path).unwrap();
 
     for path in paths{
-        outputbuffer.push(path.unwrap().path().display().to_string().replace("\\", "/"));
+        outputbuffer.push(path.unwrap().path().display().to_string().replace("\\\\?\\", ""));
     }
 
     for obj in outputbuffer{
@@ -151,7 +163,6 @@ fn list(dir_path: &Path, hidden: bool){
 }
 
 fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){
-    //todo! check if path like .. , ./ and . have to be checked by hand or if Rust understands them
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
 
