@@ -22,10 +22,25 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     //pop command or insert invalid
     let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
 
+    //pop object or current directory
+    //let current_dir_string = terminal_instance.get_current_directory_to_string();
     //let path: Result<TokenObjects, _> = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
 
-    //if tokens not empty
-    //let flag: Result<TokenFlag, _> = tokens.pop_front().unwrap().try_into();
+    //pop tokens as follows
+    // 'parser: loop{
+    //     //if token stream isnt empty pop a token.
+    //     //a token is either a terminal token. 
+    //     //or a non terminal -d followed by an object
+    //     if !tokens.is_empty(){
+    //         let flag: Result<TokenFlag, _> = tokens.pop_front().unwrap().try_into();
+    //     }
+    //     break 'parser;
+    // }
+    //after the loop is done, call the invoker with the following parameters
+    //invoker::invoke( core_command, object_command, flag_vector)
+    //where flag vector contains flags that are either FLAG object that is terminal. I.e. --hidden
+    //or an struct that is flag item and object item. I.E. -d ./localpath/to/something
+    
     invoker::invoke(command.try_into().unwrap(), tokens, terminal_instance);
 }
 

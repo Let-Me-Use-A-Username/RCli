@@ -4,7 +4,5 @@ mod rcliparser;
 mod rcliterminal;
 
 fn main() {
-    println!("HJello");
     rcliterminal::terminal::start_terminal();
-
 }

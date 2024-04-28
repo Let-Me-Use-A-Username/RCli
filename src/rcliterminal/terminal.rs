@@ -2,8 +2,8 @@ use std::mem::discriminant;
 use std::{env, io};
 use std::io::Write;
 
-use super::super::rcliparser::parser;
-use super::super::rcliparser::utils::grammar_reader;
+use crate::rcliparser::parser;
+use crate::rcliparser::utils::grammar_reader;
 use crate::rcliterminal::terminal_singlenton;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 

@@ -1,7 +1,8 @@
 CurrentProblem:
     -Todo:singlenton:why .. doesnt work but ../ does
     -Todo:parser:transfer path finder from invoker to parser
-    -Todo:parser:find flags before invoking
+        -Todo:parser:interpret path or current dir
+            -Todo:parser:Flags are either a pair or a terminal flag
 
     -Note:consider whether matching commands is better than tree implementation
         -Depends on how easy it is to interpret the token stream
@@ -9,9 +10,9 @@ CurrentProblem:
     -Idea:Create a new grammar that interprets command calls
     and verifies whether a token stream is a suitable command call
         -contains core command , object and flags
-            -core command exists anyawy
+            -core command is either a valid command or Invalid or lexical analyzer panics
             -object is either given or current dir
-            -flags...
+            -flags is either a terminal flag or a pair of flag and object
 
 Project:
     -Todo:Logger to log output
@@ -29,10 +30,6 @@ RCLi:
 
 lexical:
     -Todo:rewrite tests since the singlenton broke them
-
-
-parser:
-    
 
 
 invoker:
