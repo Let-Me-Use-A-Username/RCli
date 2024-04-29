@@ -1,18 +1,67 @@
-use std::ops::DerefMut;
-
 use crate::rcliterminal::terminal_singlenton::Terminal;
+
+use crate::rcliparser::utils::dotparser;
 
 use super::invoker;
 
 use super::input_reader::accept_input;
 
+use super::lexical_analyzer::TokenFlag;
 use super::utils::bsftree;
 
 use super::lexical_analyzer::analyze;
 use super::lexical_analyzer::Tokens;
 use super::lexical_analyzer::TokenCommands;
 use super::lexical_analyzer::TokenObjects;
-use super::lexical_analyzer::TokenFlag;
+use super::lexical_analyzer::FlagType::NONTERMINAL;
+
+#[derive(Clone, Debug)]
+pub enum FlagObjectPair{
+    PAIR(TokenFlag, TokenObjects),
+    SOLE(TokenFlag)
+}
+
+//Trait to downcast pair to tokenflag enum in order to extract string value
+impl TryFrom<FlagObjectPair> for TokenFlag{
+    type Error = &'static str;  
+
+    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
+        match value{
+            FlagObjectPair::PAIR(flag, _) => {
+                match flag{
+                    TokenFlag::FLAG(f_type, f_value) => {
+                        Ok(TokenFlag::FLAG(f_type, f_value))
+                    },
+                    TokenFlag::FlagType(f_type) => {
+                        Ok(TokenFlag::FlagType(f_type))
+                    },
+                }
+            },
+            FlagObjectPair::SOLE(flag) => {
+                Ok(flag)
+            },
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+}
+
+//Trait to downcast pair to tokenobject enum in order to extract string value
+impl TryFrom<FlagObjectPair> for TokenObjects{
+    type Error = &'static str;  
+
+    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
+        match value{
+            FlagObjectPair::PAIR(_, obj) => {
+                Ok(obj)
+            },
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+}
 
 
 pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
@@ -20,28 +69,54 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     let mut tokens = analyze(&mut input, terminal_instance);
 
     //pop command or insert invalid
-    let command = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID));
+    let command: TokenCommands = tokens.pop_front().unwrap_or(Tokens::TokenCommands(TokenCommands::INVALID)).try_into().unwrap();
 
-    //pop object or current directory
-    //let current_dir_string = terminal_instance.get_current_directory_to_string();
-    //let path: Result<TokenObjects, _> = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
+    //failsafe in case directory obj isnt present but core requires it.
+    let current_dir_string = terminal_instance.get_current_directory_to_string();
+    //mainly used when commands do not require an additional parameter like list.
+    //todo! check this, might cause problems
+    let mut path: TokenObjects = TokenObjects::DIRECTORY(current_dir_string.clone());
+    //flag vector
+    let mut flag_vector: Vec<FlagObjectPair> = Vec::new();
 
-    //pop tokens as follows
-    // 'parser: loop{
-    //     //if token stream isnt empty pop a token.
-    //     //a token is either a terminal token. 
-    //     //or a non terminal -d followed by an object
-    //     if !tokens.is_empty(){
-    //         let flag: Result<TokenFlag, _> = tokens.pop_front().unwrap().try_into();
-    //     }
-    //     break 'parser;
-    // }
-    //after the loop is done, call the invoker with the following parameters
-    //invoker::invoke( core_command, object_command, flag_vector)
-    //where flag vector contains flags that are either FLAG object that is terminal. I.e. --hidden
-    //or an struct that is flag item and object item. I.E. -d ./localpath/to/something
-    
-    invoker::invoke(command.try_into().unwrap(), tokens, terminal_instance);
+    'parser: loop{
+        //while tokens stream isnt empty
+        if !tokens.is_empty(){
+            //pop next token
+            match tokens.pop_front().unwrap() {
+                //match object (this means that the syntax is core -> object)
+                Tokens::TokenObjects(obj) => {
+                    //todo! match .. and . and return ../ and ./
+                    path = obj;
+                    dotparser::parse_path(path.clone());
+                },
+                //match flag 
+                Tokens::TokenFlag(flag) => {
+                    match flag {
+                        TokenFlag::FLAG(flag_type, _) => {
+                            //if flag type found is non terminal then next item also belongs to the flag pair
+                            if flag_type.eq(&NONTERMINAL){
+                                //todo! this unwrap might cause problems
+                                let obj = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string)));
+                                let pair = FlagObjectPair::PAIR(flag, obj.try_into().unwrap());
+                                flag_vector.push(pair);
+                            }
+                            //else this is a terminal flag which doesnt have a pair
+                            else{
+                                let sole = FlagObjectPair::SOLE(flag);
+                                flag_vector.push(sole);
+                            }
+                        },
+                        _ => unreachable!(),
+                    }
+                }
+                _ => unreachable!(),
+            };
+        }
+        break 'parser;
+    }
+
+    invoker::invoke(command, path, flag_vector, terminal_instance);
 }
 
 

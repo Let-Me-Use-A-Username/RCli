@@ -23,7 +23,7 @@ impl Terminal{
     pub fn set_current_directory(&mut self, path: PathBuf){
         let mut current_dir = self.current_directory.lock().unwrap();
         
-        let path_exists = match path.canonicalize() {
+        match path.canonicalize() {
             //check if path is valid
             Ok(res) => {
                 *current_dir = res.clone();

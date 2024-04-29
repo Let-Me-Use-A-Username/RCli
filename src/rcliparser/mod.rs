@@ -1,6 +1,7 @@
 pub mod utils {
     pub mod grammar_reader;
     pub mod bsftree;
+    pub mod dotparser;
 }
 mod input_reader;
 mod lexical_analyzer;

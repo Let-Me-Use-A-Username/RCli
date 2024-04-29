@@ -1,26 +1,24 @@
-use std::collections::VecDeque;
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
-use super::lexical_analyzer::Tokens;
+use crate::rcliparser::parser::FlagObjectPair;
+
 use super::lexical_analyzer::TokenCommands;
 use super::lexical_analyzer::TokenObjects;
 
 
-pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_instance: &mut Terminal){
-    let current_dir_string =  terminal_instance.get_current_directory_to_string();
+pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObjectPair>, terminal_instance: &mut Terminal){
 
-    //if path is something invalid , then it is set to current working directory
-    let path: Result<TokenObjects, _> = parameters.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string))).try_into();
-
-    println!("OBJECT: {:?}", path.clone().unwrap());
+    println!("CORE: {:?}", core.clone());
+    println!("OBJECT: {:?}", path.clone());
+    println!("FLAGS: {:?}", flag_vector.clone());
 
     match core{
         TokenCommands::CREATE => {
-            create(&path.ok().unwrap());
+            create(&path);
         },
         TokenCommands::DELETE => todo!(),
         TokenCommands::COPY => todo!(),
@@ -29,7 +27,7 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_in
         TokenCommands::LIST => {
             //todo! check for hidden flag
             //https://users.rust-lang.org/t/read-windows-hidden-file-attribute/51180/6
-            match &path.ok().unwrap(){
+            match &path{
                 TokenObjects::DIRECTORY(dir) => {
                     list(&Path::new(dir) , false);
                 },
@@ -40,7 +38,7 @@ pub fn invoke(core: TokenCommands, mut parameters: VecDeque<Tokens>, terminal_in
             
         },
         TokenCommands::CD => {
-            match &path.ok().unwrap(){
+            match &path{
                 TokenObjects::DIRECTORY(dir) => {
                     traverse_directory(&Path::new(dir), terminal_instance);
                 },

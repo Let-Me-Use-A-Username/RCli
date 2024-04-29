@@ -31,7 +31,7 @@ pub enum TokenObjects{
 }
 
 
-#[derive(PartialEq, Debug, Clone, Eq)]
+#[derive(PartialEq, Debug, Clone, Eq, Copy)]
 pub enum FlagType{
     TERMINAL,
     NONTERMINAL
@@ -142,7 +142,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
         
         if core_token.is_some(){
             tokens.push(Tokens::TokenCommands(core_token.unwrap()));
-            token_validator = (&commands.get(&CommandType::Core).unwrap().next.clone()).clone();
+            token_validator = (&commands.get(&CommandType::Core).unwrap().next).clone();
         }
         else {
             todo!("throw error, no core command provided")
@@ -173,7 +173,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             if file_found.is_some() | dir_found.is_some(){
                 if token_validator.contains(&CommandType::Object){
                     token_validator.clear();
-                    token_validator = (&commands.get(&CommandType::Object).unwrap().next.clone()).clone();
+                    token_validator = (&commands.get(&CommandType::Object).unwrap().next).clone();
                 }
                 else {
                     todo!("throw error, incorrect format");
@@ -195,7 +195,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
                 if token_validator.contains(&CommandType::Flag){
                     tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
                     token_validator.clear();
-                    token_validator = (&commands.get(&CommandType::Flag).unwrap().next.clone()).clone();
+                    token_validator = (&commands.get(&CommandType::Flag).unwrap().next).clone();
                 }
                 else{
                     todo!("throw error, incorrect format");
