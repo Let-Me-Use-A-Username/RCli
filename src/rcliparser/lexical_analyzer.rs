@@ -4,130 +4,13 @@ use regex::Regex;
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
-use super::input_reader::Consumable;
-use super::input_reader::UserInput;
+use super::objects::tokens::{FlagType, TokenCommands, TokenFlag, TokenObjects, Tokens};
 
-use super::utils::grammar_reader::Command;
-use super::utils::grammar_reader::CommandType;
-
-
-#[derive(PartialEq, Debug, Clone, Eq)]
-pub enum TokenCommands{
-    CREATE,
-    DELETE,
-    COPY,
-    MOVE,
-    READ,
-    LIST,
-    CD,
-    EXIT,
-    INVALID
-}
-
-#[derive(PartialEq, Debug, Clone, Eq)]
-pub enum TokenObjects{
-    FILE(String),
-    DIRECTORY(String)
-}
+use super::objects::user_input::{Consumable, UserInput};
+use super::utils::grammar_reader::{Command, CommandType};
 
 
-#[derive(PartialEq, Debug, Clone, Eq, Copy)]
-pub enum FlagType{
-    TERMINAL,
-    NONTERMINAL
-}
-
-
-#[derive(PartialEq, Debug, Clone, Eq)]
-pub enum TokenFlag{
-    FLAG(FlagType, String),
-    FlagType(FlagType)
-}
-
-
-#[derive(PartialEq, Debug, Clone, Eq,)]
-pub enum Tokens{
-    TokenCommands(TokenCommands),
-    TokenObjects(TokenObjects),
-    TokenFlag(TokenFlag)
-}
-
-//Trait to downcast tokens to tokencommand enum in order to extract string value
-impl TryFrom<Tokens> for TokenCommands{
-    type Error = &'static str;  
-
-    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
-        match value{
-            Tokens::TokenCommands(TokenCommands::CREATE) => {
-                Ok(TokenCommands::CREATE)
-            },
-            Tokens::TokenCommands(TokenCommands::DELETE) => {
-                Ok(TokenCommands::DELETE)
-            },
-            Tokens::TokenCommands(TokenCommands::COPY) => {
-                Ok(TokenCommands::COPY)
-            },
-            Tokens::TokenCommands(TokenCommands::MOVE) => {
-                Ok(TokenCommands::MOVE)
-            },
-            Tokens::TokenCommands(TokenCommands::READ) => {
-                Ok(TokenCommands::READ)
-            },
-            Tokens::TokenCommands(TokenCommands::LIST) => {
-                Ok(TokenCommands::LIST)
-            },
-            Tokens::TokenCommands(TokenCommands::CD) => {
-                Ok(TokenCommands::CD)
-            },
-            Tokens::TokenCommands(TokenCommands::EXIT) => {
-                Ok(TokenCommands::EXIT)
-            },
-            Tokens::TokenCommands(TokenCommands::INVALID) => {
-                Ok(TokenCommands::INVALID)
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
-
-//Trait to downcast tokens to tokenobject enum in order to extract string value
-impl TryFrom<Tokens> for TokenObjects{
-    type Error = &'static str;  
-
-    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
-        match value{
-            Tokens::TokenObjects(TokenObjects::DIRECTORY(dir)) => {
-                Ok(TokenObjects::DIRECTORY(dir))
-            },
-            Tokens::TokenObjects(TokenObjects::FILE(file)) => {
-                Ok(TokenObjects::FILE(file))
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
-
-//Trait to downcast tokens to tokenflag enum in order to extract string value
-impl TryFrom<Tokens> for TokenFlag{
-    type Error = &'static str;  
-
-    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
-        match value{
-            Tokens::TokenFlag(TokenFlag::FLAG(flagtype, flagvalue)) => {
-                Ok(TokenFlag::FLAG(flagtype, flagvalue))
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
-
-//Analyze returns a queue(FIFO)
+//Analyze returns a tokenqueue
 pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Tokens>{
     let commands: HashMap<CommandType, Command> = terminal_instance.get_instance_grammar();
     let core_commands: Vec<String> = commands.get(&CommandType::Core).unwrap().command.clone();
@@ -209,8 +92,10 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             command_string = next_command.clone().unwrap_or("?".to_string());
         };
     }
+    //STEP 1.1: validate soft commands. Newline, CTRL^C etc
     else{
-        todo!("Throw error, unknown core command");
+        println!("Input {:?}", input.core_command);
+        todo!("Parse commands like newline, CTRL^C etc");
     }
     return VecDeque::from(tokens);
 }
@@ -218,8 +103,11 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
 
 fn validate_command(command: &str) -> Option<TokenCommands>{
     match command {
-        "create" => {
-            return Some(TokenCommands::CREATE)
+        "touch" => {
+            return Some(TokenCommands::TOUCH)
+        },
+        "mkdir" => {
+            return Some(TokenCommands::MKDIR)
         },
         "delete" => {
             return Some(TokenCommands::DELETE)
@@ -263,75 +151,75 @@ fn validate_flag(flag: &str) -> Option<TokenFlag>{
     }
 }
 
-// #[cfg(test)]
-// mod lexical_tests {
-//     use super::*;
-//     use crate::rcliparser::input_reader::accept_input;
+#[cfg(test)]
+mod lexical_tests {
+    use super::*;
+    use crate::rcliparser::input_reader::accept_input;
+    use crate::rcliparser::utils::grammar_reader;
+    use crate::rcliterminal::terminal_singlenton;
 
-//     #[test]
-//     fn validate_create() {
-//         println!("Testing input <create readme.txt>.");
-//         let mut input: UserInput = accept_input("create readme.txt");
-//         let tokens: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string()))];
-//         assert_eq!(analyze(&mut input), tokens);
-//     }
+    #[test]
+    fn start_test(){
+        //load grammar
+        let grammar = grammar_reader::load_grammar();
+        //load singlenton
+        let instance: &mut Terminal = terminal_singlenton::singlenton(grammar);
 
-//     #[test]
-//     fn validate_create_dir(){
-//         println!("Testing input <create ./Desktop/Some/Dir>.");
-//         let mut input2 = accept_input("create ./Desktop/Some/Dir");
-//         let tokens2: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::CREATE), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string()))];
-//         assert_eq!(analyze(&mut input2), tokens2);
-//     }
+        validate_touch(&instance);
+        validate_mkdir(&instance);
+        validate_list_dir(&instance);
+        validate_flag_hidden(&instance);
+        validate_flag_tuple(&instance);
+        validate_token_chain_core_after_object(&instance);
+        validate_token_chain_double_core_command(&instance);
+    }
+
+    fn validate_touch(terminal_instance: &Terminal) {
+        println!("Testing input <touch readme.txt>.");
+        let mut input: UserInput = accept_input("touch readme.txt".to_string());
+        let tokens: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::TOUCH), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string()))];
+        assert_eq!(analyze(&mut input, terminal_instance), tokens);
+    }
+
+    fn validate_mkdir(terminal_instance: &Terminal){
+        println!("Testing input <mkdir ./Desktop/Some/Dir>.");
+        let mut input2 = accept_input("mkdir ./Desktop/Some/Dir".to_string());
+        let tokens2: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::MKDIR), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string()))];
+        assert_eq!(analyze(&mut input2, terminal_instance), tokens2);
+    }
         
-//     #[test]
-//     fn validate_list_dir(){
-//         println!("Testing input <list ./Desktop/Some/Dir --hidden>.");
-//         let mut input4 = accept_input("list ./Desktop/Some/Dir --hidden");
-//         let tokens4: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
-//         assert_eq!(analyze(&mut input4), tokens4);
-//     }
+    fn validate_list_dir(terminal_instance: &Terminal){
+        println!("Testing input <list ./Desktop/Some/Dir --hidden>.");
+        let mut input4 = accept_input("list ./Desktop/Some/Dir --hidden".to_string());
+        let tokens4: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Some/Dir".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
+        assert_eq!(analyze(&mut input4, terminal_instance), tokens4);
+    }
 
-//     #[test]
-//     fn validate_flag_hidden(){
-//         println!("Testing input <list --hidden>.");
-//         let mut input3 = accept_input("list --hidden");
-//         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
-//         assert_eq!(analyze(&mut input3), tokens3);
-//     }
+    fn validate_flag_hidden(terminal_instance: &Terminal){
+        println!("Testing input <list --hidden>.");
+        let mut input3 = accept_input("list --hidden".to_string());
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::LIST), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, "--hidden".to_string()))];
+        assert_eq!(analyze(&mut input3, terminal_instance), tokens3);
+    }
 
-//     #[test]
-//     fn validate_flag_tuple(){
-//         println!("Testing input <copy readme.txt -d ./Desktop/Pathto/file >.");
-//         let mut input3 = accept_input("copy readme.txt -d ./Desktop/Pathto/file ");
-//         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, "-d".to_string())), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Pathto/file".to_string()))];
-//         assert_eq!(analyze(&mut input3), tokens3);
-//     }
+    fn validate_flag_tuple(terminal_instance: &Terminal){
+        println!("Testing input <copy readme.txt -d ./Desktop/Pathto/file >.");
+        let mut input3 = accept_input("copy readme.txt -d ./Desktop/Pathto/file ".to_string());
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string())), Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, "-d".to_string())), Tokens::TokenObjects(TokenObjects::DIRECTORY("./Desktop/Pathto/file".to_string()))];
+        assert_eq!(analyze(&mut input3, terminal_instance), tokens3);
+    }
 
-//     #[test]
-//     #[should_panic]
-//     fn validate_token_chain_double_core_command(){
-//         println!("Testing input <copy copy>.");
-//         let mut input3 = accept_input("copy copy");
-//         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
-//         assert_eq!(analyze(&mut input3), tokens3);
-//     }
+    fn validate_token_chain_double_core_command(terminal_instance: &Terminal){
+        println!("Testing input <copy copy>.");
+        let mut input3 = accept_input("copy copy".to_string());
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY)];
+        assert_eq!(analyze(&mut input3, terminal_instance), tokens3);
+    }
 
-//     #[test]
-//     #[should_panic]
-//     fn validate_token_chain_core_after_object(){
-//         println!("Testing input <copy readme.txt copy>.");
-//         let mut input3 = accept_input("copy readme.txt copy");
-//         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
-//         assert_eq!(analyze(&mut input3), tokens3);
-//     }
-
-//     #[test]
-//     #[should_panic]
-//     fn validate_token_chain_only_object(){
-//         println!("Testing input <readme.txt>.");
-//         let mut input3 = accept_input("readme.txt");
-//         let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenCommands(TokenCommands::COPY)];
-//         assert_eq!(analyze(&mut input3), tokens3);
-//     }
-// }
+    fn validate_token_chain_core_after_object(terminal_instance: &Terminal){
+        println!("Testing input <copy readme.txt copy>.");
+        let mut input3 = accept_input("copy readme.txt copy".to_string());
+        let tokens3: Vec<Tokens> = vec![Tokens::TokenCommands(TokenCommands::COPY), Tokens::TokenObjects(TokenObjects::FILE("readme.txt".to_string()))];
+        assert_eq!(analyze(&mut input3, terminal_instance), tokens3);
+    }
+}

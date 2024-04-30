@@ -127,23 +127,17 @@ impl<T> fmt::Debug for Node<T> where T: Debug {
 
 #[cfg(test)]
 mod test{
+    use crate::rcliparser::objects::tokens::{Tokens, TokenCommands::COPY, TokenCommands::LIST, TokenCommands::TOUCH};
+    use crate::rcliparser::objects::tokens::{TokenObjects::FILE};
+    use crate::rcliparser::objects::tokens::{TokenFlag::FLAG, FlagType::TERMINAL};
+
     use super::*;
-    use crate::rcliparser::lexical_analyzer::FlagType::TERMINAL;
-    use crate::rcliparser::lexical_analyzer::Tokens;
-
-    use crate::rcliparser::lexical_analyzer::TokenCommands::COPY;
-    use crate::rcliparser::lexical_analyzer::TokenCommands::LIST;
-    use crate::rcliparser::lexical_analyzer::TokenCommands::CREATE;
-
-    use crate::rcliparser::lexical_analyzer::TokenObjects::FILE;
-
-    use crate::rcliparser::lexical_analyzer::TokenFlag::FLAG;
 
     #[test]
     fn test_node_chain(){
         let mut copy_token = Node::new(Tokens::TokenCommands((COPY)), 0);
         let mut list_token = Node::new(Tokens::TokenCommands((LIST)), 0);
-        let mut create_token = Node::new(Tokens::TokenCommands((CREATE)), 0);
+        let mut create_token = Node::new(Tokens::TokenCommands((TOUCH)), 0);
 
         let new_node = Node::new(Tokens::TokenObjects(FILE(("readme.txt".to_string()))), 1);
         copy_token.add_child(new_node.clone());
@@ -170,7 +164,7 @@ mod test{
 
     #[test]
     fn test_tree(){
-        let mut create_token: Node<Tokens> = Node::new(Tokens::TokenCommands((CREATE)), 0);
+        let mut create_token: Node<Tokens> = Node::new(Tokens::TokenCommands((TOUCH)), 0);
         let create_file: Node<Tokens> = Node::new(Tokens::TokenObjects(FILE(("readme.txt".to_string()))), 1);
 
         let mut tree = Tree::new(create_token);

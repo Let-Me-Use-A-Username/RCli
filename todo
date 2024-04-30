@@ -1,4 +1,14 @@
 CurrentProblem:
+    https://docs.rs/crossterm/latest/crossterm/index.html#
+    -Note:Accept raw input with Crossterm which is included in ratatui?
+        -Note:Then Handle it with lexical, parser and invoker
+
+
+    http://www.linusakesson.net/programming/tty/
+    https://mally.stanford.edu/~sr/computing/basic-unix.html
+    https://swcarpentry.github.io/shell-novice/reference.html
+    -Note:Read how Unix shell and commands work in order to mimick the functionality
+    
     -Todo:singlenton:why .. doesnt work but ../ doesnt
 
     https://doc.rust-lang.org/std/path/struct.Components.html
@@ -12,16 +22,14 @@ Project:
         -terminal operations
 
 RCLi:
-    -Todo:Change big if statemets to patterns
+    -Todo:Change big if statemets to patterns or do something better
     -Todo:Handle errors better in general
         -Example:change the unwraping of UserInput
     -Todo:Reformat when the parser works to a certain acceptable degree
-        -Todo:Add shorthand invocation. list -> ls
-    -Todo:When rcli works fully in windows, make Unix variation. MacOS?
+    -Todo:Add shorthand invocation. list -> ls
 
 
 lexical:
-    -Todo:rewrite tests since the singlenton broke them
 
 
 parser:

@@ -6,14 +6,10 @@ use super::invoker;
 
 use super::input_reader::accept_input;
 
-use super::lexical_analyzer::TokenFlag;
+use super::objects::tokens::{TokenCommands, TokenFlag, TokenObjects, Tokens, FlagType::NONTERMINAL};
 use super::utils::bsftree;
 
 use super::lexical_analyzer::analyze;
-use super::lexical_analyzer::Tokens;
-use super::lexical_analyzer::TokenCommands;
-use super::lexical_analyzer::TokenObjects;
-use super::lexical_analyzer::FlagType::NONTERMINAL;
 
 #[derive(Clone, Debug)]
 pub enum FlagObjectPair{
@@ -65,7 +61,7 @@ impl TryFrom<FlagObjectPair> for TokenObjects{
 
 
 pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
-    let mut input = accept_input(user_input.as_str());
+    let mut input = accept_input(user_input);
     let mut tokens = analyze(&mut input, terminal_instance);
 
     //pop command or insert invalid
@@ -122,7 +118,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
 
 //Needs testing, is more refined than matching.. I think
 pub fn tree_parse(user_input: String, teminal_instance: &mut Terminal) -> Result<bsftree::Tree<Tokens>, String>{
-    let mut input = accept_input(user_input.as_str());
+    let mut input = accept_input(user_input);
     let mut tokens = analyze(&mut input, teminal_instance);
     
     //pop command or insert invalid

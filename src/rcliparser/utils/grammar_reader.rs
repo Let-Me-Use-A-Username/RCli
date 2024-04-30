@@ -1,8 +1,9 @@
+use std::path::Path;
 use std::{collections::HashMap, fs::File};
 use std::fmt;
 use serde::{Deserialize, Serialize};
 
-const GRAMMAR_PATH: &str = "src\\rcliparser\\grammar.json";
+const GRAMMAR_PATH: &str = "src\\rcliparser\\utils\\grammar.json";
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CommandType{
@@ -29,7 +30,8 @@ impl fmt::Debug for Command {
 
 
 pub fn load_grammar() -> HashMap<CommandType, Command>{
-    let grammar_file = File::open(GRAMMAR_PATH).unwrap();
+    let grammar_path = Path::new(GRAMMAR_PATH);
+    let grammar_file = File::open(grammar_path).unwrap();
     let grammar: serde_json::Value = serde_json::from_reader(grammar_file).unwrap();
     let mut commands: HashMap<CommandType, Command> = HashMap::new();
 

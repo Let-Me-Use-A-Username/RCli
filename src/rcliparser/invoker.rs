@@ -6,8 +6,7 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use crate::rcliparser::parser::FlagObjectPair;
 
-use super::lexical_analyzer::TokenCommands;
-use super::lexical_analyzer::TokenObjects;
+use super::objects::tokens::{TokenCommands, TokenObjects};
 
 
 pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObjectPair>, terminal_instance: &mut Terminal){
@@ -17,8 +16,25 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
     println!("FLAGS: {:?}", flag_vector.clone());
 
     match core{
-        TokenCommands::CREATE => {
-            create(&path);
+        TokenCommands::TOUCH => {
+            match &path{
+                TokenObjects::FILE(file) => {
+                    touch(&Path::new(file));
+                },
+                _ => {
+                    todo!("throw error");
+                }
+            }
+        },
+        TokenCommands::MKDIR => {
+            match &path{
+                TokenObjects::DIRECTORY(dir) => {
+                    mkdir(&Path::new(dir), false);
+                },
+                _ => {
+                    todo!("throw error");
+                }
+            }
         },
         TokenCommands::DELETE => todo!(),
         TokenCommands::COPY => todo!(),
@@ -65,30 +81,8 @@ fn handle_error(error: &Error){
     }
 
 }
-
-fn create(path: &TokenObjects){
-    match path{
-        TokenObjects::FILE(file) => {
-            let res = create_file(Path::new(file));
-            if res.is_ok(){
-                //todo!("log message created");
-                return;
-            }
-            handle_error(&res.err().unwrap());
-        },
-        TokenObjects::DIRECTORY(dir) => {
-            let res = create_dir(Path::new(dir), false);
-            if res.is_ok(){
-                //todo!("log message created");
-                return;
-            }
-            handle_error(&res.err().unwrap());
-        },
-    }
-
-}
   
-fn create_file(file_path: &Path) -> Result<File, Error>{
+fn touch(file_path: &Path) -> Result<File, Error>{
     //could not need the open() clause unless pipelining
     let file = OpenOptions::new().write(true).create(true).open(file_path);
 
@@ -107,7 +101,7 @@ fn create_file(file_path: &Path) -> Result<File, Error>{
     }
 }
 
-fn create_dir(path: &Path, recursive: bool) -> Result<(), Error>{
+fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
     let mut builder = DirBuilder::new();
     builder.recursive(recursive);
 
