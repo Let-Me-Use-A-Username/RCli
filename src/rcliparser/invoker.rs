@@ -6,20 +6,23 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use crate::rcliparser::parser::FlagObjectPair;
 
-use super::objects::tokens::{TokenCommands, TokenObjects};
+use super::objects::tokens::{GetValue, TokenCommands, TokenObjects};
+use super::utils::dotparser;
 
 
 pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObjectPair>, terminal_instance: &mut Terminal){
 
-    println!("CORE: {:?}", core.clone());
+    println!("\nCORE: {:?}", core.clone());
     println!("OBJECT: {:?}", path.clone());
     println!("FLAGS: {:?}", flag_vector.clone());
+    
+    dotparser::parse_path(path.get_value(), terminal_instance);
 
     match core{
         TokenCommands::TOUCH => {
             match &path{
                 TokenObjects::FILE(file) => {
-                    touch(&Path::new(file));
+                    let _ = touch(&Path::new(file));
                 },
                 _ => {
                     todo!("throw error");
@@ -29,7 +32,7 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
         TokenCommands::MKDIR => {
             match &path{
                 TokenObjects::DIRECTORY(dir) => {
-                    mkdir(&Path::new(dir), false);
+                    let _ = mkdir(&Path::new(dir), false);
                 },
                 _ => {
                     todo!("throw error");
@@ -54,14 +57,15 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
             
         },
         TokenCommands::CD => {
-            match &path{
-                TokenObjects::DIRECTORY(dir) => {
-                    traverse_directory(&Path::new(dir), terminal_instance);
-                },
-                _ => {
-                    todo!("throw error");
-                }
-            }
+            traverse_directory(Path::new(&path.get_value()), terminal_instance);
+            // match &path{
+            //     TokenObjects::DIRECTORY(dir) => {
+            //         traverse_directory(&Path::new(dir), terminal_instance);
+            //     },
+            //     _ => {
+            //         todo!("throw error");
+            //     }
+            // }
             
         },
         TokenCommands::EXIT => todo!(),

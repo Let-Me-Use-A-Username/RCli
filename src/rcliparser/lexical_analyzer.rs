@@ -31,8 +31,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             todo!("throw error, no core command provided")
         }
         //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
-        let file_matcher = Regex::new(r"[/]?\w+[.]{1}.*").unwrap();
-        let directory_match = Regex::new(r"(^[.]{1,2})|([/]\w+$)").unwrap();
+        let object_matcher = Regex::new(r"([.]*[/]|[..])*(\w+?\S+)?").unwrap();
         let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
         let mut next_command = input.consume();
@@ -40,20 +39,15 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
 
         
         loop{
-            let file_found = file_matcher.captures(&command_string.as_str());
-            let dir_found = directory_match.captures(&command_string.as_str());
+            let object_found = object_matcher.captures(&command_string.as_str());
             
-            //if file found
-            if file_found.is_some(){
-                tokens.push(Tokens::TokenObjects(TokenObjects::FILE(command_string.clone())));
-            }
-            //if dir found
-            if dir_found.is_some(){
-                tokens.push(Tokens::TokenObjects(TokenObjects::DIRECTORY(command_string.clone())));
+            //if object found
+            if object_found.is_some(){
+                tokens.push(Tokens::TokenObjects(TokenObjects::OBJECT(command_string.clone())));
             }
             
             //we re-check to see if the token format is correct
-            if file_found.is_some() | dir_found.is_some(){
+            if object_found.is_some(){
                 if token_validator.contains(&CommandType::Object){
                     token_validator.clear();
                     token_validator = (&commands.get(&CommandType::Object).unwrap().next).clone();
@@ -89,7 +83,14 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
                 break;
             }
             next_command = input.consume();
-            command_string = next_command.clone().unwrap_or("?".to_string());
+            command_string = match next_command.clone() {
+                Some(obj) => {
+                    obj
+                }
+                None => {
+                    break;
+                }
+            };
         };
     }
     //STEP 1.1: validate soft commands. Newline, CTRL^C etc
@@ -121,7 +122,7 @@ fn validate_command(command: &str) -> Option<TokenCommands>{
         "read" => {
             return Some(TokenCommands::READ)
         },
-        "list" => {
+        "list" | "ls" => {
             return Some(TokenCommands::LIST)
         },
         "cd" => {

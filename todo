@@ -1,7 +1,15 @@
 CurrentProblem:
+    lexical:Problem, when a relative path is given, like cd RCli, the lexer doesnt find it as neither a 
+    dir or a file.
+        -New object regex works.
+        -Consider the following. Instead of matching files or directories. Match objects. If an object is found pass 
+        it to the parser and then invoker translate it to file or dir depending on the command. 
+        For example touch can only use files while mkdir only directories etc.
+
+
     https://docs.rs/crossterm/latest/crossterm/index.html#
     -Note:Accept raw input with Crossterm which is included in ratatui?
-        -Note:Then Handle it with lexical, parser and invoker
+        -I.E. newline, CTRL^C etc
 
 
     http://www.linusakesson.net/programming/tty/

@@ -15,7 +15,8 @@ pub enum TokenCommands{
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenObjects{
     FILE(String),
-    DIRECTORY(String)
+    DIRECTORY(String),
+    OBJECT(String)
 }
 
 
@@ -40,7 +41,7 @@ pub enum Tokens{
     TokenFlag(TokenFlag)
 }
 
-trait GetValue{
+pub trait GetValue{
     fn get_value(&self) -> String;
 }
 
@@ -49,6 +50,7 @@ impl GetValue for TokenObjects{
         match self{
             TokenObjects::FILE(file) => file.to_string(),
             TokenObjects::DIRECTORY(dir) => dir.to_string(),
+            TokenObjects::OBJECT(obj) => obj.to_string(),
         }
     }
 }
@@ -116,6 +118,9 @@ impl TryFrom<Tokens> for TokenObjects{
             },
             Tokens::TokenObjects(TokenObjects::FILE(file)) => {
                 Ok(TokenObjects::FILE(file))
+            },
+            Tokens::TokenObjects(TokenObjects::OBJECT(obj)) => {
+                Ok(TokenObjects::OBJECT(obj))
             },
             _ => {
                 unreachable!()

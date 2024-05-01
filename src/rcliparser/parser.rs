@@ -1,7 +1,5 @@
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
-use crate::rcliparser::utils::dotparser;
-
 use super::invoker;
 
 use super::input_reader::accept_input;
@@ -82,9 +80,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
             match tokens.pop_front().unwrap() {
                 //match object (this means that the syntax is core -> object)
                 Tokens::TokenObjects(obj) => {
-                    //todo! match .. and . and return ../ and ./
                     path = obj;
-                    dotparser::parse_path(path.clone());
                 },
                 //match flag 
                 Tokens::TokenFlag(flag) => {
@@ -101,6 +97,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
                             else{
                                 let sole = FlagObjectPair::SOLE(flag);
                                 flag_vector.push(sole);
+                                break 'parser;
                             }
                         },
                         _ => unreachable!(),
@@ -111,7 +108,6 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
         }
         break 'parser;
     }
-
     invoker::invoke(command, path, flag_vector, terminal_instance);
 }
 
