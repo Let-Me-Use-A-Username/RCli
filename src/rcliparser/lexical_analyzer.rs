@@ -35,7 +35,9 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
         let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
         let mut next_command = input.consume();
-        let mut command_string = next_command.clone().unwrap_or("?".to_string());
+        let mut command_string = next_command.clone().unwrap_or({
+            terminal_instance.get_current_directory_to_string()
+        });
 
         
         loop{

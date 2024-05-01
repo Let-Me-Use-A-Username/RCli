@@ -25,14 +25,17 @@ impl Terminal{
         
         match path.canonicalize() {
             //check if path is valid
-            Ok(res) => {
-                *current_dir = res.clone();
+            Ok(new_path) => {
                 //set it as current directory
-                let operation_results = env::set_current_dir(res);
+                let operation_results = env::set_current_dir(new_path.clone());
                 //todo! handle error in case the operation fails
                 match operation_results {
-                    Ok(_) => return,
-                    Err(_) => todo!(),
+                    Ok(_) => {
+                        *current_dir = new_path;
+                    },
+                    Err(error) => {
+                        println!("SINGLENTON SETTER: {:?}", error);
+                    },
                 }
             },
             //path not found

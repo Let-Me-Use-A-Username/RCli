@@ -15,29 +15,21 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
     println!("\nCORE: {:?}", core.clone());
     println!("OBJECT: {:?}", path.clone());
     println!("FLAGS: {:?}", flag_vector.clone());
+
+    let token_value = path.get_value();
     
-    dotparser::parse_path(path.get_value(), terminal_instance);
+    dotparser::parse_path(token_value.clone(), terminal_instance);
+    
+    let path_value = Path::new(&token_value);
+
+    println!("Path value: {path_value:?}");
 
     match core{
         TokenCommands::TOUCH => {
-            match &path{
-                TokenObjects::FILE(file) => {
-                    let _ = touch(&Path::new(file));
-                },
-                _ => {
-                    todo!("throw error");
-                }
-            }
+            let _ = touch(path_value);
         },
         TokenCommands::MKDIR => {
-            match &path{
-                TokenObjects::DIRECTORY(dir) => {
-                    let _ = mkdir(&Path::new(dir), false);
-                },
-                _ => {
-                    todo!("throw error");
-                }
-            }
+            let _ = mkdir(path_value, false);
         },
         TokenCommands::DELETE => todo!(),
         TokenCommands::COPY => todo!(),
@@ -46,27 +38,19 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
         TokenCommands::LIST => {
             //todo! check for hidden flag
             //https://users.rust-lang.org/t/read-windows-hidden-file-attribute/51180/6
-            match &path{
-                TokenObjects::DIRECTORY(dir) => {
-                    list(&Path::new(dir) , false);
-                },
-                _ => {
-                    todo!("throw error");
-                }
-            }
+            list(path_value, false);
             
         },
         TokenCommands::CD => {
-            traverse_directory(Path::new(&path.get_value()), terminal_instance);
-            // match &path{
-            //     TokenObjects::DIRECTORY(dir) => {
-            //         traverse_directory(&Path::new(dir), terminal_instance);
-            //     },
-            //     _ => {
-            //         todo!("throw error");
-            //     }
-            // }
+            let exists = path_value.exists();
+            println!("Path exists: {exists:?}");
             
+            if path_value.is_dir() & exists{
+                traverse_directory(path_value, terminal_instance);
+            }
+            else{
+                eprintln!("Path is not dir or doesn't exist");
+            }
         },
         TokenCommands::EXIT => todo!(),
         TokenCommands::INVALID => todo!(),
@@ -76,8 +60,14 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
 
 fn handle_error(error: &Error){
     match error.kind(){
+        ErrorKind::PermissionDenied => {
+            eprintln!("Permission denied.")
+        },
         ErrorKind::NotFound => {
-
+            eprintln!("Object not found.")
+        },
+        ErrorKind::AlreadyExists => {
+            eprintln!("Object already exists.")
         },
         _ => {
 
@@ -129,15 +119,20 @@ fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
 fn list(dir_path: &Path, hidden: bool){
     let mut outputbuffer: Vec<String> = vec![];
 
-    let paths = fs::read_dir(dir_path).unwrap();
-
-    for path in paths{
-        outputbuffer.push(path.unwrap().path().display().to_string().replace("\\\\?\\", ""));
-    }
-
-    for obj in outputbuffer{
-        println!("{}", obj);
-    }
+    match fs::read_dir(dir_path) {
+        Ok(paths) => {
+            for path in paths{
+                outputbuffer.push(path.unwrap().path().display().to_string().replace("\\\\?\\", ""));
+            }
+        
+            for obj in outputbuffer{
+                println!("{}", obj);
+            }
+        },
+        Err(error) => {
+            handle_error(&error);
+        },
+    };
 }
 
 fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){

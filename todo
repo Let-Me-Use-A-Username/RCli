@@ -1,11 +1,5 @@
 CurrentProblem:
-    lexical:Problem, when a relative path is given, like cd RCli, the lexer doesnt find it as neither a 
-    dir or a file.
-        -New object regex works.
-        -Consider the following. Instead of matching files or directories. Match objects. If an object is found pass 
-        it to the parser and then invoker translate it to file or dir depending on the command. 
-        For example touch can only use files while mkdir only directories etc.
-
+    -Todo:singlenton:cant cd to root dir
 
     https://docs.rs/crossterm/latest/crossterm/index.html#
     -Note:Accept raw input with Crossterm which is included in ratatui?
@@ -16,8 +10,6 @@ CurrentProblem:
     https://mally.stanford.edu/~sr/computing/basic-unix.html
     https://swcarpentry.github.io/shell-novice/reference.html
     -Note:Read how Unix shell and commands work in order to mimick the functionality
-    
-    -Todo:singlenton:why .. doesnt work but ../ doesnt
 
     https://doc.rust-lang.org/std/path/struct.Components.html
     https://doc.rust-lang.org/std/path/struct.Path.html#method.components
