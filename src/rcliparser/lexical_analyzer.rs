@@ -97,7 +97,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
     }
     //STEP 1.1: validate soft commands. Newline, CTRL^C etc
     else{
-        println!("Input {:?}", input.core_command);
+        println!("Input:[ {:?} ]", input.core_command);
         todo!("Parse commands like newline, CTRL^C etc");
     }
     return VecDeque::from(tokens);
@@ -106,6 +106,9 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
 
 fn validate_command(command: &str) -> Option<TokenCommands>{
     match command {
+        "cwd" => {
+            return Some(TokenCommands::CWD)
+        }
         "touch" => {
             return Some(TokenCommands::TOUCH)
         },
@@ -134,7 +137,7 @@ fn validate_command(command: &str) -> Option<TokenCommands>{
             return Some(TokenCommands::EXIT)
         }
         _ => {
-            return None;
+            return Some(TokenCommands::INVALID);
         }
     }
 }

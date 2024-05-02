@@ -18,13 +18,13 @@ pub fn start_terminal(){
 
     //singlenton loop
     'terminal: loop  {
-        println!("============RCLI TERMINAL============");
+        println!("============RCLI TERMINAL============\n");
         let mut input = String::new();
 
         //display cwd
         //todo! this replace in dir_disply might cause problems
         let dir_display = instance.get_current_directory_to_string().replace("\\\\?\\", "");
-        print!("{}>", dir_display);
+        print!("RCli {}>", dir_display);
         io::stdout().flush().unwrap();
 
         let user_input = std::io::stdin().read_line(&mut input);
@@ -36,10 +36,9 @@ pub fn start_terminal(){
             },
             Err(input_error) => {
                 //todo! handle error
+                eprintln!("INPUT ERROR {}", input_error);
                 break 'terminal;
             },
         }
-
-        println!("=====================================");
     }
 }

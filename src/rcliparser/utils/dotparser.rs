@@ -1,20 +1,56 @@
-use std::path::{Path, PathBuf};
+use std::path::{self, Path, PathBuf};
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 
-//function that translates dots in a way that canonicalize understands
-pub fn parse_path(directory_token: String, terminal_instance: &mut Terminal){
-    
-    let mut current_dir = PathBuf::from(terminal_instance.get_current_directory());
-    current_dir.push(directory_token);
+/*
+Todo! Currently when trying to execute cd .. to parent dir where parent dir is 
+root, it doesn't execute, however cd ../ works. The current workaround is when operation 
+fails we return the parent if it exists
+    */
+pub fn parse_root_dir(directory_token: &Path, terminal_instance: &mut Terminal) -> PathBuf{
 
-    let path_components = current_dir.components();
+    let target_dir = directory_token.canonicalize();
+    let current_dir = terminal_instance.get_current_directory();
 
+    let op: PathBuf = match target_dir {
+        Ok(target) => target,
+        Err(error) => {
+            if directory_token.eq(&PathBuf::from("..")){
+                
+                let parent = current_dir.parent();
+
+                if parent.is_some(){
+                    return parent.unwrap().to_path_buf()
+                }
+                eprintln!("INTERNAL ERROR: {error}");
+                return current_dir
+            }
+            return current_dir
+        }
+    };
+
+    return op
+}
+
+/*
+Function that returns root for terminal_instance
+*/
+pub fn get_root(mut path: PathBuf, terminal_instance: &mut Terminal){
+
+    path = match path.canonicalize() {
+        Ok(op) => {
+            op
+        },
+        Err(_) => {
+            eprintln!("Failed to canonicalize path");
+            terminal_instance.get_current_directory()
+        },
+    };
+
+    let path_components = path.components();
     let os_strings: Vec<_> = path_components.clone().map(|comp| comp.as_os_str()).collect();
-
-    println!("OS Strings {os_strings:?}\n");
-
+    
     for component in path_components{
         match component {
             std::path::Component::Prefix(pref) => {

@@ -1,22 +1,30 @@
-CurrentProblem:
-    -Todo:singlenton:cant cd to root dir
-
-    https://docs.rs/crossterm/latest/crossterm/index.html#
-    -Note:Accept raw input with Crossterm which is included in ratatui?
-        -I.E. newline, CTRL^C etc
-
-
+STUDY: 
+    -https://cheats.rs/#macros-attributes
+    -Rust general
+    
     http://www.linusakesson.net/programming/tty/
     https://mally.stanford.edu/~sr/computing/basic-unix.html
     https://swcarpentry.github.io/shell-novice/reference.html
     -Note:Read how Unix shell and commands work in order to mimick the functionality
 
-    https://doc.rust-lang.org/std/path/struct.Components.html
-    https://doc.rust-lang.org/std/path/struct.Path.html#method.components
-    -Todo:Dotparser:Iterate over the components and depending on what
-    a component is handle it accordingly
+CurrentProblem:
+    -Lexer:Consider changing the way core commands match.
+        -create another grammar that contains the 
+            type(core sub etc)
+            shorthand invocations
+            valid flags
+            next_valid_token (?)
+    -Lexer:Consider adding soft commands
+        -Soft commands are strings that are not commands
+        I.E. new_line
+
+    https://docs.rs/dirs/5.0.1/dirs/
+    -Todo:Singlenton:Add user home and root dir (C:/) (?)
+
+    -Consider add crate to parse paths instaed of messy code.
 
 Project:
+    https://dhghomon.github.io/easy_rust/Chapter_61.html
     -Todo:Logger to log output
         -parser operations
         -terminal operations
@@ -28,16 +36,23 @@ RCLi:
     -Todo:Reformat when the parser works to a certain acceptable degree
     -Todo:Add shorthand invocation. list -> ls
 
-
-lexical:
-
-
 parser:
     -Note:consider whether matching commands is better than tree implementation
-        -Depends on how easy it is to interpret the token stream
+        -This will most likely need 
+            1)a new command_grammar than contains core invocations
+            2)a tree that contains a form of struct with a function as a parameter
+            3)invocation will change from match to tree parsing
+
+
+invoker/dotparser:
+    -Todo:Change the way traversal to root dir is handled, this is stupid.
+    -Todo:Consider perhaps using only components and figure it out on the way.. ?
 
 
 terminal:
     -Note:Every terminal instance should be a singlenton.
         -Therefore when a new terminal is started it is assigned a new singlenton.
-    -Todo:change user interface to ratatui
+    
+    https://docs.rs/crossterm/latest/crossterm/index.html#
+    -Note:Accept raw input with Crossterm which is included in ratatui?
+        -I.E. newline, CTRL^C etc

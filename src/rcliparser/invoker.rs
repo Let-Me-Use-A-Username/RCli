@@ -2,7 +2,7 @@ use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
-use crate::rcliterminal::terminal_singlenton::Terminal;
+use crate::rcliterminal::terminal_singlenton::{self, Terminal};
 
 use crate::rcliparser::parser::FlagObjectPair;
 
@@ -12,19 +12,17 @@ use super::utils::dotparser;
 
 pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObjectPair>, terminal_instance: &mut Terminal){
 
-    println!("\nCORE: {:?}", core.clone());
-    println!("OBJECT: {:?}", path.clone());
-    println!("FLAGS: {:?}", flag_vector.clone());
+    // println!("\nCORE: {:?}", core.clone());
+    // println!("OBJECT: {:?}", path.clone());
+    // println!("FLAGS: {:?}", flag_vector.clone());
 
     let token_value = path.get_value();
-    
-    dotparser::parse_path(token_value.clone(), terminal_instance);
-    
     let path_value = Path::new(&token_value);
 
-    println!("Path value: {path_value:?}");
-
     match core{
+        TokenCommands::CWD => {
+            cwd(terminal_instance.get_current_directory_to_string());
+        }
         TokenCommands::TOUCH => {
             let _ = touch(path_value);
         },
@@ -43,17 +41,26 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
         },
         TokenCommands::CD => {
             let exists = path_value.exists();
-            println!("Path exists: {exists:?}");
             
             if path_value.is_dir() & exists{
                 traverse_directory(path_value, terminal_instance);
             }
             else{
+                //todo! fix, this is dumb
+                let error_path = dotparser::parse_root_dir(path_value, terminal_instance);
+                if error_path.exists() {
+                    traverse_directory(&error_path, terminal_instance);
+                    return;
+                }
                 eprintln!("Path is not dir or doesn't exist");
             }
         },
-        TokenCommands::EXIT => todo!(),
-        TokenCommands::INVALID => todo!(),
+        TokenCommands::EXIT => {
+            exit();
+        },
+        TokenCommands::INVALID => {
+            invalid();
+        },
     }
 }
 
@@ -74,6 +81,10 @@ fn handle_error(error: &Error){
         }
     }
 
+}
+
+fn cwd(path: String){
+    println!("{path}");
 }
   
 fn touch(file_path: &Path) -> Result<File, Error>{
@@ -140,4 +151,14 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){
     pathbuffer.push(path);
 
     terminal_instance.set_current_directory(pathbuffer);
+}
+
+fn exit(){
+    //todo! handle process exit more robustly, check doc for std::process::exit
+    //return res to parser, and then to terminal and exit
+    std::process::exit(1);
+}
+
+fn invalid(){
+    eprintln!("ERROR: Invalid command.")
 }

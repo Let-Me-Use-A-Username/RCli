@@ -1,5 +1,6 @@
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenCommands{
+    CWD,
     TOUCH,
     MKDIR,
     DELETE,
@@ -70,6 +71,9 @@ impl TryFrom<Tokens> for TokenCommands{
 
     fn try_from(value: Tokens) -> Result<Self, Self::Error> {
         match value{
+            Tokens::TokenCommands(TokenCommands::CWD) => {
+                Ok(TokenCommands::CWD)
+            },
             Tokens::TokenCommands(TokenCommands::TOUCH) => {
                 Ok(TokenCommands::TOUCH)
             },
