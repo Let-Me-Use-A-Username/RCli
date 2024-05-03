@@ -2,7 +2,7 @@
     "command_type": {
         "core": {
             "commands":["cwd", "touch", "mkdir", "delete", "copy", "move", "read", "list", "cd", "exit"],
-            "next":["sub", "object"],
+            "next":["sub", "object", "flag"],
             "isTerminal": false
         },
         "sub": {

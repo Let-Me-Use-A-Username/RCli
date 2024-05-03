@@ -1,3 +1,5 @@
+use super::bnf_commands::InvocationCommand;
+
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenCommands{
     CWD,
@@ -40,6 +42,54 @@ pub enum Tokens{
     TokenCommands(TokenCommands),
     TokenObjects(TokenObjects),
     TokenFlag(TokenFlag)
+}
+
+pub trait GetTokenFromString{
+    fn get_token_command(invocation_command: InvocationCommand) -> Option<TokenCommands>;
+}
+
+impl GetTokenFromString for Tokens {
+    fn get_token_command(invocation_command: InvocationCommand) -> Option<TokenCommands> {
+        let mut iterator = invocation_command.invocation_name.into_iter();
+        
+        loop{
+            match iterator.next().unwrap().to_lowercase().as_str(){
+                "cwd" => {
+                    return Some(TokenCommands::CWD)
+                }
+                "touch" => {
+                    return Some(TokenCommands::TOUCH)
+                },
+                "mkdir" => {
+                    return Some(TokenCommands::MKDIR)
+                },
+                "delete" | "del" => {
+                    return Some(TokenCommands::DELETE)
+                },
+                "copy" | "cp" => {
+                    return Some(TokenCommands::COPY)
+                },
+                "move" | "mv" => {
+                    return Some(TokenCommands::MOVE)
+                },
+                "read" => {
+                    return Some(TokenCommands::READ)
+                },
+                "list" | "ls" => {
+                    return Some(TokenCommands::LIST)
+                },
+                "cd" => {
+                    return Some(TokenCommands::CD)
+                },
+                "exit" => {
+                    return Some(TokenCommands::EXIT)
+                }
+                _ => {
+                    return Some(TokenCommands::INVALID);
+                }
+            }
+        }
+    }
 }
 
 pub trait GetValue{
@@ -141,6 +191,61 @@ impl TryFrom<Tokens> for TokenFlag{
         match value{
             Tokens::TokenFlag(TokenFlag::FLAG(flagtype, flagvalue)) => {
                 Ok(TokenFlag::FLAG(flagtype, flagvalue))
+            },
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+}
+
+/*
+
+PARSER OBJECTS:
+Used to pass to invoker a pair of flag and object or a sole object
+
+*/
+
+#[derive(Clone, Debug)]
+pub enum FlagObjectPair{
+    PAIR(TokenFlag, TokenObjects),
+    SOLE(TokenFlag)
+}
+
+//Trait to downcast pair to tokenflag enum in order to extract string value
+impl TryFrom<FlagObjectPair> for TokenFlag{
+    type Error = &'static str;  
+
+    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
+        match value{
+            FlagObjectPair::PAIR(flag, _) => {
+                match flag{
+                    TokenFlag::FLAG(f_type, f_value) => {
+                        Ok(TokenFlag::FLAG(f_type, f_value))
+                    },
+                    TokenFlag::FlagType(f_type) => {
+                        Ok(TokenFlag::FlagType(f_type))
+                    },
+                }
+            },
+            FlagObjectPair::SOLE(flag) => {
+                Ok(flag)
+            },
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+}
+
+//Trait to downcast pair to tokenobject enum in order to extract string value
+impl TryFrom<FlagObjectPair> for TokenObjects{
+    type Error = &'static str;  
+
+    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
+        match value{
+            FlagObjectPair::PAIR(_, obj) => {
+                Ok(obj)
             },
             _ => {
                 unreachable!()

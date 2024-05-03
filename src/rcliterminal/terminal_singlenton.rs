@@ -5,14 +5,15 @@ use std::path::PathBuf;
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
-use crate::rcliparser::utils::grammar_reader::Command;
-use crate::rcliparser::utils::grammar_reader::CommandType;
+use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommand};
+
 
 //singlenton terminal instance_id
 pub struct Terminal{
     instance_id: Mutex<Uuid>,
     current_directory: Mutex<PathBuf>,
-    grammar: Mutex<HashMap<CommandType, Command>>
+    bnf_grammar: Mutex<HashMap<CommandType, Command>>,
+    command_syntax: Mutex<Vec<InvocationCommand>>
 }
 
 /*
@@ -50,7 +51,11 @@ impl Terminal{
     }
 
     pub fn get_instance_grammar(&self) -> HashMap<CommandType, Command>{
-        return self.grammar.lock().unwrap().clone();
+        return self.bnf_grammar.lock().unwrap().clone();
+    }
+
+    pub fn get_instance_syntax(&self) -> Vec<InvocationCommand>{
+        return self.command_syntax.lock().unwrap().clone();
     }
 
     pub fn get_current_directory_to_string(&self) -> String{
@@ -63,7 +68,7 @@ impl Terminal{
 }
 
 
-pub fn singlenton(input_grammar: HashMap<CommandType, Command>) -> &'static mut Terminal{
+pub fn singlenton(input_grammar: HashMap<CommandType, Command>, syntax: Vec<InvocationCommand>) -> &'static mut Terminal{
     //create uninitialized static structure
     static mut SINGLENTON: MaybeUninit<Terminal> = MaybeUninit::uninit();
     static ONCE: Once = Once::new();
@@ -74,7 +79,8 @@ pub fn singlenton(input_grammar: HashMap<CommandType, Command>) -> &'static mut 
             let singlenton_instance: Terminal = Terminal{
                 instance_id: Mutex::new(Uuid::new_v4()),
                 current_directory: Mutex::new(env::current_dir().unwrap()),
-                grammar: Mutex::new(input_grammar)
+                bnf_grammar: Mutex::new(input_grammar),
+                command_syntax: Mutex::new(syntax)
             };
             SINGLENTON.write(singlenton_instance);
         });

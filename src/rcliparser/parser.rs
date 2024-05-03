@@ -1,61 +1,16 @@
+use std::collections::VecDeque;
+
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::invoker;
 
 use super::input_reader::accept_input;
 
+use super::objects::tokens::FlagObjectPair;
 use super::objects::tokens::{TokenCommands, TokenFlag, TokenObjects, Tokens, FlagType::NONTERMINAL};
 use super::utils::bsftree;
 
 use super::lexical_analyzer::analyze;
-
-#[derive(Clone, Debug)]
-pub enum FlagObjectPair{
-    PAIR(TokenFlag, TokenObjects),
-    SOLE(TokenFlag)
-}
-
-//Trait to downcast pair to tokenflag enum in order to extract string value
-impl TryFrom<FlagObjectPair> for TokenFlag{
-    type Error = &'static str;  
-
-    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
-        match value{
-            FlagObjectPair::PAIR(flag, _) => {
-                match flag{
-                    TokenFlag::FLAG(f_type, f_value) => {
-                        Ok(TokenFlag::FLAG(f_type, f_value))
-                    },
-                    TokenFlag::FlagType(f_type) => {
-                        Ok(TokenFlag::FlagType(f_type))
-                    },
-                }
-            },
-            FlagObjectPair::SOLE(flag) => {
-                Ok(flag)
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
-
-//Trait to downcast pair to tokenobject enum in order to extract string value
-impl TryFrom<FlagObjectPair> for TokenObjects{
-    type Error = &'static str;  
-
-    fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
-        match value{
-            FlagObjectPair::PAIR(_, obj) => {
-                Ok(obj)
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
 
 
 pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
@@ -71,7 +26,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     //todo! check this, might cause problems
     let mut path: TokenObjects = TokenObjects::DIRECTORY(current_dir_string.clone());
     //flag vector
-    let mut flag_vector: Vec<FlagObjectPair> = Vec::new();
+    let mut flag_vector: VecDeque<FlagObjectPair> = VecDeque::new();
 
     'parser: loop{
         //while tokens stream isnt empty
@@ -91,12 +46,12 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
                                 //todo! this unwrap might cause problems
                                 let obj = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string)));
                                 let pair = FlagObjectPair::PAIR(flag, obj.try_into().unwrap());
-                                flag_vector.push(pair);
+                                flag_vector.push_back(pair);
                             }
                             //else this is a terminal flag which doesnt have a pair
                             else{
                                 let sole = FlagObjectPair::SOLE(flag);
-                                flag_vector.push(sole);
+                                flag_vector.push_back(sole);
                                 break 'parser;
                             }
                         },

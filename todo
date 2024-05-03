@@ -1,3 +1,15 @@
+CurrentProblem:
+    -Todo:Refactor bnf_grammar.json and remove unused stuff
+        -change grammar reader
+    -Todo:Invoker:List find a more idiomatic way to parse flags
+        -or perhaps do this before invoking and then pass arguments.. ?
+
+    https://docs.rs/dirs/5.0.1/dirs/
+    -Todo:Singlenton:Add user home and root dir (C:/) (?)
+
+    -Consider add crate to parse paths instaed of dotparse.rs
+
+
 STUDY: 
     -https://cheats.rs/#macros-attributes
     -Rust general
@@ -7,21 +19,6 @@ STUDY:
     https://swcarpentry.github.io/shell-novice/reference.html
     -Note:Read how Unix shell and commands work in order to mimick the functionality
 
-CurrentProblem:
-    -Lexer:Consider changing the way core commands match.
-        -create another grammar that contains the 
-            type(core sub etc)
-            shorthand invocations
-            valid flags
-            next_valid_token (?)
-    -Lexer:Consider adding soft commands
-        -Soft commands are strings that are not commands
-        I.E. new_line
-
-    https://docs.rs/dirs/5.0.1/dirs/
-    -Todo:Singlenton:Add user home and root dir (C:/) (?)
-
-    -Consider add crate to parse paths instaed of messy code.
 
 Project:
     https://dhghomon.github.io/easy_rust/Chapter_61.html
@@ -29,12 +26,13 @@ Project:
         -parser operations
         -terminal operations
 
+
 RCLi:
     -Todo:Change big if statemets to patterns or do something better
     -Todo:Handle errors better in general
-        -Example:change the unwraping of UserInput
     -Todo:Reformat when the parser works to a certain acceptable degree
-    -Todo:Add shorthand invocation. list -> ls
+
+
 
 parser:
     -Note:consider whether matching commands is better than tree implementation
@@ -44,9 +42,15 @@ parser:
             3)invocation will change from match to tree parsing
 
 
+grammar_reader:
+    -Todo:Change load_grammar() to be more idiomatic
+
+
 invoker/dotparser:
+    https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
     -Todo:Change the way traversal to root dir is handled, this is stupid.
-    -Todo:Consider perhaps using only components and figure it out on the way.. ?
+        -Note:Perhaps access metadata to confirm path is directory and exists and then traverse?
+        -Note:Consider perhaps using only components and figure it out on the way.. ?
 
 
 terminal:
@@ -56,3 +60,4 @@ terminal:
     https://docs.rs/crossterm/latest/crossterm/index.html#
     -Note:Accept raw input with Crossterm which is included in ratatui?
         -I.E. newline, CTRL^C etc
+        -Handle with lexer or parser?

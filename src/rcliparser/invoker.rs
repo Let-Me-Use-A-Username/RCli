@@ -1,16 +1,19 @@
+use std::collections::VecDeque;
 use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
+use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-use crate::rcliterminal::terminal_singlenton::{self, Terminal};
+use crate::rcliparser::utils::windows_file_attributes;
+use crate::rcliterminal::terminal_singlenton::Terminal;
 
-use crate::rcliparser::parser::FlagObjectPair;
-
-use super::objects::tokens::{GetValue, TokenCommands, TokenObjects};
+use super::objects::tokens::{FlagObjectPair, GetValue, TokenCommands, TokenObjects};
 use super::utils::dotparser;
 
 
-pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObjectPair>, terminal_instance: &mut Terminal){
+pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal){
+
+    let syntax = terminal_instance.get_instance_syntax();
 
     // println!("\nCORE: {:?}", core.clone());
     // println!("OBJECT: {:?}", path.clone());
@@ -34,9 +37,32 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, flag_vector: Vec<FlagObje
         TokenCommands::MOVE => todo!(),
         TokenCommands::READ => todo!(),
         TokenCommands::LIST => {
-            //todo! check for hidden flag
-            //https://users.rust-lang.org/t/read-windows-hidden-file-attribute/51180/6
-            list(path_value, false);
+            let flag: bool = match flag_vector.pop_front() {
+                Some(f) => {
+                    let found: bool = match f{
+                        FlagObjectPair::SOLE(terminal) => {
+                            let terminal_value = terminal.get_value();
+                            let mut res = false;
+
+                            //todo! change this to something better
+                            for command in syntax{
+                                if command.match_name_iter(&"list".to_string()){
+                                    res = command.match_flag_iter(&terminal_value);
+                                    if res {break}
+                                }
+                            }
+                            res
+                        },
+                        _ => {
+                            false
+                        }
+                    };
+                    found
+                },
+                None => false,
+            };
+
+            list(path_value, flag);
             
         },
         TokenCommands::CD => {
@@ -133,17 +159,38 @@ fn list(dir_path: &Path, hidden: bool){
     match fs::read_dir(dir_path) {
         Ok(paths) => {
             for path in paths{
-                outputbuffer.push(path.unwrap().path().display().to_string().replace("\\\\?\\", ""));
-            }
-        
-            for obj in outputbuffer{
-                println!("{}", obj);
+                let dir_path = path.unwrap().path();
+
+                match fs::metadata(dir_path.clone()) {
+                    Ok(meta) => {
+                        let attributes = meta.file_attributes();
+
+                        let entry_attributes = windows_file_attributes::match_attributes(attributes);
+                        
+                        if hidden{
+                            outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
+                        }
+                        else{
+                            if !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
+                                outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
+                            }
+                        }
+                    },
+                    Err(error) => {
+                        eprintln!("INTERNAL ERROR: Couldn't read object metadata {error:?}");
+                        handle_error(&error)
+                    }
+                }; 
             }
         },
         Err(error) => {
             handle_error(&error);
         },
     };
+
+    for obj in outputbuffer{
+        println!("{}", obj);
+    }
 }
 
 fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){

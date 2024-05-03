@@ -1,0 +1,44 @@
+{
+    "commands":{
+        "cwd":{
+            "invocation_name": ["cwd"],
+            "flags": []
+        },
+        "touch":{
+            "invocation_name": ["touch"],
+            "flags": []
+        },
+        "mkdir":{
+            "invocation_name": ["mkdir"],
+            "flags": []
+        },
+        "delete":{
+            "invocation_name": ["delete", "del"],
+            "flags": ["--recursive"]
+        },
+        "copy":{
+            "invocation_name": ["copy", "cp"],
+            "flags": ["--recursive"]
+        },
+        "move":{
+            "invocation_name": ["move", "mv"],
+            "flags": ["--recursive"]
+        },
+        "read":{
+            "invocation_name": ["read"],
+            "flags": []
+        },
+        "list":{
+            "invocation_name": ["list", "ls"],
+            "flags": ["--hidden"]
+        },
+        "cd":{
+            "invocation_name": ["cd"],
+            "flags": []
+        },
+        "exit":{
+            "invocation_name": ["exit"],
+            "flags": []
+        }
+    }
+}

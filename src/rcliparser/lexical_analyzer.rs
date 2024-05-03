@@ -2,144 +2,108 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use regex::Regex;
 
+use crate::rcliparser::objects::tokens::GetTokenFromString;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
+use super::objects::bnf_commands::InvocationCommand;
 use super::objects::tokens::{FlagType, TokenCommands, TokenFlag, TokenObjects, Tokens};
 
 use super::objects::user_input::{Consumable, UserInput};
-use super::utils::grammar_reader::{Command, CommandType};
+use super::objects::bnf_commands::{Command, CommandType};
 
 
 //Analyze returns a tokenqueue
 pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Tokens>{
-    let commands: HashMap<CommandType, Command> = terminal_instance.get_instance_grammar();
-    let core_commands: Vec<String> = commands.get(&CommandType::Core).unwrap().command.clone();
+    let command_grammar: HashMap<CommandType, Command> = terminal_instance.get_instance_grammar();
+    let command_syntax: Vec<InvocationCommand> = terminal_instance.get_instance_syntax();
 
     let mut tokens: Vec<Tokens> = Vec::new();
     //validates if token stream is correct by checking against the `next` filed in Command struct
-    let mut token_validator: Vec<CommandType> = Vec::new();
+    let mut token_validator: Vec<CommandType> = (&command_grammar.get(&CommandType::Core).unwrap().next).clone();
 
+    
     //STEP 1: Valid core command
-    if core_commands.contains(&input.core_command){
-        let core_token: Option<TokenCommands> = validate_command(&input.consume().unwrap_or("?".to_string()));
-        
-        if core_token.is_some(){
-            tokens.push(Tokens::TokenCommands(core_token.unwrap()));
-            token_validator = (&commands.get(&CommandType::Core).unwrap().next).clone();
-        }
-        else {
-            todo!("throw error, no core command provided")
-        }
-        //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
-        let object_matcher = Regex::new(r"([.]*[/]|[..])*(\w+?\S+)?").unwrap();
-        let flag_match = Regex::new(r"([-]+\w+)").unwrap();
+    for com in command_syntax{
+        if com.match_name_iter(&input.core_command){
 
-        let mut next_command = input.consume();
-        let mut command_string = next_command.clone().unwrap_or({
-            terminal_instance.get_current_directory_to_string()
-        });
-
-        
-        loop{
-            let object_found = object_matcher.captures(&command_string.as_str());
+            let core_token: Option<TokenCommands> = Tokens::get_token_command(com);
             
-            //if object found
-            if object_found.is_some(){
-                tokens.push(Tokens::TokenObjects(TokenObjects::OBJECT(command_string.clone())));
+            if core_token.is_some(){
+                input.consume();
+                tokens.push(Tokens::TokenCommands(core_token.unwrap()));
+            }
+            //todo! change this, doesn't make sence
+            else{
+                //STEP 1.1: validate soft command_grammar. Newline, CTRL^C etc
+                println!("Input:[ {:?} ]", input.core_command);
+                todo!("Parse commands like newline, CTRL^C etc");
             }
             
-            //we re-check to see if the token format is correct
-            if object_found.is_some(){
-                if token_validator.contains(&CommandType::Object){
-                    token_validator.clear();
-                    token_validator = (&commands.get(&CommandType::Object).unwrap().next).clone();
-                }
-                else {
-                    todo!("throw error, incorrect format");
-                }
-            }
+            //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
+            let object_matcher = Regex::new(r"^[^-]([.]*[/]|[..])*(\w+?\S+)?").unwrap();
+            let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
-            //STEP 3: valid flag(s)
-            //match for terminal non terminal flags
-            let flag_found = flag_match.captures(&command_string);
+            let mut next_command = input.consume();
+            let mut command_string = next_command.clone().unwrap_or({
+                terminal_instance.get_current_directory_to_string()
+            });
+
             
-            if flag_found.is_some(){
-                let flag_object = validate_flag(flag_found.unwrap().get(0).unwrap().as_str());
-                //if terminal flag stop loops
-                if flag_object.clone().unwrap().eq(&TokenFlag::FlagType(FlagType::TERMINAL)){
-                    tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, next_command.unwrap())));
+            loop{
+                let object_found = object_matcher.captures(&command_string.as_str());
+                
+                //if object found
+                if object_found.is_some(){
+                    tokens.push(Tokens::TokenObjects(TokenObjects::OBJECT(command_string.clone())));
+
+                    if token_validator.contains(&CommandType::Object){
+                        token_validator.clear();
+                        token_validator = (&command_grammar.get(&CommandType::Object).unwrap().next).clone();
+                    }
+                    else {
+                        todo!("throw error, incorrect format");
+                    }
+                }
+
+                //STEP 3: valid flag(s)
+                //match for terminal non terminal flags
+                let flag_found = flag_match.captures(&command_string);
+                
+                if flag_found.is_some(){
+                    let flag_object = validate_flag(flag_found.unwrap().get(0).unwrap().as_str());
+                    //if terminal flag stop loops
+                    if flag_object.clone().unwrap().eq(&TokenFlag::FlagType(FlagType::TERMINAL)){
+                        tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::TERMINAL, next_command.unwrap())));
+                        break;
+                    }
+                    //else push nonterminal flag and push the flag value
+                    if token_validator.contains(&CommandType::Flag){
+                        tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
+                        token_validator.clear();
+                        token_validator = (&command_grammar.get(&CommandType::Flag).unwrap().next).clone();
+                    }
+                    else{
+                        todo!("throw error, incorrect format");
+                    }
+                }
+                //or if input analyzed break
+                if input.analyzed{
                     break;
                 }
-                //else push nonterminal flag and push the flag value
-                if token_validator.contains(&CommandType::Flag){
-                    tokens.push(Tokens::TokenFlag(TokenFlag::FLAG(FlagType::NONTERMINAL, next_command.unwrap())));
-                    token_validator.clear();
-                    token_validator = (&commands.get(&CommandType::Flag).unwrap().next).clone();
-                }
-                else{
-                    todo!("throw error, incorrect format");
-                }
-            }
-            //or if input analyzed break
-            if input.analyzed{
-                break;
-            }
-            next_command = input.consume();
-            command_string = match next_command.clone() {
-                Some(obj) => {
-                    obj
-                }
-                None => {
-                    break;
-                }
+                next_command = input.consume();
+                command_string = match next_command.clone() {
+                    Some(obj) => {
+                        obj
+                    }
+                    None => {
+                        break;
+                    }
+                };
             };
-        };
+        }
     }
-    //STEP 1.1: validate soft commands. Newline, CTRL^C etc
-    else{
-        println!("Input:[ {:?} ]", input.core_command);
-        todo!("Parse commands like newline, CTRL^C etc");
-    }
+    
     return VecDeque::from(tokens);
-}
-
-
-fn validate_command(command: &str) -> Option<TokenCommands>{
-    match command {
-        "cwd" => {
-            return Some(TokenCommands::CWD)
-        }
-        "touch" => {
-            return Some(TokenCommands::TOUCH)
-        },
-        "mkdir" => {
-            return Some(TokenCommands::MKDIR)
-        },
-        "delete" => {
-            return Some(TokenCommands::DELETE)
-        },
-        "copy" => {
-            return Some(TokenCommands::COPY)
-        },
-        "move" => {
-            return Some(TokenCommands::MOVE)
-        },
-        "read" => {
-            return Some(TokenCommands::READ)
-        },
-        "list" | "ls" => {
-            return Some(TokenCommands::LIST)
-        },
-        "cd" => {
-            return Some(TokenCommands::CD)
-        },
-        "exit" => {
-            return Some(TokenCommands::EXIT)
-        }
-        _ => {
-            return Some(TokenCommands::INVALID);
-        }
-    }
 }
 
 
@@ -168,8 +132,9 @@ mod lexical_tests {
     fn start_test(){
         //load grammar
         let grammar = grammar_reader::load_grammar();
+        let syntax = grammar_reader::load_command_syntax();
         //load singlenton
-        let instance: &mut Terminal = terminal_singlenton::singlenton(grammar);
+        let instance: &mut Terminal = terminal_singlenton::singlenton(grammar, syntax);
 
         validate_touch(&instance);
         validate_mkdir(&instance);

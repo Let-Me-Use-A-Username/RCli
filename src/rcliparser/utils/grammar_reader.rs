@@ -1,31 +1,25 @@
+use core::str;
+use std::fs;
 use std::path::Path;
 use std::{collections::HashMap, fs::File};
-use std::fmt;
-use serde::{Deserialize, Serialize};
 
-const GRAMMAR_PATH: &str = "src\\rcliparser\\utils\\grammar.json";
+use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommandSyntax, InvocationCommand};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
-pub enum CommandType{
-    Core,
-    Sub,
-    Object,
-    Flag,
-    INVALID
-}
+const GRAMMAR_PATH: &str = "src\\rcliparser\\utils\\bnf_grammar.json";
+const INVOCATION_COMMAND_PATH: &str = "src\\rcliparser\\utils\\command_syntax.json";
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub struct Command{
-    pub command: Vec<String>,
-    pub next: Vec<CommandType>,
-    pub is_terminal: bool
-}
 
-impl fmt::Debug for Command {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Command {{ commands: {:?}, next: {:?}, is_terminal: {:?}}}", 
-            self.command, self.next, self.is_terminal)
+pub fn load_command_syntax() -> Vec<InvocationCommand>{
+    let data = fs::read_to_string(INVOCATION_COMMAND_PATH).unwrap();
+    let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();
+
+    let mut syntax: Vec<InvocationCommand> = Vec::new();
+
+    for (_, value) in json.get_hashmap(){
+        syntax.push(value.clone());
     }
+
+    return syntax;
 }
 
 
@@ -35,7 +29,7 @@ pub fn load_grammar() -> HashMap<CommandType, Command>{
     let grammar: serde_json::Value = serde_json::from_reader(grammar_file).unwrap();
     let mut commands: HashMap<CommandType, Command> = HashMap::new();
 
-    let core = Command {
+    let core: Command = Command {
         command: serde_json::from_value(grammar["command_type"]["core"]["commands"].clone()).unwrap(),
         next: create_chain(serde_json::from_value(grammar["command_type"]["core"]["next"].clone()).unwrap()),
         is_terminal:serde_json::from_value::<bool>(grammar["command_type"]["core"]["isTerminal"].clone()).unwrap()
@@ -74,6 +68,9 @@ fn create_chain(input: Vec<String>) -> Vec<CommandType>{
     
     for command in input{
         match command.as_str() {
+            "core" => {
+                next_commands.push(CommandType::Core)
+            },
             "sub" => {
                 next_commands.push(CommandType::Sub)
             },
