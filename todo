@@ -1,14 +1,11 @@
 CurrentProblem:
-    -Todo:Refactor bnf_grammar.json and remove unused stuff
-        -change grammar reader
-    -Todo:Invoker:List find a more idiomatic way to parse flags
-        -or perhaps do this before invoking and then pass arguments.. ?
-
-    https://docs.rs/dirs/5.0.1/dirs/
-    -Todo:Singlenton:Add user home and root dir (C:/) (?)
-
-    -Consider add crate to parse paths instaed of dotparse.rs
-
+    invoker/dotparser:
+    https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
+    -Todo:Change the way traversal to root dir is handled, this is stupid.
+        -Note:Perhaps access metadata to confirm path is directory and exists and then traverse?
+        -Note:Consider perhaps using only components and figure it out on the way.. ?
+    -Note:Consider add crate to parse paths instaed of dotparse.rs
+    -Todo:Refactor after invoker is at an acceptable state
 
 STUDY: 
     -https://cheats.rs/#macros-attributes
@@ -40,17 +37,6 @@ parser:
             1)a new command_grammar than contains core invocations
             2)a tree that contains a form of struct with a function as a parameter
             3)invocation will change from match to tree parsing
-
-
-grammar_reader:
-    -Todo:Change load_grammar() to be more idiomatic
-
-
-invoker/dotparser:
-    https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
-    -Todo:Change the way traversal to root dir is handled, this is stupid.
-        -Note:Perhaps access metadata to confirm path is directory and exists and then traverse?
-        -Note:Consider perhaps using only components and figure it out on the way.. ?
 
 
 terminal:

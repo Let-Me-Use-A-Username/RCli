@@ -4,6 +4,7 @@ use std::io::{Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
+use crate::rcliparser::utils::dotparser::get_path_components;
 use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
@@ -39,25 +40,23 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
         TokenCommands::LIST => {
             let flag: bool = match flag_vector.pop_front() {
                 Some(f) => {
-                    let found: bool = match f{
+                    let flag_status = match f{
                         FlagObjectPair::SOLE(terminal) => {
                             let terminal_value = terminal.get_value();
-                            let mut res = false;
 
-                            //todo! change this to something better
-                            for command in syntax{
-                                if command.match_name_iter(&"list".to_string()){
-                                    res = command.match_flag_iter(&terminal_value);
-                                    if res {break}
-                                }
+                            let res = syntax.get_value(&String::from("list"));
+                            if res.unwrap().match_flag_iter(&terminal_value){
+                                true
                             }
-                            res
+                            else{
+                                false
+                            }
                         },
                         _ => {
                             false
                         }
                     };
-                    found
+                    flag_status
                 },
                 None => false,
             };
@@ -65,20 +64,24 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
             list(path_value, flag);
             
         },
+        //todo! cannot make root dir (C:, D:) be parsed recursively with cd ..
         TokenCommands::CD => {
-            let exists = path_value.exists();
-            
-            if path_value.is_dir() & exists{
-                traverse_directory(path_value, terminal_instance);
-            }
-            else{
-                //todo! fix, this is dumb
-                let error_path = dotparser::parse_root_dir(path_value, terminal_instance);
-                if error_path.exists() {
-                    traverse_directory(&error_path, terminal_instance);
-                    return;
+            let original_path_exists = path_value.try_exists().unwrap_or(false);
+
+            if original_path_exists{
+                let res = traverse_directory(path_value, terminal_instance);
+
+                if res.is_err(){
+                    let path = dotparser::parse_dir(path_value, terminal_instance);
+                    
+                    let fixed_path_exists = path.try_exists().unwrap_or(false);
+
+                    if fixed_path_exists{
+                        let res = traverse_directory(&path, terminal_instance);
+
+                        if res.is_ok(){return}
+                    }
                 }
-                eprintln!("Path is not dir or doesn't exist");
             }
         },
         TokenCommands::EXIT => {
@@ -193,11 +196,11 @@ fn list(dir_path: &Path, hidden: bool){
     }
 }
 
-fn traverse_directory(path: &Path, terminal_instance: &mut Terminal){
+fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<String, String>{
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
 
-    terminal_instance.set_current_directory(pathbuffer);
+    terminal_instance.set_current_directory(pathbuffer)
 }
 
 fn exit(){

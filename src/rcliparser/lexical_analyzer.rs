@@ -15,7 +15,7 @@ use super::objects::bnf_commands::{Command, CommandType};
 //Analyze returns a tokenqueue
 pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Tokens>{
     let command_grammar: HashMap<CommandType, Command> = terminal_instance.get_instance_grammar();
-    let command_syntax: Vec<InvocationCommand> = terminal_instance.get_instance_syntax();
+    let command_syntax: Vec<InvocationCommand> = terminal_instance.get_instance_syntax().get_all_values();
 
     let mut tokens: Vec<Tokens> = Vec::new();
     //validates if token stream is correct by checking against the `next` filed in Command struct

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
-use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommand};
+use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommandSyntax};
 
 
 //singlenton terminal instance_id
@@ -13,7 +13,7 @@ pub struct Terminal{
     instance_id: Mutex<Uuid>,
     current_directory: Mutex<PathBuf>,
     bnf_grammar: Mutex<HashMap<CommandType, Command>>,
-    command_syntax: Mutex<Vec<InvocationCommand>>
+    command_syntax: Mutex<InvocationCommandSyntax>
 }
 
 /*
@@ -21,7 +21,7 @@ Terminal singlenton methods.
 At the moment only path changing functions.
 */
 impl Terminal{
-    pub fn set_current_directory(&mut self, path: PathBuf){
+    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<String, String>{
         let mut current_dir = self.current_directory.lock().unwrap();
         
         match path.canonicalize() {
@@ -33,15 +33,18 @@ impl Terminal{
                 match operation_results {
                     Ok(_) => {
                         *current_dir = new_path;
+                        return Ok(String::from("Success"))
                     },
                     Err(error) => {
                         println!("SINGLENTON SETTER: {:?}", error);
+                        return Err(String::from("Failure"))
                     },
                 }
             },
             //path not found
             Err(error) => {
                 println!("SINGLENTON ERROR: Path not found {:?}", error);
+                return Err(String::from("Failure"))
             },
         };
     }
@@ -54,7 +57,7 @@ impl Terminal{
         return self.bnf_grammar.lock().unwrap().clone();
     }
 
-    pub fn get_instance_syntax(&self) -> Vec<InvocationCommand>{
+    pub fn get_instance_syntax(&self) -> InvocationCommandSyntax{
         return self.command_syntax.lock().unwrap().clone();
     }
 
@@ -68,7 +71,7 @@ impl Terminal{
 }
 
 
-pub fn singlenton(input_grammar: HashMap<CommandType, Command>, syntax: Vec<InvocationCommand>) -> &'static mut Terminal{
+pub fn singlenton(input_grammar: HashMap<CommandType, Command>, syntax: InvocationCommandSyntax) -> &'static mut Terminal{
     //create uninitialized static structure
     static mut SINGLENTON: MaybeUninit<Terminal> = MaybeUninit::uninit();
     static ONCE: Once = Once::new();

@@ -1,4 +1,4 @@
-use std::path::{self, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
@@ -7,16 +7,16 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 Todo! Currently when trying to execute cd .. to parent dir where parent dir is 
 root, it doesn't execute, however cd ../ works. The current workaround is when operation 
 fails we return the parent if it exists
-    */
-pub fn parse_root_dir(directory_token: &Path, terminal_instance: &mut Terminal) -> PathBuf{
+*/
+pub fn parse_dir(directory: &Path, terminal_instance: &mut Terminal) -> PathBuf{
 
-    let target_dir = directory_token.canonicalize();
+    let target_dir = directory.canonicalize();
     let current_dir = terminal_instance.get_current_directory();
 
     let op: PathBuf = match target_dir {
         Ok(target) => target,
         Err(error) => {
-            if directory_token.eq(&PathBuf::from("..")){
+            if directory.eq(&PathBuf::from("..")){
                 
                 let parent = current_dir.parent();
 
@@ -33,10 +33,43 @@ pub fn parse_root_dir(directory_token: &Path, terminal_instance: &mut Terminal) 
     return op
 }
 
-/*
-Function that returns root for terminal_instance
+/* 
+Function that based on a paths components return a hard coded path. This is done due to 
+how windows addresses paths like C:/ When trying to traverse with .. canonicalize fails to 
+understand the path, so we hardcode a return type
 */
-pub fn get_root(mut path: PathBuf, terminal_instance: &mut Terminal){
+pub fn get_path(path: PathBuf, attr: i32) -> PathBuf{
+    let components = path.components();
+    
+    let p = path.parent();
+    match attr{
+        //Prefix + Rootdir | Prefix + Root + Parent |Prefix + Root + Normal | Prefix + Root + + Curent + Parent
+        3 | 7 | 8 | 10 => {
+            if p.is_some(){
+                return p.unwrap().to_path_buf()
+            }
+        },
+        //Current Dir
+        6 => {
+            return path
+        },
+        //Normal
+        15 => {
+            let com = &components.last().unwrap();
+            let normal_path = Path::new(com);
+            return PathBuf::from(normal_path)
+        },
+        _ => return path.to_path_buf()
+    }
+    return path
+}
+
+/*
+Function that returns path componets
+*/
+pub fn get_path_components(mut path: PathBuf, terminal_instance: &mut Terminal) -> (PathBuf, i32){
+    
+    let mut comp = 0;
 
     path = match path.canonicalize() {
         Ok(op) => {
@@ -48,29 +81,33 @@ pub fn get_root(mut path: PathBuf, terminal_instance: &mut Terminal){
         },
     };
 
+    println!("Path canonicalized {path:?}");
+
     let path_components = path.components();
-    let os_strings: Vec<_> = path_components.clone().map(|comp| comp.as_os_str()).collect();
     
     for component in path_components{
         match component {
             std::path::Component::Prefix(pref) => {
-                println!("Prefix:{pref:?}");
+                comp += 1;
+                //println!("Prefix:{pref:?}");
             },
             std::path::Component::RootDir => {
-                println!("RootDir:{component:?}");
+                comp += 2;
+                //println!("RootDir:{component:?}");
             },
             std::path::Component::CurDir => {
-                println!("CurrentDir:{component:?}");
+                comp += 3;
+                //println!("CurrentDir:{component:?}");
             },
             std::path::Component::ParentDir => {
-                println!("ParentDir:{component:?}");
-                if os_strings.len() == 1 {
-                    //return terminal_instance.get_current_directory().parent();
-                }
+                comp += 4;
+                //println!("ParentDir:{component:?}");
             },
             std::path::Component::Normal(n) => {
-                println!("Normal:{n:?}")
+                comp += 5;
+                //println!("Normal:{n:?}")
             },
         }
     }
+    return (path, comp)
 }

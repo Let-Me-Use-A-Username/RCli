@@ -1,5 +1,7 @@
+use std::{fs, os::windows::fs::MetadataExt, path::Path};
 
-#[derive(PartialEq, Eq)]
+
+#[derive(PartialEq, Eq, Debug)]
 pub enum WindowsAttributes{
     READONLY,
     HIDDEN,
@@ -20,6 +22,22 @@ pub enum WindowsAttributes{
     NO_SCRUB_DATA,
     INTERNAL_ATTRIBUTES,
     PINNED
+}
+
+pub fn get_path_attributes(path: &Path) -> Option<Vec<WindowsAttributes>>{
+    
+    match fs::metadata(path) {
+        Ok(meta) => {
+            let attributes = meta.file_attributes();
+
+            let entry_attributes = match_attributes(attributes);
+            return Some(entry_attributes)
+        },
+        Err(error) => {
+            eprintln!("INTERNAL ERROR: Couldn't read object metadata {error:?}");
+            return None
+        }
+    };
 }
 
 

@@ -1,24 +1,16 @@
 {
     "command_type": {
         "core": {
-            "commands":["cwd", "touch", "mkdir", "delete", "copy", "move", "read", "list", "cd", "exit"],
-            "next":["sub", "object", "flag"],
-            "isTerminal": false
+            "next":["Sub", "Object", "Flag"]
         },
         "sub": {
-            "commands":[],
-            "next": ["object", "flag"],
-            "isTerminal": false
+            "next": ["Object", "Flag"]
         },
         "object": {
-            "commands":["file", "directory", "()"],
-            "next": ["flag", "()"],
-            "isTerminal": true
+            "next": ["Flag", "None"]
         },
         "flag": {
-            "commands":["--hidden", "-d"],
-            "next": ["flag", "object", "()"],
-            "isTerminal": true
+            "next": ["Flag", "Object", "None"]
         }
     }
 }
