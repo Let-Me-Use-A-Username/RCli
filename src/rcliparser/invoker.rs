@@ -4,12 +4,10 @@ use std::io::{Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-use crate::rcliparser::utils::dotparser::get_path_components;
 use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::tokens::{FlagObjectPair, GetValue, TokenCommands, TokenObjects};
-use super::utils::dotparser;
 
 
 pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal){
@@ -31,9 +29,56 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
             let _ = touch(path_value);
         },
         TokenCommands::MKDIR => {
-            let _ = mkdir(path_value, false);
+            let flag: bool = match flag_vector.pop_front() {
+                Some(f) => {
+                    let flag_status = match f{
+                        FlagObjectPair::SOLE(terminal) => {
+                            let terminal_value = terminal.get_value();
+
+                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::MKDIR);
+                            if res.unwrap().match_flag_iter(&terminal_value){
+                                true
+                            }
+                            else{
+                                false
+                            }
+                        },
+                        _ => {
+                            false
+                        }
+                    };
+                    flag_status
+                },
+                None => false,
+            };
+            
+            let _ = mkdir(path_value, flag);
         },
-        TokenCommands::DELETE => todo!(),
+        TokenCommands::REMOVE => {
+            let flag: bool = match flag_vector.pop_front() {
+                Some(f) => {
+                    let flag_status = match f{
+                        FlagObjectPair::SOLE(terminal) => {
+                            let terminal_value = terminal.get_value();
+
+                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::REMOVE);
+                            if res.unwrap().match_flag_iter(&terminal_value){
+                                true
+                            }
+                            else{
+                                false
+                            }
+                        },
+                        _ => {
+                            false
+                        }
+                    };
+                    flag_status
+                },
+                None => false,
+            };
+            let _ = remove(path_value, flag);
+        },
         TokenCommands::COPY => todo!(),
         TokenCommands::MOVE => todo!(),
         TokenCommands::READ => todo!(),
@@ -44,7 +89,7 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                         FlagObjectPair::SOLE(terminal) => {
                             let terminal_value = terminal.get_value();
 
-                            let res = syntax.get_value(&String::from("list"));
+                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::LIST);
                             if res.unwrap().match_flag_iter(&terminal_value){
                                 true
                             }
@@ -64,24 +109,16 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
             list(path_value, flag);
             
         },
-        //todo! cannot make root dir (C:, D:) be parsed recursively with cd ..
         TokenCommands::CD => {
-            let original_path_exists = path_value.try_exists().unwrap_or(false);
+            let new_path = terminal_instance.get_current_directory().join(path_value);
+
+            let original_path_exists = new_path.try_exists().unwrap_or(false);
 
             if original_path_exists{
-                let res = traverse_directory(path_value, terminal_instance);
-
-                if res.is_err(){
-                    let path = dotparser::parse_dir(path_value, terminal_instance);
-                    
-                    let fixed_path_exists = path.try_exists().unwrap_or(false);
-
-                    if fixed_path_exists{
-                        let res = traverse_directory(&path, terminal_instance);
-
-                        if res.is_ok(){return}
-                    }
-                }
+                let _ = traverse_directory(new_path.as_path(), terminal_instance);
+            }
+            else{
+                eprintln!("INVALID PATH");
             }
         },
         TokenCommands::EXIT => {
@@ -97,13 +134,13 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
 fn handle_error(error: &Error){
     match error.kind(){
         ErrorKind::PermissionDenied => {
-            eprintln!("Permission denied.")
+            eprintln!("ERROR HANDLER: Permission denied.")
         },
         ErrorKind::NotFound => {
-            eprintln!("Object not found.")
+            eprintln!("ERROR HANDLER: Object not found.")
         },
         ErrorKind::AlreadyExists => {
-            eprintln!("Object already exists.")
+            eprintln!("ERROR HANDLER: Object already exists.")
         },
         _ => {
 
@@ -137,6 +174,7 @@ fn touch(file_path: &Path) -> Result<File, Error>{
 
 fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
     let mut builder = DirBuilder::new();
+    
     builder.recursive(recursive);
 
     let directory = builder.create(path);
@@ -153,6 +191,28 @@ fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
             return Err(error);
         }
         
+    }
+}
+
+fn remove(path: &Path, recursive: bool){
+    let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "Initialize"));
+    if path.try_exists().is_ok(){
+        if path.is_dir() & recursive{
+            res = fs::remove_dir_all(path);            
+        }
+        else if path.is_dir(){
+            res = fs::remove_dir(path);
+        }
+        else if path.is_file(){
+            res = fs::remove_file(path);
+        }
+    }
+
+    match res{
+        Ok(_) => return,
+        Err(error) => {
+            handle_error(&error)
+        },
     }
 }
 
@@ -196,11 +256,11 @@ fn list(dir_path: &Path, hidden: bool){
     }
 }
 
-fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<String, String>{
+fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<PathBuf, PathBuf>{
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
 
-    terminal_instance.set_current_directory(pathbuffer)
+    return terminal_instance.set_current_directory(pathbuffer);
 }
 
 fn exit(){

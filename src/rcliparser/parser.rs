@@ -23,7 +23,6 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     //failsafe in case directory obj isnt present but core requires it.
     let current_dir_string = terminal_instance.get_current_directory_to_string();
     //mainly used when commands do not require an additional parameter like list.
-    //todo! check this, might cause problems
     let mut path: TokenObjects = TokenObjects::DIRECTORY(current_dir_string.clone());
     //flag vector
     let mut flag_vector: VecDeque<FlagObjectPair> = VecDeque::new();
@@ -44,7 +43,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
                             //if flag type found is non terminal then next item also belongs to the flag pair
                             if flag_type.eq(&NONTERMINAL){
                                 //todo! this unwrap might cause problems
-                                let obj = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::DIRECTORY(current_dir_string)));
+                                let obj = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::INVALID));
                                 let pair = FlagObjectPair::PAIR(flag, obj.try_into().unwrap());
                                 flag_vector.push_back(pair);
                             }
@@ -61,7 +60,9 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
                 _ => unreachable!(),
             };
         }
-        break 'parser;
+        else{
+            break 'parser;
+        }
     }
     invoker::invoke(command, path, flag_vector, terminal_instance);
 }

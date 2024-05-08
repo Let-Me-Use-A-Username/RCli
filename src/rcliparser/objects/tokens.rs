@@ -5,7 +5,7 @@ pub enum TokenCommands{
     CWD,
     TOUCH,
     MKDIR,
-    DELETE,
+    REMOVE,
     COPY,
     MOVE,
     READ,
@@ -19,7 +19,8 @@ pub enum TokenCommands{
 pub enum TokenObjects{
     FILE(String),
     DIRECTORY(String),
-    OBJECT(String)
+    OBJECT(String),
+    INVALID
 }
 
 
@@ -63,8 +64,8 @@ impl GetTokenFromString for Tokens {
                 "mkdir" => {
                     return Some(TokenCommands::MKDIR)
                 },
-                "delete" | "del" => {
-                    return Some(TokenCommands::DELETE)
+                "remove" | "rm" => {
+                    return Some(TokenCommands::REMOVE)
                 },
                 "copy" | "cp" => {
                     return Some(TokenCommands::COPY)
@@ -102,6 +103,7 @@ impl GetValue for TokenObjects{
             TokenObjects::FILE(file) => file.to_string(),
             TokenObjects::DIRECTORY(dir) => dir.to_string(),
             TokenObjects::OBJECT(obj) => obj.to_string(),
+            TokenObjects::INVALID => "INVALID".to_string()
         }
     }
 }
@@ -130,8 +132,8 @@ impl TryFrom<Tokens> for TokenCommands{
             Tokens::TokenCommands(TokenCommands::MKDIR) => {
                 Ok(TokenCommands::MKDIR)
             },
-            Tokens::TokenCommands(TokenCommands::DELETE) => {
-                Ok(TokenCommands::DELETE)
+            Tokens::TokenCommands(TokenCommands::REMOVE) => {
+                Ok(TokenCommands::REMOVE)
             },
             Tokens::TokenCommands(TokenCommands::COPY) => {
                 Ok(TokenCommands::COPY)
@@ -230,9 +232,6 @@ impl TryFrom<FlagObjectPair> for TokenFlag{
             },
             FlagObjectPair::SOLE(flag) => {
                 Ok(flag)
-            },
-            _ => {
-                unreachable!()
             }
         }
     }

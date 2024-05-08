@@ -42,34 +42,46 @@ impl fmt::Debug for Command {
 Objects used to parse command syntax.
 */
 
-
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct InvocationCommandSyntax{
-    commands: HashMap<String, InvocationCommand>
+    commands: HashMap<InvocationName, InvocationCommand>
 }
 
 impl InvocationCommandSyntax{
-    pub fn get_hashmap(&self) -> &HashMap<String, InvocationCommand>{
+    pub fn get_hashmap(&self) -> &HashMap<InvocationName, InvocationCommand>{
         return &self.commands
     }
 
-    pub fn get_value(&self, name: &String) -> Option<InvocationCommand>{
-        for (key, value) in &self.commands{
-            if key.eq(name) {
-                return Some(value.clone())
-            }
+    pub fn get_value(&self, name: &InvocationName) -> Option<&InvocationCommand>{
+        if self.commands.contains_key(name){
+            return self.commands.get(name)
         }
-        return None
+        else{
+            return None
+        }
     }
 
     pub fn get_all_values(&self) -> Vec<InvocationCommand>{
         let mut command_syntax = Vec::<InvocationCommand>::new();
 
-        for (key, value) in &self.commands{
+        for (_, value) in &self.commands{
             command_syntax.push(value.clone());
         }
         return command_syntax
     }
+}
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, Hash)]
+pub enum InvocationName{
+    CWD,
+    TOUCH,
+    MKDIR,
+    REMOVE,
+    COPY,
+    MOVE,
+    READ,
+    LIST,
+    CD,
+    EXIT
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]

@@ -21,7 +21,7 @@ Terminal singlenton methods.
 At the moment only path changing functions.
 */
 impl Terminal{
-    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<String, String>{
+    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<PathBuf, PathBuf>{
         let mut current_dir = self.current_directory.lock().unwrap();
         
         match path.canonicalize() {
@@ -32,19 +32,19 @@ impl Terminal{
                 //todo! handle error in case the operation fails
                 match operation_results {
                     Ok(_) => {
-                        *current_dir = new_path;
-                        return Ok(String::from("Success"))
+                        *current_dir = new_path.clone();
+                        return Ok(new_path)
                     },
                     Err(error) => {
                         println!("SINGLENTON SETTER: {:?}", error);
-                        return Err(String::from("Failure"))
+                        return Err(new_path)
                     },
                 }
             },
             //path not found
             Err(error) => {
                 println!("SINGLENTON ERROR: Path not found {:?}", error);
-                return Err(String::from("Failure"))
+                return Err(current_dir.to_path_buf())
             },
         };
     }

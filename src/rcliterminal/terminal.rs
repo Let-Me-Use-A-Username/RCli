@@ -16,7 +16,7 @@ pub fn start_terminal(){
     let instance: &mut Terminal = terminal_singlenton::singlenton(grammar, syntax);
 
     //set the current directory in case the core command is on local dir and full path isnt specified
-    instance.set_current_directory(env::current_dir().unwrap());
+    let _ = instance.set_current_directory(env::current_dir().unwrap());
 
     //singlenton loop
     'terminal: loop  {

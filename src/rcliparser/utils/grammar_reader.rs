@@ -12,8 +12,6 @@ pub fn load_command_syntax() -> InvocationCommandSyntax{
     let data = fs::read_to_string(COMMAND_SYNTAX_PATH).unwrap();
     let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();
 
-    let mut syntax: Vec<InvocationCommand> = Vec::new();
-
     return json
 }
 
