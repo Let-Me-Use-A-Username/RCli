@@ -1,7 +1,31 @@
-use super::bnf_commands::InvocationCommand;
+use serde::{Deserialize, Serialize};
 
+///Struct used by the parser. Carries the information from
+///bnf_command objects onto the parser.
 #[derive(PartialEq, Debug, Clone, Eq)]
-pub enum TokenCommands{
+pub struct TokenCommands{
+    command_type: TokenCommandType,
+    token_flags: Vec<String>
+}
+
+impl TokenCommands{
+    pub fn new(command_type: TokenCommandType, flags: Vec<String>) -> Self{
+        return TokenCommands { command_type: command_type, token_flags: flags }
+    }
+
+    pub fn get_type(&self) -> TokenCommandType{
+        return self.command_type
+    }
+
+    pub fn containt_flag(&self, flag: &String) -> bool{
+        let con = self.token_flags.iter().any(|val| val.contains(flag));
+
+        return con
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
+pub enum TokenCommandType{
     CWD,
     TOUCH,
     MKDIR,
@@ -15,6 +39,7 @@ pub enum TokenCommands{
     INVALID
 }
 
+///Enum used by the lexer and parser. Mimics available invocable objects.
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenObjects{
     FILE(String),
@@ -23,80 +48,35 @@ pub enum TokenObjects{
     INVALID
 }
 
-
+///Enum used by the lexer and parser to interpret terminal (--) and
+///non terminal (-) commands
 #[derive(PartialEq, Debug, Clone, Eq, Copy)]
 pub enum FlagType{
     TERMINAL,
     NONTERMINAL
 }
 
-
+///Enum that is used by the lexer to qualify flag order.
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub enum TokenFlag{
     FLAG(FlagType, String),
     FlagType(FlagType)
 }
 
-
+///Enum used by the lexer to provide a Token stream 
+///without caring about what is inside (to a certain degree of course)
 #[derive(PartialEq, Debug, Clone, Eq,)]
 pub enum Tokens{
-    TokenCommands(TokenCommands),
+    TokenCommand(TokenCommands),
     TokenObjects(TokenObjects),
     TokenFlag(TokenFlag)
-}
-
-pub trait GetTokenFromString{
-    fn get_token_command(invocation_command: InvocationCommand) -> Option<TokenCommands>;
-}
-
-impl GetTokenFromString for Tokens {
-    fn get_token_command(invocation_command: InvocationCommand) -> Option<TokenCommands> {
-        let mut iterator = invocation_command.invocation_name.into_iter();
-        
-        loop{
-            match iterator.next().unwrap().to_lowercase().as_str(){
-                "cwd" => {
-                    return Some(TokenCommands::CWD)
-                }
-                "touch" => {
-                    return Some(TokenCommands::TOUCH)
-                },
-                "mkdir" => {
-                    return Some(TokenCommands::MKDIR)
-                },
-                "remove" | "rm" => {
-                    return Some(TokenCommands::REMOVE)
-                },
-                "copy" | "cp" => {
-                    return Some(TokenCommands::COPY)
-                },
-                "move" | "mv" => {
-                    return Some(TokenCommands::MOVE)
-                },
-                "read" => {
-                    return Some(TokenCommands::READ)
-                },
-                "list" | "ls" => {
-                    return Some(TokenCommands::LIST)
-                },
-                "cd" => {
-                    return Some(TokenCommands::CD)
-                },
-                "exit" => {
-                    return Some(TokenCommands::EXIT)
-                }
-                _ => {
-                    return Some(TokenCommands::INVALID);
-                }
-            }
-        }
-    }
 }
 
 pub trait GetValue{
     fn get_value(&self) -> String;
 }
 
+///Get String value from TokenObject
 impl GetValue for TokenObjects{
     fn get_value(&self) -> String{
         match self{
@@ -108,6 +88,7 @@ impl GetValue for TokenObjects{
     }
 }
 
+///Get String value from TokenFlag::FLAG object
 impl GetValue for TokenFlag{
     fn get_value(&self) -> String{
         match self{
@@ -117,56 +98,10 @@ impl GetValue for TokenFlag{
     }
 }
 
-//Trait to downcast tokens to tokencommand enum in order to extract string value
-impl TryFrom<Tokens> for TokenCommands{
-    type Error = &'static str;  
 
-    fn try_from(value: Tokens) -> Result<Self, Self::Error> {
-        match value{
-            Tokens::TokenCommands(TokenCommands::CWD) => {
-                Ok(TokenCommands::CWD)
-            },
-            Tokens::TokenCommands(TokenCommands::TOUCH) => {
-                Ok(TokenCommands::TOUCH)
-            },
-            Tokens::TokenCommands(TokenCommands::MKDIR) => {
-                Ok(TokenCommands::MKDIR)
-            },
-            Tokens::TokenCommands(TokenCommands::REMOVE) => {
-                Ok(TokenCommands::REMOVE)
-            },
-            Tokens::TokenCommands(TokenCommands::COPY) => {
-                Ok(TokenCommands::COPY)
-            },
-            Tokens::TokenCommands(TokenCommands::MOVE) => {
-                Ok(TokenCommands::MOVE)
-            },
-            Tokens::TokenCommands(TokenCommands::READ) => {
-                Ok(TokenCommands::READ)
-            },
-            Tokens::TokenCommands(TokenCommands::LIST) => {
-                Ok(TokenCommands::LIST)
-            },
-            Tokens::TokenCommands(TokenCommands::CD) => {
-                Ok(TokenCommands::CD)
-            },
-            Tokens::TokenCommands(TokenCommands::EXIT) => {
-                Ok(TokenCommands::EXIT)
-            },
-            Tokens::TokenCommands(TokenCommands::INVALID) => {
-                Ok(TokenCommands::INVALID)
-            },
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-}
-
-//Trait to downcast tokens to tokenobject enum in order to extract string value
 impl TryFrom<Tokens> for TokenObjects{
     type Error = &'static str;  
-
+    ///Trait used to downcast Tokens to TokenObjects
     fn try_from(value: Tokens) -> Result<Self, Self::Error> {
         match value{
             Tokens::TokenObjects(TokenObjects::DIRECTORY(dir)) => {
@@ -185,10 +120,10 @@ impl TryFrom<Tokens> for TokenObjects{
     }
 }
 
-//Trait to downcast tokens to tokenflag enum in order to extract string value
+
 impl TryFrom<Tokens> for TokenFlag{
     type Error = &'static str;  
-
+    ///Trait used to downcast Tokens to TokenFlags::FLAG
     fn try_from(value: Tokens) -> Result<Self, Self::Error> {
         match value{
             Tokens::TokenFlag(TokenFlag::FLAG(flagtype, flagvalue)) => {
@@ -200,24 +135,41 @@ impl TryFrom<Tokens> for TokenFlag{
         }
     }
 }
-
 /*
 
 PARSER OBJECTS:
 Used to pass to invoker a pair of flag and object or a sole object
 
 */
-
+///Enum used to parse tokenflag-tokenobject pair for the invoker
 #[derive(Clone, Debug)]
 pub enum FlagObjectPair{
     PAIR(TokenFlag, TokenObjects),
     SOLE(TokenFlag)
 }
 
-//Trait to downcast pair to tokenflag enum in order to extract string value
+pub trait GetTupleValue{
+    fn get_value(&self) -> (Option<String>, Option<String>);
+}
+
+///Get String value from TokenObject
+impl GetTupleValue for FlagObjectPair{
+    fn get_value(&self) -> (Option<String>, Option<String>){
+        match self{
+            FlagObjectPair::PAIR(flag, object) => {
+                return (Some(flag.get_value()), Some(object.get_value()))
+            },
+            FlagObjectPair::SOLE(sole_flag) => {
+                return (Some(sole_flag.get_value()), None)
+            },
+        }
+    }
+}
+
+
 impl TryFrom<FlagObjectPair> for TokenFlag{
     type Error = &'static str;  
-
+    ///Trait to downcast pair to flag value
     fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
         match value{
             FlagObjectPair::PAIR(flag, _) => {
@@ -237,10 +189,10 @@ impl TryFrom<FlagObjectPair> for TokenFlag{
     }
 }
 
-//Trait to downcast pair to tokenobject enum in order to extract string value
+
 impl TryFrom<FlagObjectPair> for TokenObjects{
     type Error = &'static str;  
-
+    ///Trait to downcast pair to object value
     fn try_from(value: FlagObjectPair) -> Result<Self, Self::Error> {
         match value{
             FlagObjectPair::PAIR(_, obj) => {

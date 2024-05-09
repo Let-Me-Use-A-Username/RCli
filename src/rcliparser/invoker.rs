@@ -7,12 +7,10 @@ use std::path::{Path, PathBuf};
 use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
-use super::objects::tokens::{FlagObjectPair, GetValue, TokenCommands, TokenObjects};
+use super::objects::tokens::{FlagObjectPair, GetTupleValue, GetValue, TokenCommandType, TokenCommands, TokenObjects};
 
 
 pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal){
-
-    let syntax = terminal_instance.get_instance_syntax();
 
     // println!("\nCORE: {:?}", core.clone());
     // println!("OBJECT: {:?}", path.clone());
@@ -21,95 +19,79 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
     let token_value = path.get_value();
     let path_value = Path::new(&token_value);
 
-    match core{
-        TokenCommands::CWD => {
+    match core.get_type(){
+        TokenCommandType::CWD => {
             cwd(terminal_instance.get_current_directory_to_string());
         }
-        TokenCommands::TOUCH => {
+        TokenCommandType::TOUCH => {
             let _ = touch(path_value);
         },
-        TokenCommands::MKDIR => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(f) => {
-                    let flag_status = match f{
-                        FlagObjectPair::SOLE(terminal) => {
-                            let terminal_value = terminal.get_value();
-
-                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::MKDIR);
-                            if res.unwrap().match_flag_iter(&terminal_value){
-                                true
-                            }
-                            else{
-                                false
-                            }
-                        },
-                        _ => {
-                            false
-                        }
-                    };
-                    flag_status
+        TokenCommandType::MKDIR => {
+            //todo! change this
+            let flag = match flag_vector.pop_front() {
+                Some(flag) => {
+                    let flag_value = flag.get_value();
+                    let flag = flag_value.0;
+                    let obj = flag_value.1;
+                    
+                    core.containt_flag(&flag.unwrap_or("?".to_string()))
                 },
-                None => false,
+                _ => false
             };
-            
+
             let _ = mkdir(path_value, flag);
         },
-        TokenCommands::REMOVE => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(f) => {
-                    let flag_status = match f{
-                        FlagObjectPair::SOLE(terminal) => {
-                            let terminal_value = terminal.get_value();
-
-                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::REMOVE);
-                            if res.unwrap().match_flag_iter(&terminal_value){
-                                true
-                            }
-                            else{
-                                false
-                            }
-                        },
-                        _ => {
-                            false
-                        }
-                    };
-                    flag_status
+        TokenCommandType::REMOVE => {
+            //todo! change this
+            let flag = match flag_vector.pop_front() {
+                Some(flag) => {
+                    let flag_value = flag.get_value();
+                    let flag = flag_value.0;
+                    let obj = flag_value.1;
+                    
+                    core.containt_flag(&flag.unwrap_or("?".to_string()))
                 },
-                None => false,
+                _ => false
             };
+
             let _ = remove(path_value, flag);
         },
-        TokenCommands::COPY => todo!(),
-        TokenCommands::MOVE => todo!(),
-        TokenCommands::READ => todo!(),
-        TokenCommands::LIST => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(f) => {
-                    let flag_status = match f{
-                        FlagObjectPair::SOLE(terminal) => {
-                            let terminal_value = terminal.get_value();
-
-                            let res = syntax.get_value(&super::objects::bnf_commands::InvocationName::LIST);
-                            if res.unwrap().match_flag_iter(&terminal_value){
-                                true
-                            }
-                            else{
-                                false
-                            }
-                        },
-                        _ => {
-                            false
-                        }
-                    };
-                    flag_status
+        TokenCommandType::COPY => {
+            //todo! change this
+            let flag = match flag_vector.pop_front() {
+                Some(flag) => {
+                    let flag_value = flag.get_value();
+                    let flag = flag_value.0;
+                    let obj = flag_value.1.unwrap();
+                    
+                    let destination_path = Path::new(&obj);
+                    copy(path_value, destination_path);
                 },
-                None => false,
+                _ => {
+                    eprintln!("INTERNAL ERROR: No destination provided");
+                    return
+                }
+            };
+        },
+        TokenCommandType::MOVE => todo!(),
+        TokenCommandType::READ => todo!(),
+        TokenCommandType::LIST => {
+            //todo! change this
+            let flag = match flag_vector.pop_front() {
+                Some(flag) => {
+                    let flag_value = flag.get_value();
+                    let flag = flag_value.0;
+                    let obj = flag_value.1;
+                    
+                    core.containt_flag(&flag.unwrap_or("?".to_string()))
+                },
+                _ => false
             };
 
             list(path_value, flag);
             
         },
-        TokenCommands::CD => {
+        TokenCommandType::CD => {
             let new_path = terminal_instance.get_current_directory().join(path_value);
 
             let original_path_exists = new_path.try_exists().unwrap_or(false);
@@ -121,10 +103,10 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                 eprintln!("INVALID PATH");
             }
         },
-        TokenCommands::EXIT => {
+        TokenCommandType::EXIT => {
             exit();
         },
-        TokenCommands::INVALID => {
+        TokenCommandType::INVALID => {
             invalid();
         },
     }
@@ -149,10 +131,12 @@ fn handle_error(error: &Error){
 
 }
 
+///Shows current working dir
 fn cwd(path: String){
     println!("{path}");
 }
-  
+
+///Creates a file at the given path
 fn touch(file_path: &Path) -> Result<File, Error>{
     //could not need the open() clause unless pipelining
     let file = OpenOptions::new().write(true).create(true).open(file_path);
@@ -172,6 +156,7 @@ fn touch(file_path: &Path) -> Result<File, Error>{
     }
 }
 
+///Creates a directory at the given path
 fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
     let mut builder = DirBuilder::new();
     
@@ -194,6 +179,7 @@ fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
     }
 }
 
+///Removes a file or dir.
 fn remove(path: &Path, recursive: bool){
     let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "Initialize"));
     if path.try_exists().is_ok(){
@@ -214,6 +200,31 @@ fn remove(path: &Path, recursive: bool){
             handle_error(&error)
         },
     }
+}
+
+///Copies the content of either a file or a directory
+fn copy(path: &Path, destination: &Path){
+    if path.try_exists().unwrap_or(false){
+        if path.is_file(){
+            match fs::copy(path, destination){
+                Ok(_) => return,
+                Err(error) => {
+                    handle_error(&error)
+                },
+            }
+        }
+        else if path.is_dir(){
+            //copy root dir
+            //iterate dir and copy files
+            //then iterate sub dirs until we reach last layer
+            //copy to destination   
+        }
+        //tricky clause.
+        else{
+    
+        }
+    }
+    eprintln!("INTERNAL ERROR: Path doesn't exist.")
 }
 
 fn list(dir_path: &Path, hidden: bool){

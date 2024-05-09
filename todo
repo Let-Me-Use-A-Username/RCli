@@ -1,7 +1,13 @@
 CurrentProblem:
     invoker:
-        -Todo:Parse flags before invocation(?)
         -Todo:Refactor after invoker is at an acceptable state
+            -Make a better and more robust way to extract flags
+    lexer/parser/bsftree:
+        -Todo:New objects implementation broke the tests, rewrite them
+        -Todo:Parser tree_match also broke..
+    Project:
+        -Todo:Add documentation for everything with /// and #[doc(inline)] to display info when overhead
+        
 
 STUDY: 
     -https://cheats.rs/#macros-attributes

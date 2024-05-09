@@ -1,16 +1,19 @@
 {
     "command_type": {
-        "core": {
-            "next":["Sub", "Object", "Flag"]
+        "CORE": {
+            "next":["SUB", "OBJECT", "FLAG"]
         },
-        "sub": {
-            "next": ["Object", "Flag"]
+        "SUB": {
+            "next": ["OBJECT", "FLAG"]
         },
-        "object": {
-            "next": ["Flag", "None"]
+        "OBJECT": {
+            "next": ["FLAG", "NONE"]
         },
-        "flag": {
-            "next": ["Flag", "Object", "None"]
+        "FLAG": {
+            "next": ["FLAG", "OBJECT", "NONE"]
+        },
+        "NONE":{
+            "next": []
         }
     }
 }

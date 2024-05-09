@@ -18,7 +18,7 @@
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["--recursive"]
+            "flags": ["-d, -destination"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
@@ -38,6 +38,10 @@
         },
         "EXIT":{
             "invocation_name": ["exit"],
+            "flags": []
+        },
+        "INVALID":{
+            "invocation_name": ["invalid"],
             "flags": []
         }
     }
