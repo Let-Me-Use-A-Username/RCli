@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::fs::{self, DirBuilder, File, OpenOptions};
+use std::fs::{self, DirBuilder, DirEntry, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -131,10 +131,12 @@ fn handle_error(error: &Error){
 
 }
 
+
 ///Shows current working dir
 fn cwd(path: String){
     println!("{path}");
 }
+
 
 ///Creates a file at the given path
 fn touch(file_path: &Path) -> Result<File, Error>{
@@ -155,6 +157,7 @@ fn touch(file_path: &Path) -> Result<File, Error>{
         }
     }
 }
+
 
 ///Creates a directory at the given path
 fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
@@ -179,6 +182,7 @@ fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
     }
 }
 
+
 ///Removes a file or dir.
 fn remove(path: &Path, recursive: bool){
     let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "Initialize"));
@@ -202,6 +206,7 @@ fn remove(path: &Path, recursive: bool){
     }
 }
 
+
 ///Copies the content of either a file or a directory
 fn copy(path: &Path, destination: &Path){
     if path.try_exists().unwrap_or(false){
@@ -214,18 +219,31 @@ fn copy(path: &Path, destination: &Path){
             }
         }
         else if path.is_dir(){
-            //copy root dir
-            //iterate dir and copy files
-            //then iterate sub dirs until we reach last layer
-            //copy to destination   
+            let directory_stack = read_dir(path);
         }
         //tricky clause.
         else{
-    
+            eprintln!("INTERNAL ERROR: Path not recognized as a file or a directory.")
         }
     }
     eprintln!("INTERNAL ERROR: Path doesn't exist.")
 }
+
+
+///recursive function that reads a directory and returns a stack(?)
+//https://stackoverflow.com/questions/26958489/how-to-copy-a-folder-recursively-in-rust
+
+//consider using an enum that contains either a dir or a file and add a stack
+fn read_dir(path: &Path){
+
+    let path_components = path.components().collect::<Vec<_>>();
+    
+    if path_components.len() == 1{
+        fs::read_dir(path).unwrap().collect::<Vec<_>>();
+    }
+
+}
+
 
 fn list(dir_path: &Path, hidden: bool){
     let mut outputbuffer: Vec<String> = vec![];
@@ -267,6 +285,7 @@ fn list(dir_path: &Path, hidden: bool){
     }
 }
 
+
 fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<PathBuf, PathBuf>{
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
@@ -274,11 +293,13 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<P
     return terminal_instance.set_current_directory(pathbuffer);
 }
 
+
 fn exit(){
     //todo! handle process exit more robustly, check doc for std::process::exit
     //return res to parser, and then to terminal and exit
     std::process::exit(1);
 }
+
 
 fn invalid(){
     eprintln!("ERROR: Invalid command.")
