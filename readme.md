@@ -1,6 +1,7 @@
 # RCLI
 
-<p>Command line interface for windows that mimicks Linux/Unix functionality with a little added spice.
+<p>Command line interface for windows that mimicks Linux/Unix functionality with a little added spice.<br>
+This projects aim to be an interoperable command line tool that requires little to no external dependencies.
 </p>
 
 ---
@@ -9,30 +10,26 @@
     <li> <strong>Input Parser</strong> </li>
 	<li> <strong>Lexical Analyzer</strong></li>
     <li> <strong>Parser</strong></li>
+    <li> <strong>Invoker</strong></li>
 	<li> <strong>Window</strong> - Ratatui </li>
 </ul>
 
 ### Basic Commands of RCli
 <ul>
-	<li> Create </li>
-    <li> Delete </li>
-	<li> Copy </li>
-    <li> Move </li>
-    <li> Update </li>
-    <li> Read </li>
-    <li> List </li>
+	<li> cwd </li>
+	<li> touch </li>
+	<li> mkdir </li>    
+    <li> remove </li>
+	<li> copy </li>
+    <li> move </li>
+    <li> read </li>
+    <li> list </li>
+    <li> cd </li>
 </ul>
 
-<p>A command can be used to invoke an event on an object, the current invocable objects are: </p>
-
+### Future additions
 <ul>
-    <li>File</li>
-    <li>Directory</li>
-</ul>
-
-
-### RCli integrations
-<ul>
-    <li>todo-app</li>
-    <li>virtual-assistant</li>
+	<li> shortcut </li>
+	<li> todo </li>
+	<li> ai </li>
 </ul>

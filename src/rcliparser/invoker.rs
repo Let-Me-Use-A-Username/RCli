@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
-use std::fs::{self, DirBuilder, DirEntry, File, OpenOptions};
+use std::ffi::{OsStr, OsString};
+use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -27,65 +28,95 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
             let _ = touch(path_value);
         },
         TokenCommandType::MKDIR => {
-            //todo! change this
-            let flag = match flag_vector.pop_front() {
+            let flag: bool = match flag_vector.pop_front() {
                 Some(flag) => {
-                    let flag_value = flag.get_value();
-                    let flag = flag_value.0;
-                    let obj = flag_value.1;
-                    
-                    core.containt_flag(&flag.unwrap_or("?".to_string()))
-                },
-                _ => false
+                    match flag.get_value().0 {
+                        Some(value) => {
+                            core.containt_flag(&value)
+                        },
+                        None => false
+                    }
+                }
+                None => false
             };
 
             let _ = mkdir(path_value, flag);
         },
         TokenCommandType::REMOVE => {
-            //todo! change this
-            let flag = match flag_vector.pop_front() {
+            let flag: bool = match flag_vector.pop_front() {
                 Some(flag) => {
-                    let flag_value = flag.get_value();
-                    let flag = flag_value.0;
-                    let obj = flag_value.1;
-                    
-                    core.containt_flag(&flag.unwrap_or("?".to_string()))
-                },
-                _ => false
+                    match flag.get_value().0 {
+                        Some(value) => {
+                            core.containt_flag(&value)
+                        },
+                        None => false
+                    }
+                }
+                None => false
             };
 
             let _ = remove(path_value, flag);
         },
         TokenCommandType::COPY => {
-            //todo! change this
-            let flag = match flag_vector.pop_front() {
+            match flag_vector.pop_front() {
                 Some(flag) => {
                     let flag_value = flag.get_value();
-                    let flag = flag_value.0;
-                    let obj = flag_value.1.unwrap();
-                    
-                    let destination_path = Path::new(&obj);
-                    copy(path_value, destination_path);
+
+                    let flag = flag_value.0.unwrap_or("INVALID".to_string());
+                    let obj = flag_value.1.unwrap_or("INVALID".to_string());
+
+                    if core.containt_flag(&flag) & !obj.eq("INVALID"){
+                        let new_path = terminal_instance.get_current_directory().join(path_value);
+                        let destination_path = terminal_instance.get_current_directory().join(obj);
+                        
+                        copy(new_path.as_path(), destination_path.as_path());
+                    }
+                    else{
+                        eprintln!("INTERNAL ERROR: Unknown flag {flag:?}.")
+                    }
                 },
-                _ => {
+                None => {
                     eprintln!("INTERNAL ERROR: No destination provided");
-                    return
                 }
             };
         },
-        TokenCommandType::MOVE => todo!(),
-        TokenCommandType::READ => todo!(),
-        TokenCommandType::LIST => {
-            //todo! change this
-            let flag = match flag_vector.pop_front() {
+        TokenCommandType::MOVE => {
+            //move or rename file
+            //after confirming it moved, delete origin
+            match flag_vector.pop_front() {
                 Some(flag) => {
                     let flag_value = flag.get_value();
-                    let flag = flag_value.0;
-                    let obj = flag_value.1;
-                    
-                    core.containt_flag(&flag.unwrap_or("?".to_string()))
+
+                    let flag = flag_value.0.unwrap_or("INVALID".to_string());
+                    let obj = flag_value.1.unwrap_or("INVALID".to_string());
+
+                    if core.containt_flag(&flag) & !obj.eq("INVALID"){
+                        let new_path = terminal_instance.get_current_directory().join(path_value);
+                        let destination_path = terminal_instance.get_current_directory().join(obj);
+                        
+                        rename(new_path.as_path(), destination_path.as_path());
+                    }
+                    else{
+                        eprintln!("INTERNAL ERROR: Unknown flag {flag:?}.")
+                    }
                 },
-                _ => false
+                None => {
+                    eprintln!("INTERNAL ERROR: No destination provided");
+                }
+            };
+        },
+        TokenCommandType::READ => todo!(),
+        TokenCommandType::LIST => {
+            let flag: bool = match flag_vector.pop_front() {
+                Some(flag) => {
+                    match flag.get_value().0 {
+                        Some(value) => {
+                            core.containt_flag(&value)
+                        },
+                        None => false
+                    }
+                }
+                None => false
             };
 
             list(path_value, flag);
@@ -145,9 +176,6 @@ fn touch(file_path: &Path) -> Result<File, Error>{
 
     match file{
         Ok(res) => {
-            //if persmisions
-
-            //else
             return Ok(res);
 
         },
@@ -169,9 +197,6 @@ fn mkdir(path: &Path, recursive: bool) -> Result<(), Error>{
 
     match directory{
         Ok(dir) => {
-            //if persmisions
-
-            //else
             return Ok(dir);
         },
         Err(error) => {
@@ -209,7 +234,8 @@ fn remove(path: &Path, recursive: bool){
 
 ///Copies the content of either a file or a directory
 fn copy(path: &Path, destination: &Path){
-    if path.try_exists().unwrap_or(false){
+    if path.try_exists().unwrap(){
+
         if path.is_file(){
             match fs::copy(path, destination){
                 Ok(_) => return,
@@ -219,32 +245,29 @@ fn copy(path: &Path, destination: &Path){
             }
         }
         else if path.is_dir(){
-            let directory_stack = read_dir(path);
+            read_dir(path, Some(destination));
         }
         //tricky clause.
         else{
             eprintln!("INTERNAL ERROR: Path not recognized as a file or a directory.")
         }
     }
-    eprintln!("INTERNAL ERROR: Path doesn't exist.")
-}
-
-
-///recursive function that reads a directory and returns a stack(?)
-//https://stackoverflow.com/questions/26958489/how-to-copy-a-folder-recursively-in-rust
-
-//consider using an enum that contains either a dir or a file and add a stack
-fn read_dir(path: &Path){
-
-    let path_components = path.components().collect::<Vec<_>>();
-    
-    if path_components.len() == 1{
-        fs::read_dir(path).unwrap().collect::<Vec<_>>();
+    else{
+        eprintln!("INTERNAL ERROR: Path |{path:?}| doesn't exist.")
     }
-
 }
 
+///Moves and renames a file or directory
+fn rename(path: &Path, destination: &Path){
+    //https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexa
+    
+    
+    //problem due to permissions
+    //let res = fs::rename(path, destination);
+    //println!("result {res:?}");
+}
 
+///Lists items in a directory
 fn list(dir_path: &Path, hidden: bool){
     let mut outputbuffer: Vec<String> = vec![];
 
@@ -259,13 +282,13 @@ fn list(dir_path: &Path, hidden: bool){
 
                         let entry_attributes = windows_file_attributes::match_attributes(attributes);
                         
+                        //if hidden is true show everything
                         if hidden{
                             outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
                         }
-                        else{
-                            if !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
-                                outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
-                            }
+                        //else hidden flag is false. if dir DOESNT have hidden flag append it
+                        else if !hidden & !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
+                            outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
                         }
                     },
                     Err(error) => {
@@ -286,6 +309,7 @@ fn list(dir_path: &Path, hidden: bool){
 }
 
 
+///Traverses given path if valid
 fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<PathBuf, PathBuf>{
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
@@ -294,13 +318,53 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<P
 }
 
 
+///Exits RCli
 fn exit(){
     //todo! handle process exit more robustly, check doc for std::process::exit
     //return res to parser, and then to terminal and exit
     std::process::exit(1);
 }
 
-
+///Processes invalid commands
 fn invalid(){
     eprintln!("ERROR: Invalid command.")
+}
+
+
+/*
+    HELPER FUNCTIONS
+*/
+
+///Helper function to recursively copy a directory with its content.
+///Mimics DFS algorithms. Used in cp/copy
+fn read_dir(original_path: &Path, destination: Option<&Path>){
+
+    if destination.is_some(){
+        fs::create_dir_all(destination.unwrap()).ok();
+    }
+    
+    match fs::read_dir(original_path){
+        Ok(dir_paths) => {
+            for path in dir_paths{
+                let path_type = path.unwrap().path();
+
+                let new_file = path_type.file_name().unwrap();
+                let new_path = destination.unwrap().join(new_file);
+
+                if path_type.is_dir(){
+                    //recurse
+                    if destination.is_some(){
+                        read_dir(&path_type, Some(&new_path))
+                    }
+                }
+                else{
+                    //add to stack
+                    let _ = fs::copy(path_type, new_path);
+                }
+            }
+        },
+        Err(error) => {
+            handle_error(&error)
+        },
+    }
 }

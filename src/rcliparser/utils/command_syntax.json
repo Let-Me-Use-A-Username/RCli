@@ -18,11 +18,11 @@
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["-d, -destination"]
+            "flags": ["-d", "-destination"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
-            "flags": ["--recursive"]
+            "flags": ["-d", "-destination"]
         },
         "READ":{
             "invocation_name": ["read"],

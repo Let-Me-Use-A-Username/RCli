@@ -1,7 +1,8 @@
 CurrentProblem:
     invoker:
-        -Todo:Refactor after invoker is at an acceptable state
-            -Make a better and more robust way to extract flags
+        https://crates.io/crates/windows
+        https://crates.io/crates/windows-permissions
+        -Todo:Use one of the above to resolve the permision problem in rename()
         -Todo:Consider changing function return type to io::Result
 
     lexer/parser/bsftree:
@@ -9,6 +10,9 @@ CurrentProblem:
         -Todo:Parser tree_match also broke..
     
     Project:
+        https://crates.io/crates/dirs
+        -Todo:Start rcli in home directory
+            -Todo:Add it to singlenton
         -Todo:Add documentation for everything with /// and #[doc(inline)] to display info when overhead
         
 
@@ -32,7 +36,7 @@ Project:
 RCLi:
     -Todo:Change big if statemets to patterns or do something better
     -Todo:Handle errors better in general
-    -Todo:Reformat when the parser works to a certain acceptable degree
+    -Todo:Add pipelining with > or |
 
 
 

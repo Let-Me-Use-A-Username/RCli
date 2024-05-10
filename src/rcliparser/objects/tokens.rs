@@ -152,8 +152,9 @@ pub trait GetTupleValue{
     fn get_value(&self) -> (Option<String>, Option<String>);
 }
 
-///Get String value from TokenObject
+
 impl GetTupleValue for FlagObjectPair{
+    ///Get String value from TokenObject. First value is flag second is object.
     fn get_value(&self) -> (Option<String>, Option<String>){
         match self{
             FlagObjectPair::PAIR(flag, object) => {

@@ -21,7 +21,10 @@ pub enum WindowsAttributes{
     VIRTUAL,
     NO_SCRUB_DATA,
     INTERNAL_ATTRIBUTES,
-    PINNED
+    PINNED,
+    UNPINNED,
+    RECALLONOPEN,
+    RECALLONACCESS
 }
 
 pub fn get_path_attributes(path: &Path) -> Option<Vec<WindowsAttributes>>{
@@ -102,6 +105,14 @@ pub fn match_attributes(attribute_value: u32) -> Vec<WindowsAttributes>{
     if (attribute_value & 0x524288) > 0 {
         windows_attributes.push(WindowsAttributes::PINNED);
     }
-
+    if (attribute_value & 0x1048576) > 0 {
+        windows_attributes.push(WindowsAttributes::UNPINNED);
+    }
+    if (attribute_value & 0x262144) > 0 {
+        windows_attributes.push(WindowsAttributes::RECALLONOPEN);
+    }
+    if (attribute_value & 0x4194304) > 0 {
+        windows_attributes.push(WindowsAttributes::RECALLONACCESS);
+    }
     return windows_attributes
 }
