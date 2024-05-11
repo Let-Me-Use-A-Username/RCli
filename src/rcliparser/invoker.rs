@@ -99,7 +99,7 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                         
                         //check todo
                         // if path_parent.eq(des_parent){
-                        //     operation_status = rename(new_path.as_path(), destination_path.as_path());
+                        operation_status = r#move(new_path.as_path(), destination_path.as_path());
                         // }
                         // else{
                         //     operation_status = copy(&new_path, &destination_path);
@@ -202,7 +202,7 @@ fn cwd(terminal_instance: &mut Terminal) -> Result<i32, Error>{
 ///Creates a file at the given path
 fn touch(file_path: &Path) -> Result<i32, Error>{
     //could not need the open() clause unless pipelining
-    let file = OpenOptions::new().write(true).create(true).open(file_path);
+    let file = OpenOptions::new().write(true).read(true).create(true).open(file_path);
 
     match file{
         Ok(_) => {
@@ -221,8 +221,9 @@ fn mkdir(path: &Path, recursive: bool) -> Result<i32, Error>{
     let mut builder = DirBuilder::new();
     
     builder.recursive(recursive);
-
+    
     let directory = builder.create(path);
+
 
     match directory{
         Ok(_) => {
@@ -264,8 +265,11 @@ fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
 
 ///Copies the content of either a file or a directory
 fn copy(path: &Path, destination: &Path) -> Result<i32, Error>{
-    if path.try_exists().unwrap(){
+    let path_exists = path.try_exists().unwrap();
+    let dest_exists = destination.try_exists()?;
 
+    //Destination doesn't exist, so copy the content to a new file/directory
+    if path_exists & !dest_exists{
         if path.is_file(){
             match fs::copy(path, destination){
                 Ok(_) => {
@@ -284,15 +288,55 @@ fn copy(path: &Path, destination: &Path) -> Result<i32, Error>{
             Err(Error::new(ErrorKind::Other, "INTERNAL ERROR: Path not recognized as a file or a directory."))
         }
     }
+    //Destination does exist, so we handle each case
+    else if path_exists & dest_exists{
+        if path.is_file() & destination.is_file(){
+               todo!("copy path file to destination file")
+        }
+        else if path.is_dir() & destination.is_dir(){
+            todo!("copy path dir to destionation dir")
+        }
+        else if path.is_file() & destination.is_dir(){
+            todo!("copy path file to destination dir")
+        }
+        else{
+            Err(Error::new(ErrorKind::InvalidData, "INTERNAL ERROR: Unknown objects."))
+        }
+    }
     else{
         Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Path |{path:?}| doesn't exist."))
     }
 }
 
 ///Moves and renames a file or directory
-fn rename(path: &Path, destination: &Path) -> Result<i32, Error>{
-    //https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexa
-    let res = fs::rename(path, destination);
+fn r#move(path: &Path, destination: &Path) -> Result<i32, Error>{
+    let res : Result<i32, Error> = Ok(100);
+    //Types of move
+    let path_exists = path.try_exists()? | path.exists();
+    let dest_exists = destination.try_exists()?;
+    //path is file and destination doesn exist -> rename
+    //path is dir and destination doesnt exist -> rename
+    if path_exists & !dest_exists{
+        let rename_res = fs::rename(path, destination);
+    }
+    //path is file and destination file exists -> copy content
+    if path_exists & dest_exists{
+        if path.is_file() & destination.is_file(){
+            let copy_res = copy(path, destination);
+        }
+        //path is file and destination dir exists -> move to dir
+        else if path.is_file() & destination.is_dir(){
+            let copy_res = copy(path, destination);
+        }
+        //path is dir and destination dir exists -> move to dir
+        else if path.is_dir() & destination.is_dir(){
+            let copy_res = copy(path, destination);
+        }
+        //path is dir and destination file exists -> bad case 
+        else{
+            todo!("bad case")
+        }
+    }
     Ok(100)
 }
 

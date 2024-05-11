@@ -10,7 +10,7 @@ CurrentProblem:
             -Todo:consider the following. If we simply rename in the same file/folder then invoke rename.
             in other case call copy , and then rename(?)
 
-        -Todo:When trying to cd in D: (Daddy) it instnaly goes to RCli project folder
+        -Note:When trying to cd in D: (Daddy) it instnaly goes to RCli project folder
         
 
 
