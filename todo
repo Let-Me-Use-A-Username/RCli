@@ -1,9 +1,18 @@
 CurrentProblem:
     invoker:
+        -Todo:More concrete way to extract flags. Implement cp ./ -d ../ --force
+            -Flag --force Removes original files
+            -Additionally check when cp from one file to another copies content
+
         https://crates.io/crates/windows
         https://crates.io/crates/windows-permissions
         -Todo:Use one of the above to resolve the permision problem in rename()
-        -Todo:Consider changing function return type to io::Result
+            -Todo:consider the following. If we simply rename in the same file/folder then invoke rename.
+            in other case call copy , and then rename(?)
+
+        -Todo:When trying to cd in D: (Daddy) it instnaly goes to RCli project folder
+        
+
 
     lexer/parser/bsftree:
         -Todo:New objects implementation broke the tests, rewrite them
@@ -11,8 +20,6 @@ CurrentProblem:
     
     Project:
         https://crates.io/crates/dirs
-        -Todo:Start rcli in home directory
-            -Todo:Add it to singlenton
         -Todo:Add documentation for everything with /// and #[doc(inline)] to display info when overhead
         
 

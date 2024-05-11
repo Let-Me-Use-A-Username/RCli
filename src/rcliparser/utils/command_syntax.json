@@ -1,5 +1,9 @@
 {
     "commands":{
+        "HOME": {
+            "invocation_name": ["home"],
+            "flags": []
+        },
         "CWD":{
             "invocation_name": ["cwd"],
             "flags": []
@@ -18,7 +22,7 @@
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["-d", "-destination"]
+            "flags": ["-d", "-destination", "--force"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],

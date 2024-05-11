@@ -11,6 +11,7 @@ use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationC
 //singlenton terminal instance_id
 pub struct Terminal{
     instance_id: Mutex<Uuid>,
+    user_home_directory: Mutex<PathBuf>,
     current_directory: Mutex<PathBuf>,
     bnf_grammar: Mutex<HashMap<CommandType, Command>>,
     command_syntax: Mutex<InvocationCommandSyntax>
@@ -21,9 +22,8 @@ Terminal singlenton methods.
 At the moment only path changing functions.
 */
 impl Terminal{
-    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<PathBuf, PathBuf>{
+    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<i32, PathBuf>{
         let mut current_dir = self.current_directory.lock().unwrap();
-        
         match path.canonicalize() {
             //check if path is valid
             Ok(new_path) => {
@@ -32,8 +32,8 @@ impl Terminal{
                 //todo! handle error in case the operation fails
                 match operation_results {
                     Ok(_) => {
-                        *current_dir = new_path.clone();
-                        return Ok(new_path)
+                        *current_dir = env::current_dir().unwrap();
+                        return Ok(100)
                     },
                     Err(error) => {
                         println!("SINGLENTON SETTER: {:?}", error);
@@ -50,7 +50,11 @@ impl Terminal{
     }
 
     pub fn get_instance_id(&self) -> Uuid{
-        return  *self.instance_id.lock().unwrap();
+        return *self.instance_id.lock().unwrap();
+    }
+
+    pub fn get_home_directory(&self) -> PathBuf{
+        return self.user_home_directory.lock().unwrap().to_path_buf()
     }
 
     pub fn get_instance_grammar(&self) -> HashMap<CommandType, Command>{
@@ -71,7 +75,7 @@ impl Terminal{
 }
 
 
-pub fn singlenton(input_grammar: HashMap<CommandType, Command>, syntax: InvocationCommandSyntax) -> &'static mut Terminal{
+pub fn singlenton(home_dir: PathBuf, input_grammar: HashMap<CommandType, Command>, syntax: InvocationCommandSyntax) -> &'static mut Terminal{
     //create uninitialized static structure
     static mut SINGLENTON: MaybeUninit<Terminal> = MaybeUninit::uninit();
     static ONCE: Once = Once::new();
@@ -81,6 +85,7 @@ pub fn singlenton(input_grammar: HashMap<CommandType, Command>, syntax: Invocati
         ONCE.call_once(|| {
             let singlenton_instance: Terminal = Terminal{
                 instance_id: Mutex::new(Uuid::new_v4()),
+                user_home_directory: Mutex::new(home_dir),
                 current_directory: Mutex::new(env::current_dir().unwrap()),
                 bnf_grammar: Mutex::new(input_grammar),
                 command_syntax: Mutex::new(syntax)

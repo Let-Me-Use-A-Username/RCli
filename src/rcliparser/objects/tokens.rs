@@ -26,6 +26,7 @@ impl TokenCommands{
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
 pub enum TokenCommandType{
+    HOME,
     CWD,
     TOUCH,
     MKDIR,
