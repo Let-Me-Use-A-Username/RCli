@@ -72,7 +72,7 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                         let new_path = terminal_instance.get_current_directory().join(path_value);
                         let destination_path = terminal_instance.get_current_directory().join(obj);
                         
-                        operation_status = copy(new_path.as_path(), destination_path.as_path());
+                        operation_status = copy(new_path.as_path(), destination_path.as_path(), terminal_instance);
                     }
                     else{
                         operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Unknown flag {flag:?}."));
@@ -97,13 +97,8 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                         let new_path = terminal_instance.get_current_directory().join(path_value);
                         let destination_path = terminal_instance.get_current_directory().join(obj);
                         
-                        //check todo
-                        // if path_parent.eq(des_parent){
-                        operation_status = r#move(new_path.as_path(), destination_path.as_path());
-                        // }
-                        // else{
-                        //     operation_status = copy(&new_path, &destination_path);
-                        // }
+                        operation_status = r#move(new_path.as_path(), destination_path.as_path(), terminal_instance);
+                       
                     }
                     else{
                         operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Unknown flag {flag:?}."));
@@ -114,7 +109,9 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                 }
             };
         },
-        TokenCommandType::READ => todo!(),
+        TokenCommandType::READ => {
+            operation_status = read(path_value);
+        },
         TokenCommandType::LIST => {
             let flag: bool = match flag_vector.pop_front() {
                 Some(flag) => {
@@ -171,13 +168,13 @@ fn handle_error(errorkind: &ErrorKind){
             eprintln!("ERROR HANDLER: Object already exists.")
         },
         ErrorKind::InvalidInput => {
-
+            eprintln!("ERROR HANDLER: Invalid input.")
         },
         ErrorKind::Other => {
-
+            eprintln!("ERROR HANDLER: Other error encountered.")
         }
         _ => {
-
+            eprintln!("ERROR HANDLER: Unknown error occured.")
         }
     }
 
@@ -239,7 +236,7 @@ fn mkdir(path: &Path, recursive: bool) -> Result<i32, Error>{
 
 ///Removes a file or dir.
 fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
-    let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "Initialize"));
+    let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Object doesn't exist."));
     if path.try_exists().is_ok(){
         if path.is_dir() & recursive{
             res = fs::remove_dir_all(path);            
@@ -263,9 +260,11 @@ fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
 }
 
 
-///Copies the content of either a file or a directory
-fn copy(path: &Path, destination: &Path) -> Result<i32, Error>{
-    let path_exists = path.try_exists().unwrap();
+///Copies the content of either a file or a directory. This is move powerful over move
+///due to the fact that it can copy without requiring permissions (on Windows) whereas 
+///move requires.
+fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<i32, Error>{
+    let path_exists = path.try_exists()?;
     let dest_exists = destination.try_exists()?;
 
     //Destination doesn't exist, so copy the content to a new file/directory
@@ -281,23 +280,51 @@ fn copy(path: &Path, destination: &Path) -> Result<i32, Error>{
             }
         }
         else if path.is_dir(){
-            return read_dir(path, Some(destination));
+            return copy_dir(path, Some(destination));
         }
         //tricky clause.
         else{
             Err(Error::new(ErrorKind::Other, "INTERNAL ERROR: Path not recognized as a file or a directory."))
         }
     }
-    //Destination does exist, so we handle each case
+    //Destination does exists
     else if path_exists & dest_exists{
         if path.is_file() & destination.is_file(){
-               todo!("copy path file to destination file")
+            //todo! this overrites the content of to
+            //add flag to merge.. ?
+            match fs::copy(path, destination){
+                Ok(_) => {
+                    return Ok(100)
+                },
+                Err(error) => {
+                    return Err(error)
+                },
+            }
         }
+        //create the from dir to destination dir
         else if path.is_dir() & destination.is_dir(){
-            todo!("copy path dir to destionation dir")
+            let mut destination_path = terminal_instance.get_current_directory().join(destination);
+            destination_path.push(path.components().last().unwrap().as_os_str());
+            
+            return copy_dir(path, Some(destination_path.as_path()));
         }
         else if path.is_file() & destination.is_dir(){
-            todo!("copy path file to destination dir")
+            //create new path
+            let mut file_path = terminal_instance.get_current_directory().join(destination);
+            file_path.push(path.components().last().unwrap().as_os_str());
+
+            //create file in destination
+            let _ = OpenOptions::new().write(true).read(true).create(true).open(file_path.clone())?;
+            
+            //copy data
+            match fs::copy(path, file_path.clone()){
+                Ok(_) => {
+                    return Ok(100)
+                },
+                Err(error) => {
+                    return Err(error)
+                },
+            }
         }
         else{
             Err(Error::new(ErrorKind::InvalidData, "INTERNAL ERROR: Unknown objects."))
@@ -308,37 +335,53 @@ fn copy(path: &Path, destination: &Path) -> Result<i32, Error>{
     }
 }
 
-///Moves and renames a file or directory
-fn r#move(path: &Path, destination: &Path) -> Result<i32, Error>{
-    let res : Result<i32, Error> = Ok(100);
-    //Types of move
+///Moves and renames a file or directory.
+///If destination doesn't exist it renames a file. If it does exist it copies it.
+fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<i32, Error>{
     let path_exists = path.try_exists()? | path.exists();
     let dest_exists = destination.try_exists()?;
-    //path is file and destination doesn exist -> rename
-    //path is dir and destination doesnt exist -> rename
+    //simple rename
     if path_exists & !dest_exists{
-        let rename_res = fs::rename(path, destination);
-    }
-    //path is file and destination file exists -> copy content
-    if path_exists & dest_exists{
-        if path.is_file() & destination.is_file(){
-            let copy_res = copy(path, destination);
-        }
-        //path is file and destination dir exists -> move to dir
-        else if path.is_file() & destination.is_dir(){
-            let copy_res = copy(path, destination);
-        }
-        //path is dir and destination dir exists -> move to dir
-        else if path.is_dir() & destination.is_dir(){
-            let copy_res = copy(path, destination);
-        }
-        //path is dir and destination file exists -> bad case 
-        else{
-            todo!("bad case")
+        match fs::rename(path, destination){
+            Ok(_) => {
+                return Ok(100)
+            },
+            Err(error) => {
+                return Err(error)
+            },
         }
     }
-    Ok(100)
+    //both paths exists so let copy handle it.
+    else if path_exists & dest_exists{
+        return copy(path, destination, terminal_instance);
+    }
+    else{
+        Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Path |{path:?}| doesn't exist."))
+    }
 }
+
+///Reads the content of a file to terminal
+fn read(path: &Path) -> Result<i32, Error>{
+    if path.exists() | path.try_exists()?{
+        if path.is_dir(){
+            return Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Cannot read directory. Use ls instead."))
+        }
+        let file = OpenOptions::new().write(true).read(true).open(path)?;
+
+        match io::read_to_string(file){
+            Ok(content) => {
+                println!("{content}");
+                return Ok(100)
+            },
+            Err(error) => {
+                return Err(error)
+            },
+        }
+        
+    }
+    return Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Invalid path."))
+}
+
 
 ///Lists items in a directory
 fn list(dir_path: &Path, hidden: bool) -> Result<i32, Error>{
@@ -417,7 +460,7 @@ fn invalid() -> Result<i32, io::Error> {
 
 ///Helper function to recursively copy a directory with its content.
 ///Mimics DFS algorithms. Used in cp/copy
-fn read_dir(original_path: &Path, destination: Option<&Path>) -> Result<i32, Error>{
+fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<i32, Error>{
 
     if destination.is_some(){
         fs::create_dir_all(destination.unwrap()).ok();
@@ -434,7 +477,7 @@ fn read_dir(original_path: &Path, destination: Option<&Path>) -> Result<i32, Err
                 if path_type.is_dir(){
                     //recurse
                     if destination.is_some(){
-                        return read_dir(&path_type, Some(&new_path));
+                        return copy_dir(&path_type, Some(&new_path));
                     }
                 }
                 else{

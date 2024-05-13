@@ -1,26 +1,29 @@
 CurrentProblem:
+    RCLi:
+        -Reformat invoker to return a form of stream
+        -Reformat flag extraction
+            -Idea:When extracting flags create a vector that contains them raw
+            I.e copy smt -d smtElse --clean
+            would be parsed as 
+            core:copy
+            object:smt
+            flags:{ -d, smtElse, --clean}
+            We then iterate the flags and assign their "meaning" and then invoke the command
+            If wrong parameters are given, panic
+
+        -Implement sub command > or | to pipeline
+
+
+
     invoker:
-        -Todo:More concrete way to extract flags. Implement cp ./ -d ../ --force
-            -Flag --force Removes original files
-            -Additionally check when cp from one file to another copies content
+        -Todo:More concrete way to extract flags. 
 
-        https://crates.io/crates/windows
-        https://crates.io/crates/windows-permissions
-        -Todo:Use one of the above to resolve the permision problem in rename()
-            -Todo:consider the following. If we simply rename in the same file/folder then invoke rename.
-            in other case call copy , and then rename(?)
-
-        -Note:When trying to cd in D: (Daddy) it instnaly goes to RCli project folder
-        
+        -Perhaps invoke a command with all flags and if more flags are given return error...?
 
 
     lexer/parser/bsftree:
         -Todo:New objects implementation broke the tests, rewrite them
         -Todo:Parser tree_match also broke..
-    
-    Project:
-        https://crates.io/crates/dirs
-        -Todo:Add documentation for everything with /// and #[doc(inline)] to display info when overhead
         
 
 STUDY: 
@@ -34,25 +37,27 @@ STUDY:
 
 
 Project:
-    https://dhghomon.github.io/easy_rust/Chapter_61.html
+    https://dhghomon.github.io/easy_rust/Chapter_61.html 
     -Todo:Logger to log output
         -parser operations
         -terminal operations
 
 
-RCLi:
-    -Todo:Change big if statemets to patterns or do something better
-    -Todo:Handle errors better in general
-    -Todo:Add pipelining with > or |
+invoker:
+    -Implement cp ./ -d ../ --clean
+        -Flag --clean Removes original files
 
+    -Implement grep(global regular expression search and print)
+        -Search datasets to match an expression
+    -Implement find
+        -Searching dataset to match a string loosely
+    -Implement shortcut 
+        -Adds an alias for a executable (probably) and saves it in a retrievable document
 
-
-parser:
-    -Note:consider whether matching commands is better than tree implementation
-        -This will most likely need 
-            1)a new command_grammar than contains core invocations
-            2)a tree that contains a form of struct with a function as a parameter
-            3)invocation will change from match to tree parsing
+    -Todo:Reformated invoker
+        -Note:Consider whether an object invoker with methods would be better
+        -Todo:Find a more concrete way to move files/dirs instead of copying
+        -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
 
 terminal:

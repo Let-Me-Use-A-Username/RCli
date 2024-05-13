@@ -32,4 +32,7 @@ This projects aim to be an interoperable command line tool that requires little 
 	<li> shortcut </li>
 	<li> todo </li>
 	<li> ai </li>
+	<li> grep </li>
+	<li> pipeline | or > </li>
+	<li> find </li>
 </ul>
