@@ -142,7 +142,24 @@ pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeq
             }
         },
         TokenCommandType::GREP => {
-            operation_status = grep();
+            let flag: Option<String> = match flag_vector.pop_front() {
+                Some(flag) => {
+                    match flag.get_value().0 {
+                        Some(value) => {
+                            if core.containt_flag(&value){
+                                flag.get_value().1;
+                            }
+                            None
+                        },
+                        None => None
+                    }
+                }
+                None => None
+            };
+
+            if flag.is_some(){
+                operation_status = grep(path_value, flag.unwrap());
+            }
         }
         TokenCommandType::EXIT => {
             operation_status = exit();
@@ -457,7 +474,27 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<D
 ///For given data returns match.
 ///Data can be either a dir or a stream.
 ///Therefore matches are either files or Strings.
-fn grep() -> Result<Data, io::Error> {
+fn grep(path: &Path, regex_string: String) -> Result<Data, io::Error> {
+    if path.try_exists()?{
+        if path.is_dir(){
+            //todo! list recursive
+            let dir_entries = match list(path, true)? {
+                Data::DirVecData(entries) => entries,
+                _ => vec![],
+            };
+
+            for entry in dir_entries{
+                println!("{}", entry.file_name().to_str().unwrap())
+            }
+        }
+        else if path.is_file(){
+            let content = read(path);
+            
+            if content.is_ok(){
+                println!("{:?}", content.unwrap());
+            }
+        }
+    }
     Ok(Data::StatusData(1))
 }
 

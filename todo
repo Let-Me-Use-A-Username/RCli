@@ -1,8 +1,11 @@
 CurrentProblem:
     invoker:
         -Implement grep(global regular expression search and print)
-            -Search datasets to match an expression
-            -Implement --name, --content to seperate between files and file content
+            -First parameter is path, second is -r "regex"
+                -if path is dir search to find file with regex match
+                    -should have --resursive flag to search recursive files/dirs
+                -else if path is file read it and match regex
+
     RCLi:
         -Reformat flag extraction
             -Idea:When extracting flags create a vector that contains them raw
