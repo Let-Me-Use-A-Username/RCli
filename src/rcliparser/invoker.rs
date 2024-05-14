@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::fs::{self, DirBuilder, OpenOptions};
+use std::fs::{self, DirBuilder, DirEntry, OpenOptions};
 use std::io::{self, Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -7,18 +7,19 @@ use std::path::{Path, PathBuf};
 use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
+use super::objects::data_types::Data;
 use super::objects::tokens::{FlagObjectPair, GetTupleValue, GetValue, TokenCommandType, TokenCommands, TokenObjects};
 
 
-pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal) -> Result<i32, Error>{
+pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
-    // println!("\nCORE: {:?}", core.clone());
-    // println!("OBJECT: {:?}", path.clone());
-    // println!("FLAGS: {:?}", flag_vector.clone());
+    println!("\nCORE: {:?}", core.clone());
+    println!("OBJECT: {:?}", object.clone());
+    println!("FLAGS: {:?}", flag_vector.clone());
 
-    let token_value = path.get_value();
+    let token_value = object.get_value();
     let path_value = Path::new(&token_value);
-    let mut operation_status: Result<i32, Error> = Ok(100);
+    let mut operation_status: Result<Data, Error> = Ok(Data::StatusData(0));
 
     match core.get_type(){
         TokenCommandType::HOME => {
@@ -140,6 +141,9 @@ pub fn invoke(core: TokenCommands, path: TokenObjects, mut flag_vector: VecDeque
                 operation_status = Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Path {new_path:?} not found"));
             }
         },
+        TokenCommandType::GREP => {
+            operation_status = grep();
+        }
         TokenCommandType::EXIT => {
             operation_status = exit();
         },
@@ -180,30 +184,30 @@ fn handle_error(errorkind: &ErrorKind){
 
 }
 
-///Shows the users home directory
-fn home(terminal_instance: &mut Terminal) -> Result<i32, Error>{
-    let home_dir = terminal_instance.get_home_directory().display().to_string();
-    println!("{home_dir}");
-    Ok(100)
+///Shows the users home directory. Returns path.
+fn home(terminal_instance: &mut Terminal) -> Result<Data, Error>{
+    let home_dir = terminal_instance.get_home_directory();
+    println!("{}", home_dir.display().to_string());
+    Ok(Data::PathData(home_dir))
 }
 
 
-///Shows current working dir
-fn cwd(terminal_instance: &mut Terminal) -> Result<i32, Error>{
-    let current_path = terminal_instance.get_current_directory_to_string();
-    println!("{current_path}");
-    Ok(100)
+///Shows current working dir. Returns path.
+fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
+    let current_path = terminal_instance.get_current_directory();
+    println!("{}", current_path.display().to_string());
+    Ok(Data::PathData(current_path))
 }
 
 
-///Creates a file at the given path
-fn touch(file_path: &Path) -> Result<i32, Error>{
+///Creates a file at the given path. Returns file.
+fn touch(file_path: &Path) -> Result<Data, Error>{
     //could not need the open() clause unless pipelining
     let file = OpenOptions::new().write(true).read(true).create(true).open(file_path);
 
     match file{
         Ok(_) => {
-            return Ok(100);
+            return Ok(Data::FileData(file.unwrap()));
 
         },
         Err(error) => {
@@ -213,8 +217,8 @@ fn touch(file_path: &Path) -> Result<i32, Error>{
 }
 
 
-///Creates a directory at the given path
-fn mkdir(path: &Path, recursive: bool) -> Result<i32, Error>{
+///Creates a directory at the given path. Returns path to top level directory.
+fn mkdir(path: &Path, recursive: bool) -> Result<Data, Error>{
     let mut builder = DirBuilder::new();
     
     builder.recursive(recursive);
@@ -224,7 +228,7 @@ fn mkdir(path: &Path, recursive: bool) -> Result<i32, Error>{
 
     match directory{
         Ok(_) => {
-            return Ok(100);
+            return Ok(Data::PathData(path.to_path_buf()));
         },
         Err(error) => {
             return Err(error);
@@ -234,8 +238,8 @@ fn mkdir(path: &Path, recursive: bool) -> Result<i32, Error>{
 }
 
 
-///Removes a file or dir.
-fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
+///Removes a file or dir. Returns path of removed object.
+fn remove(path: &Path, recursive: bool) -> Result<Data, Error>{
     let mut res : Result<(), Error> = Result::Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Object doesn't exist."));
     if path.try_exists().is_ok(){
         if path.is_dir() & recursive{
@@ -251,8 +255,8 @@ fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
 
     match res{
         Ok(_) => {
-            return Ok(100)
-        },
+            return Ok(Data::PathData(path.to_path_buf()))
+        },  
         Err(error) => {
             return Err(error);
         },
@@ -263,7 +267,8 @@ fn remove(path: &Path, recursive: bool) -> Result<i32, Error>{
 ///Copies the content of either a file or a directory. This is move powerful over move
 ///due to the fact that it can copy without requiring permissions (on Windows) whereas 
 ///move requires.
-fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<i32, Error>{
+///Returns either the destination file or directory.
+fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let path_exists = path.try_exists()?;
     let dest_exists = destination.try_exists()?;
 
@@ -272,7 +277,7 @@ fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Re
         if path.is_file(){
             match fs::copy(path, destination){
                 Ok(_) => {
-                    return Ok(100)
+                    return Ok(Data::PathData(destination.to_path_buf()))
                 },
                 Err(error) => {
                     return Err(error)
@@ -294,7 +299,7 @@ fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Re
             //add flag to merge.. ?
             match fs::copy(path, destination){
                 Ok(_) => {
-                    return Ok(100)
+                    return Ok(Data::PathData(destination.to_path_buf()))
                 },
                 Err(error) => {
                     return Err(error)
@@ -319,7 +324,7 @@ fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Re
             //copy data
             match fs::copy(path, file_path.clone()){
                 Ok(_) => {
-                    return Ok(100)
+                    return Ok(Data::PathData(file_path))
                 },
                 Err(error) => {
                     return Err(error)
@@ -337,14 +342,15 @@ fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Re
 
 ///Moves and renames a file or directory.
 ///If destination doesn't exist it renames a file. If it does exist it copies it.
-fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<i32, Error>{
+///Returns destination path.
+fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let path_exists = path.try_exists()? | path.exists();
     let dest_exists = destination.try_exists()?;
     //simple rename
     if path_exists & !dest_exists{
         match fs::rename(path, destination){
             Ok(_) => {
-                return Ok(100)
+                return Ok(Data::PathData(destination.to_path_buf()))
             },
             Err(error) => {
                 return Err(error)
@@ -361,7 +367,8 @@ fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> 
 }
 
 ///Reads the content of a file to terminal
-fn read(path: &Path) -> Result<i32, Error>{
+///Returns content as string.
+fn read(path: &Path) -> Result<Data, Error>{
     if path.exists() | path.try_exists()?{
         if path.is_dir(){
             return Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Cannot read directory. Use ls instead."))
@@ -371,7 +378,7 @@ fn read(path: &Path) -> Result<i32, Error>{
         match io::read_to_string(file){
             Ok(content) => {
                 println!("{content}");
-                return Ok(100)
+                return Ok(Data::BufferedStringData(content))
             },
             Err(error) => {
                 return Err(error)
@@ -384,13 +391,16 @@ fn read(path: &Path) -> Result<i32, Error>{
 
 
 ///Lists items in a directory
-fn list(dir_path: &Path, hidden: bool) -> Result<i32, Error>{
+fn list(dir_path: &Path, hidden: bool) -> Result<Data, Error>{
     let mut outputbuffer: Vec<String> = vec![];
+    let mut entrybuffer: Vec<DirEntry> = vec![];
 
     match fs::read_dir(dir_path) {
         Ok(paths) => {
             for path in paths{
-                let dir_path = path.unwrap().path();
+                entrybuffer.push(path.unwrap());
+
+                let dir_path = entrybuffer.last().clone().unwrap().path();
 
                 match fs::metadata(dir_path.clone()) {
                     Ok(meta) => {
@@ -406,6 +416,7 @@ fn list(dir_path: &Path, hidden: bool) -> Result<i32, Error>{
                         else if !hidden & !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
                             outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
                         }
+
                     },
                     Err(error) => {
                         eprintln!("INTERNAL ERROR: Couldn't read object metadata {error:?}");
@@ -413,27 +424,28 @@ fn list(dir_path: &Path, hidden: bool) -> Result<i32, Error>{
                     }
                 }; 
             }
+
+            for obj in outputbuffer{
+                println!("{}", obj);
+            }
+    
+            return Ok(Data::DirVecData(entrybuffer))
         },
         Err(error) => {
             return Err(error)
         },
-    };
-
-    for obj in outputbuffer{
-        println!("{}", obj);
     }
-    Ok(100)
 }
 
 
 ///Traverses given path if valid
-fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<i32, Error>{
+fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let mut pathbuffer = PathBuf::new();
     pathbuffer.push(path);
     
     match terminal_instance.set_current_directory(pathbuffer) {
         Ok(status) => {
-            Ok(status)
+            Ok(Data::StatusData(status))
         },
         Err(error_path) => {
             let error = Error::new(ErrorKind::InvalidData, error_path.display().to_string());
@@ -442,14 +454,21 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<i
     }
 }
 
+///For given data returns match.
+///Data can be either a dir or a stream.
+///Therefore matches are either files or Strings.
+fn grep() -> Result<Data, io::Error> {
+    Ok(Data::StatusData(1))
+}
+
 
 ///Exits RCli
-fn exit() -> Result<i32, io::Error> {
-    Ok(1)
+fn exit() -> Result<Data, io::Error> {
+    Ok(Data::StatusData(1))
 }
 
 ///Processes invalid commands
-fn invalid() -> Result<i32, io::Error> {
+fn invalid() -> Result<Data, io::Error> {
     Err(Error::new(ErrorKind::InvalidInput, "ERROR: Invalid command."))
 }
 
@@ -459,17 +478,22 @@ fn invalid() -> Result<i32, io::Error> {
 */
 
 ///Helper function to recursively copy a directory with its content.
-///Mimics DFS algorithms. Used in cp/copy
-fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<i32, Error>{
+///Mimics DFS algorithms. Used in cp/copy.
+///Returns ReadDir object.
+fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Error>{
 
     if destination.is_some(){
         fs::create_dir_all(destination.unwrap()).ok();
     }
+
+    let mut entrybuffer: Vec<DirEntry> = vec![];
     
     match fs::read_dir(original_path){
         Ok(dir_paths) => {
             for path in dir_paths{
-                let path_type = path.unwrap().path();
+                entrybuffer.push(path.unwrap());
+
+                let path_type = entrybuffer.last().clone().unwrap().path();
 
                 let new_file = path_type.file_name().unwrap();
                 let new_path = destination.unwrap().join(new_file);
@@ -485,7 +509,7 @@ fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<i32, Err
                     let _ = fs::copy(path_type, new_path);
                 }
             }
-            Ok(100)
+            return Ok(Data::DirVecData(entrybuffer))
         },
         Err(error) => {
             return Err(error)

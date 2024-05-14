@@ -36,6 +36,7 @@ pub enum TokenCommandType{
     READ,
     LIST,
     CD,
+    GREP,
     EXIT,
     INVALID
 }

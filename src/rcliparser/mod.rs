@@ -9,6 +9,7 @@ pub mod objects{
     pub mod tokens;
     pub mod user_input;
     pub mod bnf_commands;
+    pub mod data_types;
 }
 
 mod input_reader;

@@ -1,6 +1,9 @@
 CurrentProblem:
+    invoker:
+        -Implement grep(global regular expression search and print)
+            -Search datasets to match an expression
+            -Implement --name, --content to seperate between files and file content
     RCLi:
-        -Reformat invoker to return a form of stream
         -Reformat flag extraction
             -Idea:When extracting flags create a vector that contains them raw
             I.e copy smt -d smtElse --clean
@@ -10,15 +13,11 @@ CurrentProblem:
             flags:{ -d, smtElse, --clean}
             We then iterate the flags and assign their "meaning" and then invoke the command
             If wrong parameters are given, panic
+            -Perhaps invoke a command with all flags and if more flags are given return error...?
 
         -Implement sub command > or | to pipeline
-
-
-
-    invoker:
-        -Todo:More concrete way to extract flags. 
-
-        -Perhaps invoke a command with all flags and if more flags are given return error...?
+            -Idea:Pipe either resets the arguments in order to interpret core command again
+            or it could invoke it self again with the input received after the pipe token
 
 
     lexer/parser/bsftree:
@@ -47,8 +46,6 @@ invoker:
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
 
-    -Implement grep(global regular expression search and print)
-        -Search datasets to match an expression
     -Implement find
         -Searching dataset to match a string loosely
     -Implement shortcut 

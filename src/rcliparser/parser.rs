@@ -29,7 +29,7 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     //failsafe in case directory obj isnt present but core requires it.
     let current_dir_string = terminal_instance.get_current_directory_to_string();
     //mainly used when commands do not require an additional parameter like list.
-    let mut path: TokenObjects = TokenObjects::DIRECTORY(current_dir_string.clone());
+    let mut path: TokenObjects = TokenObjects::DIRECTORY(current_dir_string);
     //flag vector
     let mut flag_vector: VecDeque<FlagObjectPair> = VecDeque::new();
 

@@ -40,6 +40,10 @@
             "invocation_name": ["cd"],
             "flags": []
         },
+        "GREP":{
+            "invocation_name": ["grep"],
+            "flags": ["-d", "-destination"]
+        },
         "EXIT":{
             "invocation_name": ["exit"],
             "flags": []
