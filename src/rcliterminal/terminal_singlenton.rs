@@ -8,7 +8,7 @@ use std::mem::MaybeUninit;
 use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommandSyntax};
 
 
-//singlenton terminal instance_id
+///Singlenton terminal
 pub struct Terminal{
     instance_id: Mutex<Uuid>,
     user_home_directory: Mutex<PathBuf>,

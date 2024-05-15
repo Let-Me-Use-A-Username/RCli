@@ -8,7 +8,7 @@ use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::data_types::Data;
-use super::objects::tokens::{FlagObjectPair, GetTupleValue, GetValue, TokenCommandType, TokenCommands, TokenObjects};
+use super::objects::tokens::{FlagObjectPair, GetTupleValue, GetValue, TokenCommandType, TokenCommands, TokenFlag, TokenObjects};
 
 
 pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
@@ -19,6 +19,8 @@ pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeq
 
     let token_value = object.get_value();
     let path_value = Path::new(&token_value);
+
+    let flags = validate_and_extract_flags(core.clone(), flag_vector);
     let mut operation_status: Result<Data, Error> = Ok(Data::StatusData(0));
 
     match core.get_type(){
@@ -32,19 +34,18 @@ pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeq
             operation_status = touch(path_value);
         },
         TokenCommandType::MKDIR => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(flag) => {
-                    match flag.get_value().0 {
-                        Some(value) => {
-                            core.containt_flag(&value)
-                        },
-                        None => false
-                    }
-                }
-                None => false
-            };
+            let mut recursive = false;
 
-            operation_status = mkdir(path_value, flag);
+            if flags.is_ok(){
+                match flags.unwrap().get(0).unwrap() {
+                    Data::BoolData(_) => {
+                        recursive = true
+                    },
+                    _ => {unreachable!()}
+                };
+            }
+
+            operation_status = mkdir(path_value, recursive);
         },
         TokenCommandType::REMOVE => {
             let flag: bool = match flag_vector.pop_front() {
@@ -142,24 +143,23 @@ pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeq
             }
         },
         TokenCommandType::GREP => {
-            let flag: Option<String> = match flag_vector.pop_front() {
-                Some(flag) => {
-                    match flag.get_value().0 {
-                        Some(value) => {
-                            if core.containt_flag(&value){
-                                flag.get_value().1;
-                            }
-                            None
-                        },
-                        None => None
-                    }
-                }
-                None => None
-            };
-
-            if flag.is_some(){
-                operation_status = grep(path_value, flag.unwrap());
-            }
+            // let flag: Option<String> = match flag_vector.pop_front() {
+            //     Some(flag) => {
+            //         let flag_value = flag.get_value().0.unwrap();
+            //         if core.containt_flag(&flag_value){
+            //             Some(flag.get_value().1)
+            //         }
+            //         else{
+            //             None
+            //         }
+            //         flag_value
+            //     }
+            //     None => None
+            // };
+            // println!("{flag:?}");
+            // if flag.is_some(){
+            //     operation_status = grep(path_value, flag.unwrap());
+            // }
         }
         TokenCommandType::EXIT => {
             operation_status = exit();
@@ -475,8 +475,11 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<D
 ///Data can be either a dir or a stream.
 ///Therefore matches are either files or Strings.
 fn grep(path: &Path, regex_string: String) -> Result<Data, io::Error> {
+    println!("grep");
     if path.try_exists()?{
+        println!("path exists");
         if path.is_dir(){
+            println!("path is dir");
             //todo! list recursive
             let dir_entries = match list(path, true)? {
                 Data::DirVecData(entries) => entries,
@@ -488,6 +491,7 @@ fn grep(path: &Path, regex_string: String) -> Result<Data, io::Error> {
             }
         }
         else if path.is_file(){
+            println!("path is file");
             let content = read(path);
             
             if content.is_ok(){
@@ -513,6 +517,35 @@ fn invalid() -> Result<Data, io::Error> {
 /*
     HELPER FUNCTIONS
 */
+
+///For a given commands validates that the flags provided are valid.
+///Validates all flags whether terminal or not.
+fn validate_and_extract_flags(command: TokenCommands, mut flag_vector: VecDeque<FlagObjectPair>) -> Result<Vec<Data>, ()>{
+    let valid_flags = command.get_flags();
+    let flag_length = valid_flags.len();
+
+    //First case, user provided more flags than the command supports
+    if flag_vector.len() > flag_length{
+        eprintln!("INTERNAL ERROR: Invalid number of flags.");
+        return Err(())
+    }
+
+    let mut data_flags = Vec::<Data>::new();
+
+    for flag in flag_vector{
+
+        //Second case, command doesn't support this flag
+        if !valid_flags.contains(&flag.get_value().0.unwrap()){
+            eprintln!("INTERNAL ERROR: Invalid flag.");
+            return Err(())
+        }
+
+        data_flags.push(Data::from(flag));
+    }
+
+    return Ok(data_flags)
+}
+
 
 ///Helper function to recursively copy a directory with its content.
 ///Mimics DFS algorithms. Used in cp/copy.

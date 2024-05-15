@@ -2,55 +2,77 @@
     "commands":{
         "HOME": {
             "invocation_name": ["home"],
-            "flags": []
+            "flag_type": []
         },
         "CWD":{
             "invocation_name": ["cwd"],
-            "flags": []
+            "flag_type": []
         },
         "TOUCH":{
             "invocation_name": ["touch"],
-            "flags": []
+            "flag_type": []
         },
         "MKDIR":{
             "invocation_name": ["mkdir"],
-            "flags": ["--recursive"]
+            "flag_type": ["RECURSIVE"]
         },
         "REMOVE":{
             "invocation_name": ["remove", "rm"],
-            "flags": ["--recursive"]
+            "flag_type": ["RECURSIVE"]
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["-d", "-destination", "--force"]
+            "flag_type": ["DESTINATION", "FORCE"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
-            "flags": ["-d", "-destination"]
+            "flag_type": ["DESTINATION"]
         },
         "READ":{
             "invocation_name": ["read", "cat"],
-            "flags": []
+            "flag_type": []
         },
         "LIST":{
             "invocation_name": ["list", "ls"],
-            "flags": ["--hidden"]
+            "flag_type": ["HIDDEN"]
         },
         "CD":{
             "invocation_name": ["cd"],
-            "flags": []
+            "flag_type": []
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flags": ["-r", "-regex"]
+            "flag_type": ["REGEX"]
         },
         "EXIT":{
             "invocation_name": ["exit"],
-            "flags": []
+            "flag_type": ["HIDDEN"]
         },
         "INVALID":{
             "invocation_name": ["invalid"],
-            "flags": []
+            "flag_type": ["HIDDEN"]
+        }
+    },
+    "flags":{
+        "RECURSIVE": {
+            "flag_values": ["-r", "-recursive"],
+            "has_obj": false
+        },
+        "DESTINATION": {
+            "flag_values": ["-d", "-destination"],
+            "has_obj": true
+        },
+        "FORCE": {
+            "flag_values": ["-f", "-force"],
+            "has_obj": false
+        },
+        "HIDDEN": {
+            "flag_values": ["-h", "-hidden"],
+            "has_obj": false
+        },
+        "REGEX": {
+            "flag_values": ["-r", "-regex"],
+            "has_obj": true
         }
     }
 }

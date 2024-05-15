@@ -1,31 +1,31 @@
 CurrentProblem:
+    RCLi:
+        -Reformat everything
+            -Idea:We change the way that commands are read (look at command_syntax.json)
+            -First we change the structure grammar reader loads.
+                -Two objects. One contains Syntax(name, flags), second is Flags
+            -Second we change lexer in order to parse EVERYTHING until no input is left and creates a token stream (like before)
+            -Thirdly, in parser we create FlagObjectPairs with (flag, obj) or (flag) pair
+            -Fourth in invoker we can now parse commands and flags more abstractly.
+                -Possibly have to change Data type in, or maybe remove it
+            -Fifth Reformat flag extraction
+
+        -Implement sub command > or | to pipeline
+            -Idea:Pipe either resets the arguments in order to interpret core command again
+            or it could invoke it self again with the input received after the pipe token
+
     invoker:
         -Implement grep(global regular expression search and print)
             -First parameter is path, second is -r "regex"
                 -if path is dir search to find file with regex match
                     -should have --resursive flag to search recursive files/dirs
                 -else if path is file read it and match regex
-
-    RCLi:
-        -Reformat flag extraction
-            -Idea:When extracting flags create a vector that contains them raw
-            I.e copy smt -d smtElse --clean
-            would be parsed as 
-            core:copy
-            object:smt
-            flags:{ -d, smtElse, --clean}
-            We then iterate the flags and assign their "meaning" and then invoke the command
-            If wrong parameters are given, panic
-            -Perhaps invoke a command with all flags and if more flags are given return error...?
-
-        -Implement sub command > or | to pipeline
-            -Idea:Pipe either resets the arguments in order to interpret core command again
-            or it could invoke it self again with the input received after the pipe token
-
-
+    
+    
     lexer/parser/bsftree:
         -Todo:New objects implementation broke the tests, rewrite them
         -Todo:Parser tree_match also broke..
+    
         
 
 STUDY: 

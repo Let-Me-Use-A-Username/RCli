@@ -8,6 +8,13 @@ const BNF_GRAMMAR_PATH: &str = "src\\rcliparser\\utils\\bnf_grammar.json";
 const COMMAND_SYNTAX_PATH: &str = "src\\rcliparser\\utils\\command_syntax.json";
 
 
+pub fn load_syntax() -> InvocationCommandSyntax{
+    let data = fs::read_to_string(COMMAND_SYNTAX_PATH).unwrap();
+    let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();
+
+    return json
+}
+
 pub fn load_command_syntax() -> InvocationCommandSyntax{
     let data = fs::read_to_string(COMMAND_SYNTAX_PATH).unwrap();
     let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();

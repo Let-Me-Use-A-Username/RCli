@@ -22,6 +22,10 @@ impl TokenCommands{
 
         return con
     }
+
+    pub fn get_flags(&self) -> Vec<String>{
+        return self.token_flags.clone()
+    }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
@@ -50,6 +54,18 @@ pub enum TokenObjects{
     INVALID
 }
 
+///Get String value from TokenObject
+impl GetValue for TokenObjects{
+    fn get_value(&self) -> String{
+        match self{
+            TokenObjects::FILE(file) => file.to_string(),
+            TokenObjects::DIRECTORY(dir) => dir.to_string(),
+            TokenObjects::OBJECT(obj) => obj.to_string(),
+            TokenObjects::INVALID => "INVALID".to_string()
+        }
+    }
+}
+
 ///Enum used by the lexer and parser to interpret terminal (--) and
 ///non terminal (-) commands
 #[derive(PartialEq, Debug, Clone, Eq, Copy)]
@@ -65,6 +81,16 @@ pub enum TokenFlag{
     FlagType(FlagType)
 }
 
+///Get String value from TokenFlag::FLAG object
+impl GetValue for TokenFlag{
+    fn get_value(&self) -> String{
+        match self{
+            TokenFlag::FLAG(f_type, f_value) => f_value.to_string(),
+            _ => unreachable!()
+        }
+    }
+}
+
 ///Enum used by the lexer to provide a Token stream 
 ///without caring about what is inside (to a certain degree of course)
 #[derive(PartialEq, Debug, Clone, Eq,)]
@@ -74,30 +100,9 @@ pub enum Tokens{
     TokenFlag(TokenFlag)
 }
 
+
 pub trait GetValue{
     fn get_value(&self) -> String;
-}
-
-///Get String value from TokenObject
-impl GetValue for TokenObjects{
-    fn get_value(&self) -> String{
-        match self{
-            TokenObjects::FILE(file) => file.to_string(),
-            TokenObjects::DIRECTORY(dir) => dir.to_string(),
-            TokenObjects::OBJECT(obj) => obj.to_string(),
-            TokenObjects::INVALID => "INVALID".to_string()
-        }
-    }
-}
-
-///Get String value from TokenFlag::FLAG object
-impl GetValue for TokenFlag{
-    fn get_value(&self) -> String{
-        match self{
-            TokenFlag::FLAG(f_type, f_value) => f_value.to_string(),
-            _ => unreachable!()
-        }
-    }
 }
 
 
@@ -137,6 +142,9 @@ impl TryFrom<Tokens> for TokenFlag{
         }
     }
 }
+
+
+
 /*
 
 PARSER OBJECTS:
@@ -156,7 +164,7 @@ pub trait GetTupleValue{
 
 
 impl GetTupleValue for FlagObjectPair{
-    ///Get String value from TokenObject. First value is flag second is object.
+    ///Get String value from TokenObject. First value is always flag, second is object can be None.
     fn get_value(&self) -> (Option<String>, Option<String>){
         match self{
             FlagObjectPair::PAIR(flag, object) => {
@@ -182,7 +190,7 @@ impl TryFrom<FlagObjectPair> for TokenFlag{
                     },
                     TokenFlag::FlagType(f_type) => {
                         Ok(TokenFlag::FlagType(f_type))
-                    },
+                    }
                 }
             },
             FlagObjectPair::SOLE(flag) => {
