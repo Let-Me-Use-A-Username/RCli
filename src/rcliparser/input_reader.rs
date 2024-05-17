@@ -19,9 +19,9 @@ pub fn accept_input(input: String) -> UserInput{
     }
 
 
-    let main: String = string_parts[0].clone();
+    let main: String = string_parts[0].to_lowercase();
 
-    let rest: VecDeque<String> = VecDeque::from_iter(string_parts.clone().split_off(1));
+    let rest: VecDeque<String> = VecDeque::from_iter(string_parts.split_off(1));
 
     return UserInput {
         vector_input:string_parts, 

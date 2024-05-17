@@ -1,11 +1,10 @@
 use uuid::Uuid;
-use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
-use crate::rcliparser::objects::bnf_commands::{Command, CommandType, InvocationCommandSyntax};
+use crate::rcliparser::objects::grammar_objects::Grammar;
 
 
 ///Singlenton terminal
@@ -13,8 +12,7 @@ pub struct Terminal{
     instance_id: Mutex<Uuid>,
     user_home_directory: Mutex<PathBuf>,
     current_directory: Mutex<PathBuf>,
-    bnf_grammar: Mutex<HashMap<CommandType, Command>>,
-    command_syntax: Mutex<InvocationCommandSyntax>
+    grammar: Mutex<Grammar>
 }
 
 /*
@@ -57,12 +55,8 @@ impl Terminal{
         return self.user_home_directory.lock().unwrap().to_path_buf()
     }
 
-    pub fn get_instance_grammar(&self) -> HashMap<CommandType, Command>{
-        return self.bnf_grammar.lock().unwrap().clone();
-    }
-
-    pub fn get_instance_syntax(&self) -> InvocationCommandSyntax{
-        return self.command_syntax.lock().unwrap().clone();
+    pub fn get_instance_grammar(&self) -> Grammar{
+        return self.grammar.lock().unwrap().clone();
     }
 
     pub fn get_current_directory_to_string(&self) -> String{
@@ -75,7 +69,7 @@ impl Terminal{
 }
 
 
-pub fn singlenton(home_dir: PathBuf, input_grammar: HashMap<CommandType, Command>, syntax: InvocationCommandSyntax) -> &'static mut Terminal{
+pub fn singlenton(home_dir: PathBuf, grammar: Grammar) -> &'static mut Terminal{
     //create uninitialized static structure
     static mut SINGLENTON: MaybeUninit<Terminal> = MaybeUninit::uninit();
     static ONCE: Once = Once::new();
@@ -87,8 +81,7 @@ pub fn singlenton(home_dir: PathBuf, input_grammar: HashMap<CommandType, Command
                 instance_id: Mutex::new(Uuid::new_v4()),
                 user_home_directory: Mutex::new(home_dir),
                 current_directory: Mutex::new(env::current_dir().unwrap()),
-                bnf_grammar: Mutex::new(input_grammar),
-                command_syntax: Mutex::new(syntax)
+                grammar: Mutex::new(grammar)
             };
             SINGLENTON.write(singlenton_instance);
         });

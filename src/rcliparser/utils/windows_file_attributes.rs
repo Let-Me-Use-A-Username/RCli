@@ -1,6 +1,5 @@
 use std::{fs, os::windows::fs::MetadataExt, path::Path};
 
-
 #[derive(PartialEq, Eq, Debug)]
 pub enum WindowsAttributes{
     READONLY,

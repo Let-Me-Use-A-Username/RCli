@@ -1,4 +1,3 @@
-use std::mem::discriminant;
 use std::{env, io};
 use std::io::Write;
 
@@ -10,15 +9,13 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 pub fn start_terminal(){
     //load grammar
     let grammar = grammar_reader::load_grammar();
-    //load syntax
-    let syntax = grammar_reader::load_command_syntax();
     //current dir
     let current_dir = env::current_dir().unwrap();
     //get home dir
     //let home_dir = dirs::home_dir().unwrap_or(current_dir);
     let home_dir = dirs::home_dir().unwrap();
     //load singlenton
-    let instance: &mut Terminal = terminal_singlenton::singlenton(home_dir.clone(), grammar, syntax);
+    let instance: &mut Terminal = terminal_singlenton::singlenton(home_dir.clone(), grammar);
 
     //set the current directory in case the core command is on local dir and full path isnt specified
     let _ = instance.set_current_directory(home_dir);

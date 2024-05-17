@@ -1,14 +1,13 @@
 CurrentProblem:
     RCLi:
         -Reformat everything
-            -Idea:We change the way that commands are read (look at command_syntax.json)
-            -First we change the structure grammar reader loads.
-                -Two objects. One contains Syntax(name, flags), second is Flags
-            -Second we change lexer in order to parse EVERYTHING until no input is left and creates a token stream (like before)
-            -Thirdly, in parser we create FlagObjectPairs with (flag, obj) or (flag) pair
-            -Fourth in invoker we can now parse commands and flags more abstractly.
-                -Possibly have to change Data type in, or maybe remove it
-            -Fifth Reformat flag extraction
+            -Lexer verifies only the order. Nothing else.
+            -Parser verifies that token syntax is correct <-Here
+                -When flag has an object 
+                    -Verify that an object is next
+                    -Create a new Token that is a pair
+                        -Pass this in invoker instead of TokenFlag
+            -Invoker invokes command
 
         -Implement sub command > or | to pipeline
             -Idea:Pipe either resets the arguments in order to interpret core command again

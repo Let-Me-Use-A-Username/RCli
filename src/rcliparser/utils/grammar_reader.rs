@@ -1,31 +1,14 @@
 use core::str;
 use std::fs;
-use std::collections::HashMap;
 
-use crate::rcliparser::objects::bnf_commands::{BnfGrammar, Command, CommandType, InvocationCommandSyntax};
+use crate::rcliparser::objects::grammar_objects::Grammar;
 
-const BNF_GRAMMAR_PATH: &str = "src\\rcliparser\\utils\\bnf_grammar.json";
-const COMMAND_SYNTAX_PATH: &str = "src\\rcliparser\\utils\\command_syntax.json";
+const GRAMMAR: &str = "src\\rcliparser\\utils\\grammar.json";
 
 
-pub fn load_syntax() -> InvocationCommandSyntax{
-    let data = fs::read_to_string(COMMAND_SYNTAX_PATH).unwrap();
-    let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();
+pub fn load_grammar() -> Grammar{
+    let data = fs::read_to_string(GRAMMAR).unwrap();
+    let json = serde_json::from_str::<Grammar>(&data).unwrap();
 
-    return json
-}
-
-pub fn load_command_syntax() -> InvocationCommandSyntax{
-    let data = fs::read_to_string(COMMAND_SYNTAX_PATH).unwrap();
-    let json = serde_json::from_str::<InvocationCommandSyntax>(&data).unwrap();
-
-    return json
-}
-
-
-pub fn load_grammar() -> HashMap<CommandType, Command>{
-    let data = fs::read_to_string(BNF_GRAMMAR_PATH).unwrap();
-    let json = serde_json::from_str::<BnfGrammar>(&data).unwrap();
-
-    return json.get_hashmap().clone();
+    return json;
 }

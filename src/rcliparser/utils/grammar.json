@@ -1,59 +1,59 @@
 {
-    "commands":{
+    "command_invocations":{
         "HOME": {
             "invocation_name": ["home"],
-            "flag_type": []
+            "flags": []
         },
         "CWD":{
             "invocation_name": ["cwd"],
-            "flag_type": []
+            "flags": []
         },
         "TOUCH":{
             "invocation_name": ["touch"],
-            "flag_type": []
+            "flags": []
         },
         "MKDIR":{
             "invocation_name": ["mkdir"],
-            "flag_type": ["RECURSIVE"]
+            "flags": ["RECURSIVE"]
         },
         "REMOVE":{
             "invocation_name": ["remove", "rm"],
-            "flag_type": ["RECURSIVE"]
+            "flags": ["RECURSIVE"]
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flag_type": ["DESTINATION", "FORCE"]
+            "flags": ["DESTINATION", "FORCE"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
-            "flag_type": ["DESTINATION"]
+            "flags": ["DESTINATION"]
         },
         "READ":{
             "invocation_name": ["read", "cat"],
-            "flag_type": []
+            "flags": []
         },
         "LIST":{
             "invocation_name": ["list", "ls"],
-            "flag_type": ["HIDDEN"]
+            "flags": ["HIDDEN"]
         },
         "CD":{
             "invocation_name": ["cd"],
-            "flag_type": []
+            "flags": []
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flag_type": ["REGEX"]
+            "flags": ["REGEX"]
         },
         "EXIT":{
             "invocation_name": ["exit"],
-            "flag_type": ["HIDDEN"]
+            "flags": ["HIDDEN"]
         },
         "INVALID":{
             "invocation_name": ["invalid"],
-            "flag_type": ["HIDDEN"]
+            "flags": ["HIDDEN"]
         }
     },
-    "flags":{
+    "flag_type":{
         "RECURSIVE": {
             "flag_values": ["-r", "-recursive"],
             "has_obj": false
@@ -73,6 +73,23 @@
         "REGEX": {
             "flag_values": ["-r", "-regex"],
             "has_obj": true
+        }
+    },
+    "bnf_grammar": {
+        "CORE": {
+            "next":["SUB", "OBJECT", "FLAG"]
+        },
+        "SUB": {
+            "next": ["OBJECT", "FLAG"]
+        },
+        "OBJECT": {
+            "next": ["FLAG", "NONE"]
+        },
+        "FLAG": {
+            "next": ["FLAG", "OBJECT", "NONE"]
+        },
+        "NONE":{
+            "next": []
         }
     }
 }
