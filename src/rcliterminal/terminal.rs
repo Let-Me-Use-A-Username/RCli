@@ -36,7 +36,7 @@ pub fn start_terminal(){
         //accept input
         match user_input {
             Ok(_) => {
-                parser::match_parse(input, instance);
+                parser::parse(input, instance);
             },
             Err(input_error) => {
                 //todo! handle error

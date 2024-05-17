@@ -12,30 +12,27 @@ pub struct Grammar{
 }
 
 impl Grammar{
-    pub fn get_invocation_commands(&self) -> HashMap<CommandType, Command>{
-        return self.command_invocations
-    }
 
-    pub fn get_flag_types(&self) -> HashMap<FlagType, Flags>{
-        return self.flag_type
-    }
-
-    pub fn get_bnf_grammar(&self) -> HashMap<BnfType, BnfSyntax>{
-        return self.bnf_grammar
+    pub fn accepts_next(&self, current: &BnfType, next: &BnfType) -> bool{
+        let pair =  &self.bnf_grammar.get_key_value(current);
+        if pair.is_some(){
+            return pair.unwrap().1.next.contains(next)
+        }
+        return false
     }
 
     pub fn get_command(&self, command: &String) -> Option<InvocationToken>{
-        for (command_type, invocation_command) in self.command_invocations{
+        for (command_type, invocation_command) in &self.command_invocations{
             let match_command =  invocation_command.match_string(command);
             if match_command.is_some(){
-                return Some(InvocationToken::new(command_type, match_command.unwrap().get_flags()))
+                return Some(InvocationToken::new(command_type.clone(), match_command.unwrap().get_flags()))
             }
         }
         return None
     }
 
-    pub fn get_flag(&self, flag: &String) -> Option<(FlagType, Flags)>{
-        for (_type, flag_values) in self.flag_type{
+    pub fn get_flag(&self, flag: &String) -> Option<(&FlagType, &Flags)>{
+        for (_type, flag_values) in &self.flag_type{
             let flags =  flag_values.get_flag_values();
             if flags.contains(flag){
                 return Some((_type, flag_values))
@@ -44,7 +41,7 @@ impl Grammar{
         return None
     }
 
-    pub fn flag_accepts_obj(&self, flag: FlagType) -> bool{
+    pub fn flag_accepts_obj(&self, flag: &FlagType) -> bool{
         return self.flag_type.get(&flag).unwrap().has_obj
     }
 }
@@ -74,16 +71,16 @@ pub struct Command{
 
 impl Command{
     pub fn match_string(&self, command: &String) -> Option<Self>{
-        for name in self.invocation_name{
+        for name in &self.invocation_name{
             if name.eq(command){
-                return Some(*self)
+                return Some(self.clone())
             }
         }
         return None
     }
 
     pub fn get_flags(&self) -> Vec<FlagType>{
-        return self.flags
+        return self.flags.clone()
     }
 }
 
@@ -106,14 +103,14 @@ pub struct Flags{
 }
 impl Flags{
     pub fn get_flag_values(&self) -> Vec<String>{
-        return self.flag_values
+        return self.flag_values.clone()
     }
 }
 
 
 
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
 pub enum BnfType{
     CORE,
     SUB,

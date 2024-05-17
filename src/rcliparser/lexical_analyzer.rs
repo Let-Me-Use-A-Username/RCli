@@ -11,12 +11,7 @@ use super::objects::user_input::{UserInput, Consumable};
 //Analyze returns a tokenqueue
 pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Token>{
     let grammar: Grammar = terminal_instance.get_instance_grammar();
-    
-    let bnf_grammar = grammar.get_bnf_grammar();
-
     let mut tokens: Vec<Token> = Vec::new();
-    //validates if token stream is correct by checking against the `next` filed in Command struct
-    let mut token_validator = bnf_grammar.get(&BnfType::CORE).unwrap().next;
 
     
     //STEP 1: Valid core command
@@ -42,11 +37,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             if object_found.is_some(){
                 tokens.push(Token::TokenObject(OBJECT(command_string.clone())));
 
-                if token_validator.contains(&BnfType::OBJECT){
-                    token_validator.clear();
-                    token_validator = bnf_grammar.get(&BnfType::OBJECT).unwrap().next;
-                }
-                else {
+                if !grammar.accepts_next(&BnfType::CORE, &BnfType::OBJECT){
                     todo!("throw error, incorrect format");
                 }
             }
@@ -57,11 +48,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             if flag_found.is_some(){
                 tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
 
-                if token_validator.contains(&BnfType::FLAG){
-                    token_validator.clear();
-                    token_validator = bnf_grammar.get(&BnfType::FLAG).unwrap().next;
-                }
-                else {
+                if !grammar.accepts_next(&BnfType::OBJECT, &BnfType::FLAG){
                     todo!("throw error, incorrect format");
                 }
             }

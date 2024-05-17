@@ -3,17 +3,14 @@ use std::collections::VecDeque;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::input_reader::accept_input;
+use super::invoker;
 use super::lexical_analyzer::analyze;
-use super::objects::token_objects::{GetValue, Token};
+use super::objects::token_objects::{GetValue, InvocationPair, Token, TokenObject};
 
 
-pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
+pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> VecDeque<Token>{
     let grammar = terminal_instance.get_instance_grammar();
-    let commands = grammar.get_invocation_commands();
-    let flags = grammar.get_flag_types();
 
-    let mut input = accept_input(user_input);
-    let mut input_tokens = analyze(&mut input, terminal_instance);
     let mut output_tokens = VecDeque::<Token>::new();
 
     //pop first item, should be command
@@ -24,14 +21,12 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
     //if core command is none exit
     if core_command.is_none(){
         eprintln!("INVALID COMMAND");
-        return
+        return VecDeque::<Token>::new()
     }
 
-    //got core command. Will be interpreted in invoker
-    output_tokens.push_front(Token::InvocationToken(core_command.unwrap()));
+    //core command
+    output_tokens.push_front(Token::InvocationToken(core_command.clone().unwrap()));
 
-    // mkdir /path/to/dir -r
-    // copy afile.txt -d a/path
     
     'parse: loop{
         if !input_tokens.is_empty(){
@@ -48,10 +43,16 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
                     //flag (in general) is valid
                     if flag_exists.is_some(){
                         //core command accepts this flag
-                        if core_command.unwrap().get_flags().contains(&flag_exists.unwrap().0){
+                        if core_command.clone().unwrap().get_flags().contains(&flag_exists.unwrap().0){
                             //flag accepts object so pop next as well as a pair
                             if grammar.flag_accepts_obj(flag_exists.unwrap().0){
-
+                                match input_tokens.pop_front().unwrap() {
+                                    Token::TokenObject(obj) => {
+                                        let pair = InvocationPair::new(flag_exists.unwrap().0.clone(), obj);
+                                        output_tokens.push_back(Token::InvocationPair(pair));
+                                    },
+                                    _ => unreachable!()
+                                };
                             }
                             //flag doesn't accept object so pop as a sole flag
                             else{
@@ -71,66 +72,33 @@ pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
             }
         }
         else{
-            break 'parse
+            break 'parse;
         }
     }
+
+    return output_tokens
 }
 
-// pub fn match_parse(user_input: String, terminal_instance: &mut Terminal){
-//     let mut input = accept_input(user_input);
-//     let mut input_tokens = analyze(&mut input, terminal_instance);
-//     let mut output_tokens = VecDeque::<Token>::new();
+pub fn parse(user_input: String, terminal_instance: &mut Terminal){
+    let mut input = accept_input(user_input);
+    let mut input_tokens = analyze(&mut input, terminal_instance);
 
-//     let grammar = terminal_instance.get_instance_grammar();
+    let mut output_tokens = create_stream(input_tokens, terminal_instance);
+    
+    //Core command that is executed
+    let core_command = match output_tokens.pop_front().unwrap() {
+        Token::InvocationToken(core) => core,
+        _ => unreachable!()
+    };
+    //core object that the command invokes. If it doesn't exist we assign the cwd
+    let core_object = match output_tokens.front().unwrap() {
+        Token::TokenObject(_) => output_tokens.pop_front().unwrap(),
+        _ => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string()))
+    };
 
-//     //pop command or insert invalid token
-//     let command: TokenCommand = input_tokens.pop_front().unwrap().try_into().unwrap();
+    //Can be either a solo flag, or a pair of flag and target object
+    let flag_pairs = VecDeque::from(output_tokens);
 
-//     output_tokens.push_front(command);
-
-//     //failsafe in case directory obj isnt present but core requires it.
-//     let current_dir_string = terminal_instance.get_current_directory_to_string();
-//     //mainly used when commands do not require an additional parameter like list.
-//     let mut path: TokenObject = TokenObject::OBJECT(current_dir_string);
-//     //flag vector
-//     let mut flag_vector: VecDeque<FlagObjectPair> = VecDeque::new();
-
-//     'parser: loop{
-//         //while tokens stream isnt empty
-//         if !tokens.is_empty(){
-//             //pop next token
-//             match tokens.pop_front().unwrap() {
-//                 //match object (this means that the syntax is core -> object)
-//                 Token::TokenObject(obj) => {
-//                     path = obj;
-//                 },
-//                 //match flag 
-//                 Token::TokenFlag(flag) => {
-//                     match flag {
-//                         TokenFlag::FLAG(flag_type, _) => {
-//                             //if flag type found is non terminal then next item also belongs to the flag pair
-//                             if flag_type.eq(&NONTERMINAL){
-//                                 //todo! this unwrap might cause problems
-//                                 let obj = tokens.pop_front().unwrap_or(Tokens::TokenObjects(TokenObjects::INVALID));
-//                                 let pair = FlagObjectPair::PAIR(flag, obj.try_into().unwrap());
-//                                 flag_vector.push_back(pair);
-//                             }
-//                             //else this is a terminal flag which doesnt have a pair
-//                             else{
-//                                 let sole = FlagObjectPair::SOLE(flag);
-//                                 flag_vector.push_back(sole);
-//                                 break 'parser;
-//                             }
-//                         },
-//                         _ => unreachable!(),
-//                     }
-//                 }
-//                 _ => unreachable!(),
-//             };
-//         }
-//         else{
-//             break 'parser;
-//         }
-//     }
-//     invoker::invoke(command, path, flag_vector, terminal_instance);
-// }
+    
+    invoker::invoke(core_command, core_object, flag_pairs, terminal_instance);
+}

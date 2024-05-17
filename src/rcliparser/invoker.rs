@@ -4,14 +4,16 @@ use std::io::{self, Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
+use crate::rcliparser::objects::grammar_objects::CommandType;
+use crate::rcliparser::objects::token_objects::GetValue;
 use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::data_types::Data;
-use super::objects::tokens::{FlagObjectPair, GetTupleValue, GetValue, TokenCommandType, TokenCommands, TokenFlag, TokenObjects};
+use super::objects::token_objects::{InvocationToken, Token};
 
 
-pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeque<FlagObjectPair>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn invoke(core: InvocationToken, object: Token, mut flag_vector: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
     println!("\nCORE: {:?}", core.clone());
     println!("OBJECT: {:?}", object.clone());
@@ -20,153 +22,28 @@ pub fn invoke(core: TokenCommands, object: TokenObjects, mut flag_vector: VecDeq
     let token_value = object.get_value();
     let path_value = Path::new(&token_value);
 
-    let flags = validate_and_extract_flags(core.clone(), flag_vector);
     let mut operation_status: Result<Data, Error> = Ok(Data::StatusData(0));
 
     match core.get_type(){
-        TokenCommandType::HOME => {
-            operation_status = home(terminal_instance);
-        }
-        TokenCommandType::CWD => {
-            operation_status = cwd(terminal_instance);
-        }
-        TokenCommandType::TOUCH => {
-            operation_status = touch(path_value);
+        CommandType::HOME => {
+            operation_status = home(terminal_instance)
         },
-        TokenCommandType::MKDIR => {
-            let mut recursive = false;
-
-            if flags.is_ok(){
-                match flags.unwrap().get(0).unwrap() {
-                    Data::BoolData(_) => {
-                        recursive = true
-                    },
-                    _ => {unreachable!()}
-                };
-            }
-
-            operation_status = mkdir(path_value, recursive);
+        CommandType::CWD => {
+            operation_status = cwd(terminal_instance)
         },
-        TokenCommandType::REMOVE => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(flag) => {
-                    match flag.get_value().0 {
-                        Some(value) => {
-                            core.containt_flag(&value)
-                        },
-                        None => false
-                    }
-                }
-                None => false
-            };
-
-            operation_status = remove(path_value, flag);
+        CommandType::TOUCH => {
+            operation_status = touch(path_value)
         },
-        TokenCommandType::COPY => {
-            match flag_vector.pop_front() {
-                Some(flag) => {
-                    let flag_value = flag.get_value();
-
-                    let flag = flag_value.0.unwrap_or("INVALID".to_string());
-                    let obj = flag_value.1.unwrap_or("INVALID".to_string());
-
-                    if core.containt_flag(&flag) & !obj.eq("INVALID"){
-                        let new_path = terminal_instance.get_current_directory().join(path_value);
-                        let destination_path = terminal_instance.get_current_directory().join(obj);
-                        
-                        operation_status = copy(new_path.as_path(), destination_path.as_path(), terminal_instance);
-                    }
-                    else{
-                        operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Unknown flag {flag:?}."));
-                    }
-                },
-                None => {
-                    operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: No destination provided"));
-                }
-            };
-        },
-        TokenCommandType::MOVE => {
-            //move or rename file
-            //after confirming it moved, delete origin
-            match flag_vector.pop_front() {
-                Some(flag) => {
-                    let flag_value = flag.get_value();
-
-                    let flag = flag_value.0.unwrap_or("INVALID".to_string());
-                    let obj = flag_value.1.unwrap_or("INVALID".to_string());
-
-                    if core.containt_flag(&flag) & !obj.eq("INVALID"){
-                        let new_path = terminal_instance.get_current_directory().join(path_value);
-                        let destination_path = terminal_instance.get_current_directory().join(obj);
-                        
-                        operation_status = r#move(new_path.as_path(), destination_path.as_path(), terminal_instance);
-                       
-                    }
-                    else{
-                        operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: Unknown flag {flag:?}."));
-                    }
-                },
-                None => {
-                    operation_status = Err(Error::new(ErrorKind::InvalidInput, "INTERNAL ERROR: No destination provided"));
-                }
-            };
-        },
-        TokenCommandType::READ => {
-            operation_status = read(path_value);
-        },
-        TokenCommandType::LIST => {
-            let flag: bool = match flag_vector.pop_front() {
-                Some(flag) => {
-                    match flag.get_value().0 {
-                        Some(value) => {
-                            core.containt_flag(&value)
-                        },
-                        None => false
-                    }
-                }
-                None => false
-            };
-
-            operation_status = list(path_value, flag);
-            
-        },
-        TokenCommandType::CD => {
-            let new_path = terminal_instance.get_current_directory().join(path_value);
-
-            let original_path_exists = new_path.try_exists().unwrap_or(false);
-            
-            if original_path_exists{
-                operation_status = traverse_directory(new_path.as_path(), terminal_instance);
-            }
-            else{
-                operation_status = Err(Error::new(ErrorKind::NotFound, "INTERNAL ERROR: Path {new_path:?} not found"));
-            }
-        },
-        TokenCommandType::GREP => {
-            // let flag: Option<String> = match flag_vector.pop_front() {
-            //     Some(flag) => {
-            //         let flag_value = flag.get_value().0.unwrap();
-            //         if core.containt_flag(&flag_value){
-            //             Some(flag.get_value().1)
-            //         }
-            //         else{
-            //             None
-            //         }
-            //         flag_value
-            //     }
-            //     None => None
-            // };
-            // println!("{flag:?}");
-            // if flag.is_some(){
-            //     operation_status = grep(path_value, flag.unwrap());
-            // }
-        }
-        TokenCommandType::EXIT => {
-            operation_status = exit();
-        },
-        TokenCommandType::INVALID => {
-            operation_status = invalid();
-        },
+        CommandType::MKDIR => {todo!()},
+        CommandType::REMOVE => todo!(),
+        CommandType::COPY => todo!(),
+        CommandType::MOVE => todo!(),
+        CommandType::READ => todo!(),
+        CommandType::LIST => todo!(),
+        CommandType::CD => todo!(),
+        CommandType::GREP => todo!(),
+        CommandType::EXIT => todo!(),
+        CommandType::INVALID => todo!(),
     }
     
     if operation_status.is_err(){
@@ -517,35 +394,6 @@ fn invalid() -> Result<Data, io::Error> {
 /*
     HELPER FUNCTIONS
 */
-
-///For a given commands validates that the flags provided are valid.
-///Validates all flags whether terminal or not.
-fn validate_and_extract_flags(command: TokenCommands, mut flag_vector: VecDeque<FlagObjectPair>) -> Result<Vec<Data>, ()>{
-    let valid_flags = command.get_flags();
-    let flag_length = valid_flags.len();
-
-    //First case, user provided more flags than the command supports
-    if flag_vector.len() > flag_length{
-        eprintln!("INTERNAL ERROR: Invalid number of flags.");
-        return Err(())
-    }
-
-    let mut data_flags = Vec::<Data>::new();
-
-    for flag in flag_vector{
-
-        //Second case, command doesn't support this flag
-        if !valid_flags.contains(&flag.get_value().0.unwrap()){
-            eprintln!("INTERNAL ERROR: Invalid flag.");
-            return Err(())
-        }
-
-        data_flags.push(Data::from(flag));
-    }
-
-    return Ok(data_flags)
-}
-
 
 ///Helper function to recursively copy a directory with its content.
 ///Mimics DFS algorithms. Used in cp/copy.
