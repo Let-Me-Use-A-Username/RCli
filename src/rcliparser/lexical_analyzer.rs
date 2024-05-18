@@ -13,7 +13,6 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
     let grammar: Grammar = terminal_instance.get_instance_grammar();
     let mut tokens: Vec<Token> = Vec::new();
 
-    
     //STEP 1: Valid core command
     let core_token = input.consume();
     if core_token.is_some(){
@@ -43,8 +42,8 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             }
 
             //STEP 3: valid flag(s)
-            let flag_found = flag_match.captures(&command_string);
-            
+            let flag_found = flag_match.captures(&command_string.as_str());
+
             if flag_found.is_some(){
                 tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
 
@@ -59,7 +58,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<
             
             //if next command is None break
             next_command = input.consume();
-            command_string = match next_command.clone() {
+            command_string = match next_command {
                 Some(obj) => {
                     obj
                 }

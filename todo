@@ -1,7 +1,9 @@
 CurrentProblem:
     RCLi:
         -Reformat everything
-            -Fix what parser sends to the invoker as flags
+            -When parsing valid flags for a command it only works sometimes
+                -It seems like shorthand isnt working
+            -extract flags isnt working properly
 
             
 

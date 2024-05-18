@@ -5,7 +5,6 @@ pub struct UserInput{
     pub vector_input: VecDeque<String>,
     pub vector_length: usize,
     pub core_command: String,
-    pub rest_commands: VecDeque<String>,
     pub peek_index: usize,
     pub consume_index: usize,
     pub analyzed: bool
@@ -72,7 +71,7 @@ impl Consumable for UserInput{
 
 impl fmt::Debug for UserInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "UserInput {{ vector_input: {:?}, vector_length: {}, core_command: {}, sub_commands: {:?}, peek_index: {}, consume_index: {} }}", 
-            self.vector_input, self.vector_length, self.core_command, self.rest_commands, self.peek_index, self.consume_index)
+        write!(f, "UserInput {{ vector_input: {:?}, vector_length: {}, core_command: {}, peek_index: {}, consume_index: {} }}", 
+            self.vector_input, self.vector_length, self.core_command, self.peek_index, self.consume_index)
     }
 }

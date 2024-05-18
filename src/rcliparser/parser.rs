@@ -1,11 +1,12 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::input_reader::accept_input;
 use super::invoker;
 use super::lexical_analyzer::analyze;
-use super::objects::token_objects::{GetValue, InvocationPair, Token, TokenObject};
+use super::objects::grammar_objects::FlagType;
+use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, Token, TokenObject};
 
 
 pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> VecDeque<Token>{
@@ -29,6 +30,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
     
     'parse: loop{
+        //If tokens are consumed break, else consume.
         if !input_tokens.is_empty(){
 
             match input_tokens.pop_front().unwrap(){
@@ -40,9 +42,9 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                 Token::TokenFlag(flag) => {
                     let flag_exists = grammar.get_flag(flag.get_value());
                     
-                    //flag (in general) is valid
+                    //flag as a string exists in some FlagType
                     if flag_exists.is_some(){
-                        //core command accepts this flag
+                        //core command accepts this flag at current iteration
                         if core_command.clone().unwrap().get_flags().contains(&flag_exists.unwrap().0){
                             //flag accepts object so pop next as well as a pair
                             if grammar.flag_accepts_obj(flag_exists.unwrap().0){
@@ -56,11 +58,12 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                             }
                             //flag doesn't accept object so pop as a sole flag
                             else{
-                                output_tokens.push_back(Token::TokenFlag(flag))
+                                let sole: InvocationFlag = InvocationFlag::new(flag_exists.unwrap().0.clone());
+                                output_tokens.push_back(Token::InvocationFlag(sole))
                             }
                         }
                         else{
-                            eprintln!("INVALID FLAG FOR GIVEN COMMAND")
+                            eprintln!("INVALID FLAG FOR GIVEN COMMAND");
                         }
                     }
                     //Invalid flag
@@ -81,24 +84,42 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
 pub fn parse(user_input: String, terminal_instance: &mut Terminal){
     let mut input = accept_input(user_input);
-    let mut input_tokens = analyze(&mut input, terminal_instance);
+    let input_tokens = analyze(&mut input, terminal_instance);
 
     let mut output_tokens = create_stream(input_tokens, terminal_instance);
     
     //Core command that is executed
     let core_command = match output_tokens.pop_front().unwrap() {
         Token::InvocationToken(core) => core,
+        //If core command wasn't first we would exited aready
         _ => unreachable!()
     };
-    //core object that the command invokes. If it doesn't exist we assign the cwd
+
+    //If core object doesn;t exist we assign CWD.
+    //The item isnt popped only checked with front()
     let core_object = match output_tokens.front().unwrap() {
         Token::TokenObject(_) => output_tokens.pop_front().unwrap(),
         _ => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string()))
     };
 
-    //Can be either a solo flag, or a pair of flag and target object
-    let flag_pairs = VecDeque::from(output_tokens);
+    //Flag extraction
+    let mut flags: HashMap<FlagType, Option<TokenObject>> = HashMap::new();
 
+    loop{
+        if output_tokens.is_empty(){
+            break
+        }
+
+        match output_tokens.pop_front().unwrap() {
+            Token::InvocationFlag(sole) => {
+                flags.insert(sole.get_type(), None);
+            },
+            Token::InvocationPair(pair) => {
+                flags.insert(pair.get_type(), Some(pair.get_object()));
+            },
+            _ => break
+        }
+    }
     
-    invoker::invoke(core_command, core_object, flag_pairs, terminal_instance);
+    let _ = invoker::invoke(core_command, core_object, flags, terminal_instance);
 }

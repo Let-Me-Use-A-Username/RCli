@@ -21,13 +21,11 @@ pub fn accept_input(input: String) -> UserInput{
 
     let main: String = string_parts[0].to_lowercase();
 
-    let rest: VecDeque<String> = VecDeque::from_iter(string_parts.split_off(1));
 
     return UserInput {
         vector_input:string_parts, 
         vector_length:size, 
         core_command:main, 
-        rest_commands:rest, 
         peek_index:0, 
         consume_index:0,
         analyzed: false};
@@ -45,13 +43,10 @@ mod tests {
         let input = accept_input("create readme.txt -d path".to_string());
         assert_eq!(input.vector_input[0], "create");
         assert_eq!(input.vector_input[1], "readme.txt");
+        assert_eq!(input.vector_input[2], "-d");
+        assert_eq!(input.vector_input[3], "path");
         assert_eq!(input.vector_length, 4);
         assert_eq!(input.core_command, "create");
-        assert_eq!(input.rest_commands[0], "readme.txt");
-        assert_eq!(input.rest_commands[1], "-d");
-        assert_eq!(input.rest_commands[2], "path");
-        assert_eq!(input.peek_index, 0);
-        assert_eq!(input.consume_index, 0);
     }
 
 

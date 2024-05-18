@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::HashMap;
 use std::fs::{self, DirBuilder, DirEntry, OpenOptions};
 use std::io::{self, Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
@@ -10,52 +10,69 @@ use crate::rcliparser::utils::windows_file_attributes;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::data_types::Data;
-use super::objects::token_objects::{InvocationToken, Token};
+use super::objects::grammar_objects::FlagType;
+use super::objects::token_objects::{InvocationToken, Token, TokenObject};
 
 
-pub fn invoke(core: InvocationToken, object: Token, mut flag_vector: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn invoke(core: InvocationToken, object: Token, mut flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
-    println!("\nCORE: {:?}", core.clone());
-    println!("OBJECT: {:?}", object.clone());
-    println!("FLAGS: {:?}", flag_vector.clone());
+    //Prints for debug purposes
+    // println!("\nCORE: {:?}", core.clone());
+    // println!("OBJECT: {:?}", object.clone());
+    // println!("FLAGS: {:?}", flag_vector.clone());
 
-    let token_value = object.get_value();
-    let path_value = Path::new(&token_value);
+    //Object extraction
+    let object_value = object.get_value();
+    let path_value = Path::new(&object_value);
+    
 
     let mut operation_status: Result<Data, Error> = Ok(Data::StatusData(0));
 
     match core.get_type(){
         CommandType::HOME => {
-            operation_status = home(terminal_instance)
+            operation_status = home(terminal_instance);
         },
         CommandType::CWD => {
-            operation_status = cwd(terminal_instance)
+            operation_status = cwd(terminal_instance);
         },
         CommandType::TOUCH => {
-            operation_status = touch(path_value)
+            operation_status = touch(path_value);
         },
-        CommandType::MKDIR => {todo!()},
+        CommandType::MKDIR => {
+            println!("flags {flags:?}");
+            let recursive = flags.get(&FlagType::DESTINATION);
+            if recursive.is_some(){
+                operation_status = mkdir(path_value, true);
+            }
+            else{
+                operation_status = mkdir(path_value, false);
+            }
+            
+            
+        },
         CommandType::REMOVE => todo!(),
         CommandType::COPY => todo!(),
         CommandType::MOVE => todo!(),
         CommandType::READ => todo!(),
         CommandType::LIST => todo!(),
-        CommandType::CD => todo!(),
+        CommandType::CD => {
+            operation_status = traverse_directory(path_value, terminal_instance);
+        },
         CommandType::GREP => todo!(),
         CommandType::EXIT => todo!(),
         CommandType::INVALID => todo!(),
     }
     
     if operation_status.is_err(){
-        handle_error(&operation_status.as_mut().err().unwrap().kind().clone());
+        handle_error(&operation_status.as_mut().err().unwrap());
     }
     
     return operation_status
 }
 
 
-fn handle_error(errorkind: &ErrorKind){
-    match errorkind{
+fn handle_error(error: &Error){
+    match error.kind(){
         ErrorKind::PermissionDenied => {
             eprintln!("ERROR HANDLER: Permission denied.")
         },
@@ -114,11 +131,9 @@ fn touch(file_path: &Path) -> Result<Data, Error>{
 ///Creates a directory at the given path. Returns path to top level directory.
 fn mkdir(path: &Path, recursive: bool) -> Result<Data, Error>{
     let mut builder = DirBuilder::new();
-    
     builder.recursive(recursive);
     
     let directory = builder.create(path);
-
 
     match directory{
         Ok(_) => {

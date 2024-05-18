@@ -1,12 +1,15 @@
 use super::grammar_objects::{CommandType, FlagType};
 
+///Trait to get a value from a Token.
 pub trait GetValue{
     fn get_value(&self) -> &String;
 }
 
+///Hieghest hierarchical Token.
 #[derive(Clone, Debug)]
 pub enum Token{
     InvocationToken(InvocationToken),
+    InvocationFlag(InvocationFlag),
     InvocationPair(InvocationPair),
 
     TokenCommand(TokenCommand),
@@ -46,7 +49,7 @@ impl GetValue for TokenCommand{
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TokenObject{
     OBJECT(String)
 }
@@ -74,6 +77,12 @@ impl GetValue for TokenFlag{
     }
 }
 
+/* 
+    Invocation Tokens
+*/
+
+
+///Token used by invoker to invoke a commadn.
 #[derive(Clone, Debug)]
 pub struct InvocationToken{
     command_type: CommandType,
@@ -93,7 +102,24 @@ impl InvocationToken{
     }
 }
 
-#[derive(Clone, Debug)]
+
+///Used by invoker to invoke flag objects.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct InvocationFlag{
+    flag: FlagType
+}
+impl InvocationFlag {
+    pub fn new(flag: FlagType) -> Self{
+        return InvocationFlag{ flag:flag }
+    }
+    pub fn get_type(&self) -> FlagType{
+        return self.flag.clone()
+    }
+}
+
+
+///Used by invoker to invoke flag-object pairs.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InvocationPair{
     flag: FlagType,
     object: TokenObject
@@ -102,4 +128,13 @@ impl InvocationPair{
     pub fn new(flag: FlagType, object: TokenObject) -> Self{
         return InvocationPair{ flag:flag, object:object }
     }
+
+    pub fn get_type(&self) -> FlagType{
+        return self.flag.clone()
+    }
+
+    pub fn get_object(&self) -> TokenObject{
+        return self.object.clone()
+    }
+
 }

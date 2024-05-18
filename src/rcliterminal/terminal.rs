@@ -12,8 +12,7 @@ pub fn start_terminal(){
     //current dir
     let current_dir = env::current_dir().unwrap();
     //get home dir
-    //let home_dir = dirs::home_dir().unwrap_or(current_dir);
-    let home_dir = dirs::home_dir().unwrap();
+    let home_dir = dirs::home_dir().unwrap_or(current_dir);
     //load singlenton
     let instance: &mut Terminal = terminal_singlenton::singlenton(home_dir.clone(), grammar);
 
