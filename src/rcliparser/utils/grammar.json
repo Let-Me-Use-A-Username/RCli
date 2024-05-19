@@ -42,7 +42,7 @@
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flags": ["REGEX"]
+            "flags": ["PATTERN"]
         },
         "EXIT":{
             "invocation_name": ["exit"],
@@ -70,8 +70,8 @@
             "flag_values": ["-h", "-hidden"],
             "has_obj": false
         },
-        "REGEX": {
-            "flag_values": ["-r", "-regex"],
+        "PATTERN": {
+            "flag_values": ["-p", "-pattern"],
             "has_obj": true
         }
     },

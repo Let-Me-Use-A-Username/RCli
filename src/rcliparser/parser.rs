@@ -45,7 +45,9 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                     //flag as a string exists in some FlagType
                     if flag_exists.is_some(){
                         //core command accepts this flag at current iteration
-                        if core_command.clone().unwrap().get_flags().contains(&flag_exists.unwrap().0){
+                        let accepts_flag = core_command.clone().unwrap().get_flags().contains(&flag_exists.unwrap().0);
+
+                        if accepts_flag{
                             //flag accepts object so pop next as well as a pair
                             if grammar.flag_accepts_obj(flag_exists.unwrap().0){
                                 match input_tokens.pop_front().unwrap() {

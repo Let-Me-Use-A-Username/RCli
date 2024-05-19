@@ -1,23 +1,24 @@
 CurrentProblem:
     RCLi:
-        -Reformat everything
-            -When parsing valid flags for a command it only works sometimes
-                -It seems like shorthand isnt working
-            -extract flags isnt working properly
+        -input_reader/lexer:
+            -Accept objects that have a space inbetween by parsing strings "Funny Noita.txt"
+        -invoker:
+            -Consider not printing the objects from [list, read] in order to use them in other functions (like grep)
+                -Print the return values when we exit the functions
+        -invoker:
+            -Consider changing input for functions to be a Data type in order to be able to pipe things easier later on
+            -Implement grep(global regular expression search and print)
+                -Grep accepts a data type (piping reasons) and depending on the type we handle differently
+                    -I.e. FileData/BufferedStringData returns string stream where we match pattern matches line
+                    -I.e. DirVecData returns string stream where pattern matches name
 
-            
+
 
         -Implement sub command > or | to pipeline
             -Idea:Pipe either resets the arguments in order to interpret core command again
             or it could invoke it self again with the input received after the pipe token
 
-    invoker:
-        -Implement grep(global regular expression search and print)
-            -First parameter is path, second is -r "regex"
-                -if path is dir search to find file with regex match
-                    -should have --resursive flag to search recursive files/dirs
-                -else if path is file read it and match regex
-    
+
     
     lexer/parser/bsftree:
         -Todo:New objects implementation broke the tests, rewrite them

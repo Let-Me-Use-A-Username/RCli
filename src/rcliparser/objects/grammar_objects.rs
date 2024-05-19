@@ -101,7 +101,7 @@ pub enum FlagType{
     DESTINATION,
     FORCE,
     HIDDEN,
-    REGEX
+    PATTERN
 }
 
 ///All available invocations for a given flag. Can be followed by an object.

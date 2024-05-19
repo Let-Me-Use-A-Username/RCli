@@ -1,8 +1,10 @@
 use std::collections::HashMap;
-use std::fs::{self, DirBuilder, DirEntry, OpenOptions};
-use std::io::{self, Error, ErrorKind};
+use std::fs::{self, DirBuilder, DirEntry, File, OpenOptions};
+use std::io::{self, BufRead, Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
+
+use regex::Regex;
 
 use crate::rcliparser::objects::grammar_objects::CommandType;
 use crate::rcliparser::objects::token_objects::GetValue;
@@ -14,7 +16,7 @@ use super::objects::grammar_objects::FlagType;
 use super::objects::token_objects::{InvocationToken, Token, TokenObject};
 
 
-pub fn invoke(core: InvocationToken, object: Token, mut flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
     //Prints for debug purposes
     // println!("\nCORE: {:?}", core.clone());
@@ -39,28 +41,89 @@ pub fn invoke(core: InvocationToken, object: Token, mut flags: HashMap<FlagType,
             operation_status = touch(path_value);
         },
         CommandType::MKDIR => {
-            println!("flags {flags:?}");
-            let recursive = flags.get(&FlagType::DESTINATION);
+            
+            let recursive = flags.get(&FlagType::RECURSIVE);
+
             if recursive.is_some(){
                 operation_status = mkdir(path_value, true);
             }
             else{
                 operation_status = mkdir(path_value, false);
             }
-            
+        },
+        CommandType::REMOVE => {
+            let recursive = flags.get(&FlagType::RECURSIVE);
+
+            if recursive.is_some(){
+                operation_status = remove(path_value, true);
+            }
+            else{
+                operation_status = remove(path_value, false);
+            }
+        },
+        CommandType::COPY => {
+            let destination = flags.get(&FlagType::DESTINATION);
+
+            if destination.is_some(){
+                let destination_path = PathBuf::from(destination.unwrap().as_ref().unwrap().get_value());
+                
+                operation_status = copy(path_value, &destination_path.as_path(), terminal_instance);
+            }
+            else{
+                eprintln!("INTERNAL ERROR: Didn't provide destination.")
+            }
+        },
+        CommandType::MOVE => {
+            let destination = flags.get(&FlagType::DESTINATION);
+
+            if destination.is_some(){
+                let destination_path = PathBuf::from(destination.unwrap().as_ref().unwrap().get_value());
+                
+                operation_status = r#move(path_value, &destination_path.as_path(), terminal_instance);
+            }
+            else{
+                eprintln!("INTERNAL ERROR: Didn't provide destination.")
+            }
+        },
+        CommandType::READ => {
+            operation_status = read(path_value);
+        },
+        CommandType::LIST => {
+            let hidden = flags.get(&FlagType::HIDDEN);
+
+            if hidden.is_some(){
+                operation_status = list(path_value, true);
+            }
+            else{
+                operation_status = list(path_value, false);
+            }
             
         },
-        CommandType::REMOVE => todo!(),
-        CommandType::COPY => todo!(),
-        CommandType::MOVE => todo!(),
-        CommandType::READ => todo!(),
-        CommandType::LIST => todo!(),
         CommandType::CD => {
-            operation_status = traverse_directory(path_value, terminal_instance);
+            let mut destination_path = PathBuf::from(terminal_instance.get_current_directory());
+            destination_path.push(path_value);
+
+            operation_status = traverse_directory(destination_path.as_path(), terminal_instance);
         },
-        CommandType::GREP => todo!(),
-        CommandType::EXIT => todo!(),
-        CommandType::INVALID => todo!(),
+        CommandType::GREP => {
+            let pattern = flags.get(&FlagType::PATTERN);
+
+            if pattern.is_some(){
+                let pattern_unwraped = pattern.unwrap().as_ref().unwrap().get_value();
+                
+                operation_status = grep(path_value, pattern_unwraped);
+            }
+            else{
+                eprintln!("INTERNAL ERROR: Didn't provide pattern.")
+            }
+            
+        },
+        CommandType::EXIT => {
+            operation_status = exit();
+        },
+        CommandType::INVALID => {
+            operation_status = invalid();
+        },
     }
     
     if operation_status.is_err(){
@@ -366,28 +429,34 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<D
 ///For given data returns match.
 ///Data can be either a dir or a stream.
 ///Therefore matches are either files or Strings.
-fn grep(path: &Path, regex_string: String) -> Result<Data, io::Error> {
-    println!("grep");
+fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
+    let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
+    let pattern = Regex::new(pattern_string.as_str()).unwrap();
+    
     if path.try_exists()?{
-        println!("path exists");
         if path.is_dir(){
-            println!("path is dir");
-            //todo! list recursive
+            //todo! change with list
+            //maybe recursively?
             let dir_entries = match list(path, true)? {
                 Data::DirVecData(entries) => entries,
                 _ => vec![],
             };
 
             for entry in dir_entries{
-                println!("{}", entry.file_name().to_str().unwrap())
+                if pattern.is_match(entry.file_name().to_str().unwrap()){
+                    println!("{}", entry.file_name().to_str().unwrap())
+                }
             }
         }
         else if path.is_file(){
-            println!("path is file");
-            let content = read(path);
+            //todo! change with read?
+            let file = File::open(path)?;
+            let lines = io::BufReader::new(file).lines();
             
-            if content.is_ok(){
-                println!("{:?}", content.unwrap());
+            for line in lines.flatten(){
+                if pattern.is_match(line.as_str()){
+                    println!("{line}");
+                }
             }
         }
     }
