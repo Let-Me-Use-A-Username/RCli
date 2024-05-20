@@ -13,6 +13,9 @@ CurrentProblem:
                 or it could invoke it self again with the input received after the pipe token
                     -ls -h | grep *.txt
                     -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), SUB(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]
+                    -Idea: In parser find if more than one commands exist. If they do (and the second has pipe before it)
+                    run the invoker once, get the result and call the invoker again with the second core command, the flags and the data
+                    the first invocation returned
                     
 
     
