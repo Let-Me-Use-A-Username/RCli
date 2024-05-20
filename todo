@@ -1,21 +1,19 @@
 CurrentProblem:
     RCLi:
-        -lexer:
-            -Currently, lexer will parse anything no matter the order
         -parser:
             -Make sure the first command is a core command
             -create_chain now parses additional core commands
-                -fix parse, so that there is a core command, core object and then the rest of the command
+                -fix parse(), so that there is a core command, core object and then the rest of the command
                     -which can include core commands, solo flags, flag pairs
-            -Maybe the core commands after the first one have to be validated
-                -for example we had a sub command before.
 
         -invoker:
             -Consider changing input for functions to be a Data type in order to be able to pipe things easier later on
-            -Implement sub command > or | to pipeline
+            -Implement sub command | to pipeline
                 -Idea:Pipe either resets the arguments in order to interpret core command again
                 or it could invoke it self again with the input received after the pipe token
-
+                    -ls -h | grep *.txt
+                    -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), SUB(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]
+                    
 
     
     lexer/parser/bsftree:

@@ -124,7 +124,6 @@ pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Dat
     //The item isnt popped only checked with front()
     let core_object = match output_tokens.front() {
         Some(Token::TokenObject(_)) => output_tokens.pop_front().unwrap(),
-        None => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string())),
         _ => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string()))
     };
 
