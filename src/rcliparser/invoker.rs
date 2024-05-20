@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::format;
 use std::fs::{self, DirBuilder, DirEntry, File, OpenOptions};
 use std::io::{self, BufRead, Error, ErrorKind};
 use std::os::windows::fs::MetadataExt;
@@ -21,14 +22,14 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
     //Prints for debug purposes
     // println!("\nCORE: {:?}", core.clone());
     // println!("OBJECT: {:?}", object.clone());
-    // println!("FLAGS: {:?}", flag_vector.clone());
+    // println!("FLAGS: {:?}", flags.clone());
 
     //Object extraction
     let object_value = object.get_value();
     let path_value = Path::new(&object_value);
     
 
-    let mut operation_status: Result<Data, Error> = Ok(Data::StatusData(0));
+    let operation_status: Result<Data, Error>;
 
     match core.get_type(){
         CommandType::HOME => {
@@ -70,7 +71,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
                 operation_status = copy(path_value, &destination_path.as_path(), terminal_instance);
             }
             else{
-                eprintln!("INTERNAL ERROR: Didn't provide destination.")
+                operation_status = Err(Error::new(ErrorKind::InvalidInput, "Didn't provide destination."));
             }
         },
         CommandType::MOVE => {
@@ -82,7 +83,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
                 operation_status = r#move(path_value, &destination_path.as_path(), terminal_instance);
             }
             else{
-                eprintln!("INTERNAL ERROR: Didn't provide destination.")
+                operation_status = Err(Error::new(ErrorKind::InvalidInput, "Didn't provide destination."));
             }
         },
         CommandType::READ => {
@@ -97,7 +98,6 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             else{
                 operation_status = list(path_value, false);
             }
-            
         },
         CommandType::CD => {
             let mut destination_path = PathBuf::from(terminal_instance.get_current_directory());
@@ -114,9 +114,8 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
                 operation_status = grep(path_value, pattern_unwraped);
             }
             else{
-                eprintln!("INTERNAL ERROR: Didn't provide pattern.")
+                operation_status = Err(Error::new(ErrorKind::InvalidInput, "Didn't provide destination."));
             }
-            
         },
         CommandType::EXIT => {
             operation_status = exit();
@@ -125,43 +124,13 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             operation_status = invalid();
         },
     }
-    
-    if operation_status.is_err(){
-        handle_error(&operation_status.as_mut().err().unwrap());
-    }
-    
+
     return operation_status
-}
-
-
-fn handle_error(error: &Error){
-    match error.kind(){
-        ErrorKind::PermissionDenied => {
-            eprintln!("ERROR HANDLER: Permission denied.")
-        },
-        ErrorKind::NotFound => {
-            eprintln!("ERROR HANDLER: Object not found.")
-        },
-        ErrorKind::AlreadyExists => {
-            eprintln!("ERROR HANDLER: Object already exists.")
-        },
-        ErrorKind::InvalidInput => {
-            eprintln!("ERROR HANDLER: Invalid input.")
-        },
-        ErrorKind::Other => {
-            eprintln!("ERROR HANDLER: Other error encountered.")
-        }
-        _ => {
-            eprintln!("ERROR HANDLER: Unknown error occured.")
-        }
-    }
-
 }
 
 ///Shows the users home directory. Returns path.
 fn home(terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let home_dir = terminal_instance.get_home_directory();
-    println!("{}", home_dir.display().to_string());
     Ok(Data::PathData(home_dir))
 }
 
@@ -169,7 +138,6 @@ fn home(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 ///Shows current working dir. Returns path.
 fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let current_path = terminal_instance.get_current_directory();
-    println!("{}", current_path.display().to_string());
     Ok(Data::PathData(current_path))
 }
 
@@ -349,8 +317,7 @@ fn read(path: &Path) -> Result<Data, Error>{
 
         match io::read_to_string(file){
             Ok(content) => {
-                println!("{content}");
-                return Ok(Data::BufferedStringData(content))
+                return Ok(Data::StringData(content))
             },
             Err(error) => {
                 return Err(error)
@@ -364,15 +331,13 @@ fn read(path: &Path) -> Result<Data, Error>{
 
 ///Lists items in a directory
 fn list(dir_path: &Path, hidden: bool) -> Result<Data, Error>{
-    let mut outputbuffer: Vec<String> = vec![];
-    let mut entrybuffer: Vec<DirEntry> = vec![];
+    let mut outputbuffer: Vec<PathBuf> = vec![];
 
     match fs::read_dir(dir_path) {
         Ok(paths) => {
             for path in paths{
-                entrybuffer.push(path.unwrap());
 
-                let dir_path = entrybuffer.last().clone().unwrap().path();
+                let dir_path = path.unwrap().path();
 
                 match fs::metadata(dir_path.clone()) {
                     Ok(meta) => {
@@ -382,26 +347,22 @@ fn list(dir_path: &Path, hidden: bool) -> Result<Data, Error>{
                         
                         //if hidden is true show everything
                         if hidden{
-                            outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
+                            //outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
+                            outputbuffer.push(dir_path);
                         }
                         //else hidden flag is false. if dir DOESNT have hidden flag append it
                         else if !hidden & !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
-                            outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
+                            outputbuffer.push(dir_path);
                         }
 
                     },
                     Err(error) => {
-                        eprintln!("INTERNAL ERROR: Couldn't read object metadata {error:?}");
                         return Err(error)
                     }
                 }; 
             }
-
-            for obj in outputbuffer{
-                println!("{}", obj);
-            }
     
-            return Ok(Data::DirVecData(entrybuffer))
+            return Ok(Data::DirPathData(outputbuffer))
         },
         Err(error) => {
             return Err(error)
@@ -417,11 +378,10 @@ fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Result<D
     
     match terminal_instance.set_current_directory(pathbuffer) {
         Ok(status) => {
-            Ok(Data::StatusData(status))
+            return Ok(status)
         },
         Err(error_path) => {
-            let error = Error::new(ErrorKind::InvalidData, error_path.display().to_string());
-            return Err(error)
+            return Err(Error::new(ErrorKind::InvalidData, error_path.to_string()));
         },
     }
 }
@@ -435,32 +395,38 @@ fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
     
     if path.try_exists()?{
         if path.is_dir(){
-            //todo! change with list
-            //maybe recursively?
+            let mut output_string = Vec::<String>::new();
+
             let dir_entries = match list(path, true)? {
-                Data::DirVecData(entries) => entries,
+                Data::DirPathData(entries) => entries,
                 _ => vec![],
             };
 
             for entry in dir_entries{
-                if pattern.is_match(entry.file_name().to_str().unwrap()){
-                    println!("{}", entry.file_name().to_str().unwrap())
+                let entry_name = entry.as_path().to_str().unwrap();
+                if pattern.is_match(entry_name){
+                    output_string.push(format(format_args!("[ {} ]", entry_name)));
                 }
             }
+
+            return Ok(Data::VecStringData(output_string))
         }
         else if path.is_file(){
             //todo! change with read?
             let file = File::open(path)?;
             let lines = io::BufReader::new(file).lines();
+
+            let mut output_string = Vec::<String>::new();
             
             for line in lines.flatten(){
                 if pattern.is_match(line.as_str()){
-                    println!("{line}");
+                    output_string.push(format(format_args!("[ {} ]", line)));
                 }
             }
+            return Ok(Data::VecStringData(output_string))
         }
     }
-    Ok(Data::StatusData(1))
+    Err(Error::new(ErrorKind::NotFound, "ERROR: Invalid path."))
 }
 
 
@@ -511,7 +477,7 @@ fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Er
                     let _ = fs::copy(path_type, new_path);
                 }
             }
-            return Ok(Data::DirVecData(entrybuffer))
+            return Ok(Data::DirEntryData(entrybuffer))
         },
         Err(error) => {
             return Err(error)

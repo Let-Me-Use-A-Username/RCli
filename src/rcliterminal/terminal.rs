@@ -1,12 +1,14 @@
+use std::process::ExitCode;
 use std::{env, io};
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 
 use crate::rcliparser::parser;
 use crate::rcliparser::utils::grammar_reader;
+use crate::rcliparser::objects::data_types::Data;
 use crate::rcliterminal::terminal_singlenton;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
-pub fn start_terminal(){
+pub fn start_terminal() -> ExitCode{
     //load grammar
     let grammar = grammar_reader::load_grammar();
     //current dir
@@ -24,8 +26,6 @@ pub fn start_terminal(){
         println!("============RCLI TERMINAL============\n");
         let mut input = String::new();
 
-        //display cwd
-        //todo! this replace in dir_disply might cause problems
         let dir_display = instance.get_current_directory_to_string().replace("\\\\?\\", "");
         print!("RCli {}>", dir_display);
         io::stdout().flush().unwrap();
@@ -35,13 +35,54 @@ pub fn start_terminal(){
         //accept input
         match user_input {
             Ok(_) => {
-                parser::parse(input, instance);
+                let operation_result = parser::parse(input, instance);
+
+                match operation_result{
+                    Ok(data) => {
+                        match data {
+                            Data::PathData(path) => {
+                                println!("{}", path.display().to_string());
+                            },
+                            Data::StringData(data) => {
+                                println!("{data}");
+                            },
+                            Data::VecStringData(string_vec) => {
+                                string_vec.iter().for_each(|x| println!("{x}"));
+                            },
+                            Data::FileData(file) => {
+                                let buffer = BufReader::new(file).lines();
+                                
+                                for line in buffer.flatten(){
+                                    println!("{line}");
+                                }
+                            },
+                            Data::DirPathData(path_data) => {
+                                for path in path_data{
+                                    println!("{}", path.display().to_string());
+                                }
+                            },
+                            Data::DirEntryData(dir_entries) => {
+                                for entry in dir_entries{
+                                    println!("{}", entry.path().display().to_string());
+                                }
+                            },
+                            Data::StatusData(status_code) => {
+                                if status_code.eq(&1){
+                                    return ExitCode::SUCCESS;
+                                }
+                            },
+                        }
+                    },
+                    Err(err) => {
+                        println!("Error:{}", err.to_string());
+                    },
+                }
             },
             Err(input_error) => {
-                //todo! handle error
-                eprintln!("INPUT ERROR {}", input_error);
+                eprintln!("Error: {}", input_error.to_string());
                 break 'terminal;
             },
         }
     }
+    return ExitCode::FAILURE;
 }

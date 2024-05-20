@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::io::Error;
 use regex::Regex;
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
@@ -9,69 +10,68 @@ use super::objects::user_input::{UserInput, Consumable};
 
 
 //Analyze returns a tokenqueue
-pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> VecDeque<Token>{
+pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<VecDeque<Token>, Error>{
     let grammar: Grammar = terminal_instance.get_instance_grammar();
     let mut tokens: Vec<Token> = Vec::new();
 
-    //STEP 1: Valid core command
-    let core_token = input.consume();
-    if core_token.is_some(){
+    //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
+    let object_matcher = Regex::new(r"^[^-]([.]*[/]|[..])*(\w+?\S+)?").unwrap();
+    let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
-        tokens.push(Token::TokenCommand(COMMAND(core_token.unwrap())));
+    let mut next_command : Option<String>;
+    let mut command_string : String;
+
+    loop{
         
-        //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
-        let object_matcher = Regex::new(r"^[^-]([.]*[/]|[..])*(\w+?\S+)?").unwrap();
-        let flag_match = Regex::new(r"([-]+\w+)").unwrap();
+        //if input analyzed break
+        if input.analyzed{
+            break;
+        }
 
-        let mut next_command = input.consume();
-        let mut command_string = next_command.clone().unwrap_or({
-            terminal_instance.get_current_directory_to_string()
-        });
-
-        
-        loop{
-            let object_found = object_matcher.captures(&command_string.as_str());
-            
-            //if object found
-            if object_found.is_some(){
-                tokens.push(Token::TokenObject(OBJECT(command_string.clone())));
-
-                if !grammar.accepts_next(&BnfType::CORE, &BnfType::OBJECT){
-                    todo!("throw error, incorrect format");
-                }
+        //if next command is None break
+        next_command = input.consume();
+        command_string = match next_command {
+            Some(obj) => {
+                obj
             }
-
-            //STEP 3: valid flag(s)
-            let flag_found = flag_match.captures(&command_string.as_str());
-
-            if flag_found.is_some(){
-                tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
-
-                if !grammar.accepts_next(&BnfType::OBJECT, &BnfType::FLAG){
-                    todo!("throw error, incorrect format");
-                }
-            }
-            //if input analyzed break
-            if input.analyzed{
+            None => {
                 break;
             }
-            
-            //if next command is None break
-            next_command = input.consume();
-            command_string = match next_command {
-                Some(obj) => {
-                    obj
-                }
-                None => {
-                    break;
-                }
-            };
         };
-    }
-    //STEP 1.1: validate soft command_grammar. Newline, CTRL^C etc
-    else{
-        tokens.push(Token::TokenCommand(COMMAND("invalid".to_string())));
+
+        //for available command invocations (Strings)
+        let command_name = grammar.match_string_to_command(&command_string);
+        
+        //STEP 1: if name matches, add command
+        if command_name.is_some(){
+            tokens.push(Token::TokenCommand(COMMAND(command_string.clone())));
+            continue;
+        }
+
+        let object_found = object_matcher.captures(&command_string.as_str());
+        
+        //if object found
+        if object_found.is_some(){
+            tokens.push(Token::TokenObject(OBJECT(command_string.clone())));
+
+            if !grammar.accepts_next(&BnfType::CORE, &BnfType::OBJECT){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format."));
+            }
+            continue;
+        }
+
+        //STEP 3: valid flag(s)
+        let flag_found = flag_match.captures(&command_string.as_str());
+
+        if flag_found.is_some(){
+            tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
+
+            if !grammar.accepts_next(&BnfType::OBJECT, &BnfType::FLAG){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format."));
+            }
+            continue;
+        }
     }
 
-    return VecDeque::from(tokens);
+    return Ok(VecDeque::from(tokens));
 }

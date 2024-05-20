@@ -13,6 +13,12 @@ pub struct Grammar{
 }
 
 impl Grammar{
+
+    ///Commands to match
+    pub fn get_commands(&self) -> &HashMap<CommandType, Command>{
+        return &self.command_invocations;
+    }
+
     ///Next valid object in BNF Grammar.
     pub fn accepts_next(&self, current: &BnfType, next: &BnfType) -> bool{
         let pair =  &self.bnf_grammar.get_key_value(current);
@@ -28,6 +34,16 @@ impl Grammar{
             let match_command =  invocation_command.match_string(command);
             if match_command.is_some(){
                 return Some(InvocationToken::new(command_type.clone(), match_command.unwrap().get_flags()))
+            }
+        }
+        return None
+    }
+
+    pub fn match_string_to_command(&self, command: &String) -> Option<()>{
+        for (_, invocation_command) in &self.command_invocations{
+            let match_command =  invocation_command.match_string(command);
+            if match_command.is_some(){
+                return Some(());
             }
         }
         return None

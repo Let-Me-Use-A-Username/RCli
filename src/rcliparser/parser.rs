@@ -1,15 +1,17 @@
 use std::collections::{HashMap, VecDeque};
+use std::io::Error;
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::input_reader::accept_input;
 use super::invoker;
 use super::lexical_analyzer::analyze;
+use super::objects::data_types::Data;
 use super::objects::grammar_objects::FlagType;
 use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, Token, TokenObject};
 
 
-pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> VecDeque<Token>{
+pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<VecDeque<Token>, Error>{
     let grammar = terminal_instance.get_instance_grammar();
 
     let mut output_tokens = VecDeque::<Token>::new();
@@ -21,8 +23,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
     //if core command is none exit
     if core_command.is_none(){
-        eprintln!("INVALID COMMAND");
-        return VecDeque::<Token>::new()
+        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
     }
 
     //core command
@@ -34,6 +35,15 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
         if !input_tokens.is_empty(){
 
             match input_tokens.pop_front().unwrap(){
+                Token::TokenCommand(com) => {
+                    let command = grammar.get_command(com.get_value());
+
+                    if command.is_none(){
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
+                    }
+
+                    output_tokens.push_front(Token::InvocationToken(command.clone().unwrap()));
+                }
                 //if an object is found then simply push it to stream
                 Token::TokenObject(obj) => {
                     output_tokens.push_back(Token::TokenObject(obj));
@@ -65,12 +75,12 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                             }
                         }
                         else{
-                            eprintln!("INVALID FLAG FOR GIVEN COMMAND");
+                            return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid flag for given command."));
                         }
                     }
                     //Invalid flag
                     else{
-                        todo!()
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid flag."));
                     }
                 },
                 _ => unreachable!()
@@ -81,26 +91,40 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
         }
     }
 
-    return output_tokens
+    return Ok(output_tokens)
 }
 
-pub fn parse(user_input: String, terminal_instance: &mut Terminal){
-    let mut input = accept_input(user_input);
-    let input_tokens = analyze(&mut input, terminal_instance);
+pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+    let user_input = accept_input(user_input);
+    if user_input.is_err(){
+        return Err(user_input.err().unwrap());
+    }
 
-    let mut output_tokens = create_stream(input_tokens, terminal_instance);
+    let input_tokens = analyze(&mut user_input.ok().unwrap(), terminal_instance);
+    if input_tokens.is_err(){
+        return Err(input_tokens.err().unwrap());
+    } 
     
+    let parser_output = create_stream(input_tokens.ok().unwrap(), terminal_instance);
+    if parser_output.is_err(){
+        return Err(parser_output.err().unwrap());
+    }
+    
+    let mut output_tokens = parser_output.unwrap();
+
     //Core command that is executed
     let core_command = match output_tokens.pop_front().unwrap() {
         Token::InvocationToken(core) => core,
         //If core command wasn't first we would exited aready
         _ => unreachable!()
     };
+    
 
     //If core object doesn;t exist we assign CWD.
     //The item isnt popped only checked with front()
-    let core_object = match output_tokens.front().unwrap() {
-        Token::TokenObject(_) => output_tokens.pop_front().unwrap(),
+    let core_object = match output_tokens.front() {
+        Some(Token::TokenObject(_)) => output_tokens.pop_front().unwrap(),
+        None => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string())),
         _ => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string()))
     };
 
@@ -123,5 +147,5 @@ pub fn parse(user_input: String, terminal_instance: &mut Terminal){
         }
     }
     
-    let _ = invoker::invoke(core_command, core_object, flags, terminal_instance);
+    return invoker::invoke(core_command, core_object, flags, terminal_instance);
 }

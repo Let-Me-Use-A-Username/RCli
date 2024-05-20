@@ -1,13 +1,11 @@
 use std::{fs::{DirEntry, File}, path::PathBuf};
 
 #[derive(Debug)]
-pub enum Data{
-    RegexData(String),//used for grep
-    BoolData(String), //used for terminal flags i.e. --hidden, --recursive
-
-    PathData(PathBuf),
+pub enum Data{PathData(PathBuf),
+    StringData(String),
+    VecStringData(Vec<String>),
     FileData(File),
-    DirVecData(Vec<DirEntry>),
-    StatusData(i32),
-    BufferedStringData(String)
+    DirPathData(Vec<PathBuf>),
+    DirEntryData(Vec<DirEntry>),
+    StatusData(i32)
 }

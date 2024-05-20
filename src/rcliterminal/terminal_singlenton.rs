@@ -1,9 +1,11 @@
 use uuid::Uuid;
 use std::env;
+use std::io::Error;
 use std::path::PathBuf;
 use std::sync::{Mutex, Once};
 use std::mem::MaybeUninit;
 
+use crate::rcliparser::objects::data_types::Data;
 use crate::rcliparser::objects::grammar_objects::Grammar;
 
 
@@ -20,7 +22,7 @@ Terminal singlenton methods.
 At the moment only path changing functions.
 */
 impl Terminal{
-    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<i32, PathBuf>{
+    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<Data, Error>{
         let mut current_dir = self.current_directory.lock().unwrap();
         match path.canonicalize() {
             //check if path is valid
@@ -31,18 +33,16 @@ impl Terminal{
                 match operation_results {
                     Ok(_) => {
                         *current_dir = env::current_dir().unwrap();
-                        return Ok(100)
+                        return Ok(Data::StatusData(100));
                     },
                     Err(error) => {
-                        println!("SINGLENTON SETTER: {:?}", error);
-                        return Err(new_path)
+                        return Err(Error::new(error.kind(), error.to_string()));
                     },
                 }
             },
             //path not found
             Err(error) => {
-                println!("SINGLENTON ERROR: Path not found {:?}", error);
-                return Err(current_dir.to_path_buf())
+                return Err(Error::new(error.kind(), error.to_string()));
             },
         };
     }

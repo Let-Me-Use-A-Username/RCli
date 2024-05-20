@@ -1,22 +1,20 @@
 CurrentProblem:
     RCLi:
-        -input_reader/lexer:
-            -Accept objects that have a space inbetween by parsing strings "Funny Noita.txt"
-        -invoker:
-            -Consider not printing the objects from [list, read] in order to use them in other functions (like grep)
-                -Print the return values when we exit the functions
+        -lexer:
+            -Currently, lexer will parse anything no matter the order
+        -parser:
+            -Make sure the first command is a core command
+            -create_chain now parses additional core commands
+                -fix parse, so that there is a core command, core object and then the rest of the command
+                    -which can include core commands, solo flags, flag pairs
+            -Maybe the core commands after the first one have to be validated
+                -for example we had a sub command before.
+
         -invoker:
             -Consider changing input for functions to be a Data type in order to be able to pipe things easier later on
-            -Implement grep(global regular expression search and print)
-                -Grep accepts a data type (piping reasons) and depending on the type we handle differently
-                    -I.e. FileData/BufferedStringData returns string stream where we match pattern matches line
-                    -I.e. DirVecData returns string stream where pattern matches name
-
-
-
-        -Implement sub command > or | to pipeline
-            -Idea:Pipe either resets the arguments in order to interpret core command again
-            or it could invoke it self again with the input received after the pipe token
+            -Implement sub command > or | to pipeline
+                -Idea:Pipe either resets the arguments in order to interpret core command again
+                or it could invoke it self again with the input received after the pipe token
 
 
     
@@ -46,14 +44,14 @@ Project:
 invoker:
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
-
+    -Implement help
+        -Shows available commands and invocation
     -Implement find
         -Searching dataset to match a string loosely
     -Implement shortcut 
         -Adds an alias for a executable (probably) and saves it in a retrievable document
 
     -Todo:Reformated invoker
-        -Note:Consider whether an object invoker with methods would be better
         -Todo:Find a more concrete way to move files/dirs instead of copying
         -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
