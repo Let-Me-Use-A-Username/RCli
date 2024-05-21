@@ -128,6 +128,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
     return operation_status
 }
 
+
 ///Shows the users home directory. Returns path.
 fn home(terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let home_dir = terminal_instance.get_home_directory();

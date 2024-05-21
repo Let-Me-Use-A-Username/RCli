@@ -1,4 +1,21 @@
-use super::grammar_objects::{CommandType, FlagType};
+use super::{data_types::Data, grammar_objects::{CommandType, FlagType, PipeType}};
+
+
+#[derive(Debug)]
+pub struct TokenSteam{
+    //core command
+    core: InvocationToken,
+    //data, replaces token object
+    data: Data,
+    //invocation pairs and sole by downcasting
+    flags: Option<Vec<Token>>,
+}
+impl TokenSteam{
+    pub fn new(core: InvocationToken, data: Data, flags: Option<Vec<Token>>) -> Self{
+        return TokenSteam { core:core, data:data, flags:flags }
+    }
+}
+
 
 ///Trait to get a value from a Token.
 pub trait GetValue{
@@ -11,10 +28,12 @@ pub enum Token{
     InvocationToken(InvocationToken),
     InvocationFlag(InvocationFlag),
     InvocationPair(InvocationPair),
+    InvocationPipe(InvocationPipe),
 
     TokenCommand(TokenCommand),
     TokenObject(TokenObject),
-    TokenFlag(TokenFlag)
+    TokenFlag(TokenFlag),
+    TokenPipe(TokenPipe)
 }
 
 impl GetValue for Token{
@@ -29,6 +48,9 @@ impl GetValue for Token{
             Token::TokenFlag(flag) => {
                 return flag.get_value()
             },
+            Token::TokenPipe(pipe) => {
+                return pipe.get_value()
+            }
             _ => unreachable!()
         }
     }
@@ -76,6 +98,21 @@ impl GetValue for TokenFlag{
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub enum TokenPipe{
+    PIPE(String)
+}
+impl GetValue for TokenPipe{
+    fn get_value(&self) -> &String {
+        match self{
+            TokenPipe::PIPE(pipe) => {
+                return pipe
+            },
+        }
+    }
+}
+
 
 /* 
     Invocation Tokens
@@ -137,4 +174,16 @@ impl InvocationPair{
         return self.object.clone()
     }
 
+}
+
+
+//Used by invoker to invoke piping
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct InvocationPipe{
+    pipe: PipeType
+}
+impl InvocationPipe{
+    pub fn new(pipe: PipeType) -> Self{
+        return InvocationPipe{ pipe:pipe }
+    }
 }

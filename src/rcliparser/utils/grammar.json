@@ -53,6 +53,10 @@
             "flags": ["HIDDEN"]
         }
     },
+    "pipe_commands": {
+        "PIPE":"|",
+        "PASS":">"
+    },
     "flag_type":{
         "RECURSIVE": {
             "flag_values": ["-r", "-recursive"],
@@ -77,16 +81,16 @@
     },
     "bnf_grammar": {
         "CORE": {
-            "next":["SUB", "OBJECT", "FLAG"]
-        },
-        "SUB": {
-            "next": ["OBJECT", "FLAG"]
+            "next":["OBJECT", "FLAG", "PIPE"]
         },
         "OBJECT": {
-            "next": ["FLAG", "NONE"]
+            "next": ["FLAG", "NONE", "PIPE"]
         },
         "FLAG": {
-            "next": ["FLAG", "OBJECT", "NONE"]
+            "next": ["FLAG", "OBJECT", "PIPE", "NONE"]
+        },
+        "PIPE": {
+            "next": ["CORE"]
         },
         "NONE":{
             "next": []

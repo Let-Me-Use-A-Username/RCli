@@ -8,17 +8,12 @@ use super::token_objects::InvocationToken;
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq)]
 pub struct Grammar{
     command_invocations: HashMap<CommandType, Command>,
+    pipe_commands: HashMap<PipeType, String>,
     flag_type: HashMap<FlagType, Flags>,
     bnf_grammar: HashMap<BnfType, BnfSyntax>
 }
 
 impl Grammar{
-
-    ///Commands to match
-    pub fn get_commands(&self) -> &HashMap<CommandType, Command>{
-        return &self.command_invocations;
-    }
-
     ///Next valid object in BNF Grammar.
     pub fn accepts_next(&self, current: &BnfType, next: &BnfType) -> bool{
         let pair =  &self.bnf_grammar.get_key_value(current);
@@ -44,6 +39,15 @@ impl Grammar{
             let match_command =  invocation_command.match_string(command);
             if match_command.is_some(){
                 return Some(());
+            }
+        }
+        return None
+    }
+
+    pub fn get_pipe(&self, pipe: &String) -> Option<PipeType>{
+        for(pipe_type, pipe_string) in &self.pipe_commands{
+            if pipe_string.eq(pipe){
+                return Some(pipe_type.clone())
             }
         }
         return None
@@ -109,6 +113,14 @@ impl Command{
 }
 
 
+///Pipe commands type
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, Hash)]
+pub enum PipeType{
+    PIPE,
+    PASS
+}
+
+
 
 ///All available flag types.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash)]
@@ -139,7 +151,7 @@ impl Flags{
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
 pub enum BnfType{
     CORE,
-    SUB,
+    PIPE,
     OBJECT,
     FLAG,
     NONE

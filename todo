@@ -1,27 +1,25 @@
 CurrentProblem:
     RCLi:
         -parser:
-            -Make sure the first command is a core command
-            -create_chain now parses additional core commands
-                -fix parse(), so that there is a core command, core object and then the rest of the command
-                    -which can include core commands, solo flags, flag pairs
+            -verify 2 things when piping. 
+            1)There exists a token stream before the pipe (verified in parser)
+            2)one after the pipe
+                -create new object token_stream for invoker???
+            -this means that the Data provided by the first invocation has to be inserted into the second one
+                -Idea:Change the invokers command to accept Data objects instead of paths and string.
+                then we can invoke the first command and call the second with the data provided by the first
+
 
         -invoker:
-            -Consider changing input for functions to be a Data type in order to be able to pipe things easier later on
             -Implement sub command | to pipeline
-                -Idea:Pipe either resets the arguments in order to interpret core command again
-                or it could invoke it self again with the input received after the pipe token
-                    -ls -h | grep *.txt
-                    -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), SUB(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]
-                    -Idea: In parser find if more than one commands exist. If they do (and the second has pipe before it)
-                    run the invoker once, get the result and call the invoker again with the second core command, the flags and the data
-                    the first invocation returned
-                    
+                -ls -h | grep -p *.txt
+                -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), PIPE(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]
+                    -ls provides paths. Grep will have to iterate everypath to check for regex.
 
     
     lexer/parser/bsftree:
-        -Todo:New objects implementation broke the tests, rewrite them
-        -Todo:Parser tree_match also broke..
+        -Todo:Rewrite tests
+        -Todo:Rewrite bsftree
     
         
 

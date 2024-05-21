@@ -5,7 +5,7 @@ use regex::Regex;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::grammar_objects::{Grammar, BnfType};
-use super::objects::token_objects::{Token, TokenCommand::COMMAND, TokenObject::OBJECT, TokenFlag::FLAG};
+use super::objects::token_objects::{Token, TokenCommand::COMMAND, TokenObject::OBJECT, TokenFlag::FLAG, TokenPipe::PIPE};
 use super::objects::user_input::{UserInput, Consumable};
 
 
@@ -15,14 +15,14 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
     let mut tokens: Vec<Token> = Vec::new();
 
     //STEP 2: valid object. Match  ./Desktop/Files/readme.txt or ./Desktop/Files
-    let object_matcher = Regex::new(r"^[^-]([.]*[/]|[..])*(\w+?\S+)?").unwrap();
+    let object_matcher = Regex::new(r"^[^-|]([.]*[/]|[..])*(\w+?\S+)?").unwrap();
     let flag_match = Regex::new(r"([-]+\w+)").unwrap();
 
     let mut next_command : Option<String>;
     let mut command_string : String;
 
+    let mut last_type: BnfType = BnfType::CORE;
     loop{
-        
         //if input analyzed break
         if input.analyzed{
             break;
@@ -45,6 +45,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
         //STEP 1: if name matches, add command
         if command_name.is_some(){
             tokens.push(Token::TokenCommand(COMMAND(command_string.clone())));
+            last_type = BnfType::CORE;
             continue;
         }
 
@@ -54,9 +55,10 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
         if object_found.is_some(){
             tokens.push(Token::TokenObject(OBJECT(command_string.clone())));
 
-            if !grammar.accepts_next(&BnfType::CORE, &BnfType::OBJECT){
-                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format."));
+            if !grammar.accepts_next(&last_type, &BnfType::OBJECT){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [OBJECT]."));
             }
+            last_type = BnfType::OBJECT;
             continue;
         }
 
@@ -66,10 +68,22 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
         if flag_found.is_some(){
             tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
 
-            if !grammar.accepts_next(&BnfType::OBJECT, &BnfType::FLAG){
-                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format."));
+            if !grammar.accepts_next(&last_type, &BnfType::FLAG){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [FLAG]."));
             }
+            last_type = BnfType::FLAG;
             continue;
+        }
+
+        let pipe_found = grammar.get_pipe(&command_string.clone());
+
+        if pipe_found.is_some(){
+            tokens.push(Token::TokenPipe(PIPE(command_string.clone())));
+
+            if !grammar.accepts_next(&last_type, &BnfType::PIPE){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [PIPE]."));
+            }
+            last_type = BnfType::PIPE;
         }
     }
 

@@ -8,7 +8,7 @@ use super::invoker;
 use super::lexical_analyzer::analyze;
 use super::objects::data_types::Data;
 use super::objects::grammar_objects::FlagType;
-use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, Token, TokenObject};
+use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, InvocationPipe, Token, TokenObject};
 
 
 pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<VecDeque<Token>, Error>{
@@ -42,7 +42,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                         return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
                     }
 
-                    output_tokens.push_front(Token::InvocationToken(command.clone().unwrap()));
+                    output_tokens.push_back(Token::InvocationToken(command.clone().unwrap()));
                 }
                 //if an object is found then simply push it to stream
                 Token::TokenObject(obj) => {
@@ -83,6 +83,21 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                         return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid flag."));
                     }
                 },
+                Token::TokenPipe(pipe) => {
+                    let last_token = output_tokens.back();
+                    //if last token is some
+                    if !last_token.is_none(){
+                        //and last token is invocation token
+                        let invocation_type = grammar.get_pipe(pipe.get_value());
+                        if invocation_type.is_some(){
+                            let pipe = InvocationPipe::new(invocation_type.unwrap());
+                            output_tokens.push_back(Token::InvocationPipe(pipe));
+                        }
+                    }
+                    else{
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid piping for none command."));
+                    }
+                }
                 _ => unreachable!()
             }
         }
@@ -111,6 +126,7 @@ pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Dat
     }
     
     let mut output_tokens = parser_output.unwrap();
+
 
     //Core command that is executed
     let core_command = match output_tokens.pop_front().unwrap() {
@@ -141,7 +157,7 @@ pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Dat
             },
             Token::InvocationPair(pair) => {
                 flags.insert(pair.get_type(), Some(pair.get_object()));
-            },
+            }
             _ => break
         }
     }
