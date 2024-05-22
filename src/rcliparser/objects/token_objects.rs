@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{data_types::Data, grammar_objects::{CommandType, FlagType, PipeType}};
 
 
@@ -8,10 +10,10 @@ pub struct TokenSteam{
     //data, replaces token object
     data: Data,
     //invocation pairs and sole by downcasting
-    flags: Option<Vec<Token>>,
+    flags: Option<HashMap<FlagType, Option<TokenObject>>>,
 }
 impl TokenSteam{
-    pub fn new(core: InvocationToken, data: Data, flags: Option<Vec<Token>>) -> Self{
+    pub fn new(core: InvocationToken, data: Data, flags: Option< HashMap<FlagType, Option<TokenObject>>>) -> Self{
         return TokenSteam { core:core, data:data, flags:flags }
     }
 }

@@ -1,16 +1,11 @@
 CurrentProblem:
     RCLi:
         -parser:
-            -verify 2 things when piping. 
-            1)There exists a token stream before the pipe (verified in parser)
-            2)one after the pipe
-                -create new object token_stream for invoker???
-            -this means that the Data provided by the first invocation has to be inserted into the second one
-                -Idea:Change the invokers command to accept Data objects instead of paths and string.
-                then we can invoke the first command and call the second with the data provided by the first
-
-
+            -call_invoker:parse data type and add it to the token vector
+                -could also be a token_stream struct or smt
+                    -depends on what parameters the invoker accepts (tokens or streams)
         -invoker:
+            -Change the method parameters to accept Data objects instead of paths and string.
             -Implement sub command | to pipeline
                 -ls -h | grep -p *.txt
                 -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), PIPE(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]

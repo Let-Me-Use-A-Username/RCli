@@ -56,7 +56,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
             tokens.push(Token::TokenObject(OBJECT(command_string.clone())));
 
             if !grammar.accepts_next(&last_type, &BnfType::OBJECT){
-                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [OBJECT]."));
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Lexer error: Incorrect format [OBJECT]."));
             }
             last_type = BnfType::OBJECT;
             continue;
@@ -69,7 +69,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
             tokens.push(Token::TokenFlag(FLAG(command_string.clone())));
 
             if !grammar.accepts_next(&last_type, &BnfType::FLAG){
-                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [FLAG]."));
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Lexer error: Incorrect format [FLAG]."));
             }
             last_type = BnfType::FLAG;
             continue;
@@ -81,7 +81,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
             tokens.push(Token::TokenPipe(PIPE(command_string.clone())));
 
             if !grammar.accepts_next(&last_type, &BnfType::PIPE){
-                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Incorrect format [PIPE]."));
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Lexer error: Incorrect format [PIPE]."));
             }
             last_type = BnfType::PIPE;
         }

@@ -10,7 +10,7 @@ use super::objects::data_types::Data;
 use super::objects::grammar_objects::FlagType;
 use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, InvocationPipe, Token, TokenObject};
 
-
+/// Function that creates a token stream
 pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<VecDeque<Token>, Error>{
     let grammar = terminal_instance.get_instance_grammar();
 
@@ -19,11 +19,11 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
     //pop first item, should be command
     let command_token = input_tokens.pop_front().unwrap();
     //check if exists 
-    let core_command = grammar.get_command(command_token.get_value());
+    let mut core_command = grammar.get_command(command_token.get_value());
 
     //if core command is none exit
     if core_command.is_none(){
-        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
+        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid command."));
     }
 
     //core command
@@ -41,8 +41,10 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                     if command.is_none(){
                         return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
                     }
-
+                    //if a core command is found, change it with the current core_command
+                    //for flag checks
                     output_tokens.push_back(Token::InvocationToken(command.clone().unwrap()));
+                    core_command = command;
                 }
                 //if an object is found then simply push it to stream
                 Token::TokenObject(obj) => {
@@ -51,7 +53,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                 //if a flag is found we have to check a few things
                 Token::TokenFlag(flag) => {
                     let flag_exists = grammar.get_flag(flag.get_value());
-                    
+
                     //flag as a string exists in some FlagType
                     if flag_exists.is_some(){
                         //core command accepts this flag at current iteration
@@ -75,12 +77,12 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                             }
                         }
                         else{
-                            return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid flag for given command."));
+                            return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid flag for given command."));
                         }
                     }
                     //Invalid flag
                     else{
-                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid flag."));
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid flag."));
                     }
                 },
                 Token::TokenPipe(pipe) => {
@@ -95,7 +97,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                         }
                     }
                     else{
-                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid piping for none command."));
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid piping for none command."));
                     }
                 }
                 _ => unreachable!()
@@ -109,25 +111,9 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
     return Ok(output_tokens)
 }
 
-pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Data, Error>{
-    let user_input = accept_input(user_input);
-    if user_input.is_err(){
-        return Err(user_input.err().unwrap());
-    }
 
-    let input_tokens = analyze(&mut user_input.ok().unwrap(), terminal_instance);
-    if input_tokens.is_err(){
-        return Err(input_tokens.err().unwrap());
-    } 
-    
-    let parser_output = create_stream(input_tokens.ok().unwrap(), terminal_instance);
-    if parser_output.is_err(){
-        return Err(parser_output.err().unwrap());
-    }
-    
-    let mut output_tokens = parser_output.unwrap();
-
-
+/// Function that recursively parses input stream to call the invoker.
+pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut Terminal)  -> Result<Data, Error>{
     //Core command that is executed
     let core_command = match output_tokens.pop_front().unwrap() {
         Token::InvocationToken(core) => core,
@@ -158,9 +144,66 @@ pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Dat
             Token::InvocationPair(pair) => {
                 flags.insert(pair.get_type(), Some(pair.get_object()));
             }
+            Token::InvocationPipe(_) => {
+                //if pipe is found it means there are more tokens next
+                //call invoker to get result
+                let res = invoker::invoke(core_command.clone(), core_object.clone(), flags.clone(), terminal_instance);
+
+                //if result is valid
+                if res.is_ok(){
+                    let data_returned = res.unwrap();
+                    
+                    //if no tokens are after the pipe the syntax is wrong
+                    if output_tokens.len() <= 1{
+                        return Err(Error::new(std::io::ErrorKind::UnexpectedEof, "Parser error: Cannot pipe with empty right hand arguments."))
+                    }
+                    
+                    //match returned data type, add it to the token vector and invoke
+                    match data_returned{
+                        Data::PathData(path) => {
+                            output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(path.display().to_string())));
+                            let recursive_result = call_invoker(output_tokens.clone(), terminal_instance);
+
+                            return recursive_result;
+                        },
+                        Data::StringData(_) => todo!(),
+                        Data::VecStringData(_) => todo!(),
+                        Data::FileData(_) => todo!(),
+                        Data::DirPathData(_) => todo!(),
+                        Data::DirEntryData(_) => todo!(),
+                        Data::StatusData(_) => todo!(),
+                    }
+                }
+                //if result not valid return error
+                else{
+                    return res;
+                }
+            }
+            //This is not required since the syntax is checked at the lexer
             _ => break
         }
     }
     
     return invoker::invoke(core_command, core_object, flags, terminal_instance);
+}
+
+
+///Main parser functions. Checks if all the stages until now are correct and calls call_invoker function.
+pub fn parse(user_input: String, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+    let user_input = accept_input(user_input);
+    if user_input.is_err(){
+        return Err(user_input.err().unwrap());
+    }
+
+    let input_tokens = analyze(&mut user_input.ok().unwrap(), terminal_instance);
+    if input_tokens.is_err(){
+        return Err(input_tokens.err().unwrap());
+    } 
+    
+    let parser_output = create_stream(input_tokens.ok().unwrap(), terminal_instance);
+    if parser_output.is_err(){
+        return Err(parser_output.err().unwrap());
+    }
+
+    return call_invoker(parser_output.unwrap(), terminal_instance)
 }

@@ -39,10 +39,11 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             operation_status = cwd(terminal_instance);
         },
         CommandType::TOUCH => {
+            //PathData
             operation_status = touch(path_value);
         },
         CommandType::MKDIR => {
-            
+            //PathData
             let recursive = flags.get(&FlagType::RECURSIVE);
 
             if recursive.is_some(){
@@ -53,6 +54,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             }
         },
         CommandType::REMOVE => {
+            //PathData
             let recursive = flags.get(&FlagType::RECURSIVE);
 
             if recursive.is_some(){
@@ -63,6 +65,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             }
         },
         CommandType::COPY => {
+            //PathData
             let destination = flags.get(&FlagType::DESTINATION);
 
             if destination.is_some(){
@@ -75,6 +78,7 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             }
         },
         CommandType::MOVE => {
+            //PathData
             let destination = flags.get(&FlagType::DESTINATION);
 
             if destination.is_some(){
@@ -87,9 +91,11 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             }
         },
         CommandType::READ => {
+            //PathData
             operation_status = read(path_value);
         },
         CommandType::LIST => {
+            //PathData
             let hidden = flags.get(&FlagType::HIDDEN);
 
             if hidden.is_some(){
@@ -100,12 +106,14 @@ pub fn invoke(core: InvocationToken, object: Token, flags: HashMap<FlagType, Opt
             }
         },
         CommandType::CD => {
+            //PathData
             let mut destination_path = PathBuf::from(terminal_instance.get_current_directory());
             destination_path.push(path_value);
 
             operation_status = traverse_directory(destination_path.as_path(), terminal_instance);
         },
         CommandType::GREP => {
+            //PathData
             let pattern = flags.get(&FlagType::PATTERN);
 
             if pattern.is_some(){

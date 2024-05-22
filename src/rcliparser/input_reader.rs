@@ -9,7 +9,7 @@ pub fn accept_input(input: String) -> Result<UserInput, Error>{
     let size = input_parts.len();
 
     if size < 1 {
-        return Err(Error::new(std::io::ErrorKind::InvalidInput, "No arguments provided."));
+        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Input reader error: No arguments provided."));
     }
 
     let mut string_parts: VecDeque<String> = VecDeque::new();
