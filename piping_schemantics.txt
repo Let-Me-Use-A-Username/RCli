@@ -1,0 +1,14 @@
+function 	|input 			|output
+
+home 		|none 			|Pathbuf
+cwd			|none 			|Pathbuf
+touch 		|Path 			|File
+mkdir 		|Path 			|Pathbuf
+remove 		|Path 			|Pathbuf
+copy 		|(Path, Path) 	|Pathbuf or Vec<DirEntry>
+move 		|(Path, Path) 	|Pathbuf or Vec<DirEntry>
+read 		|Path 			|String
+list 		|Path 			|Vec<Pathbuf>
+cd 			|Path 			|Status
+grep 		|Path 			|Vec<String>
+    

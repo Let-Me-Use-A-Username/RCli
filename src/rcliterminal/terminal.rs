@@ -71,6 +71,7 @@ pub fn start_terminal() -> ExitCode{
                                     return ExitCode::SUCCESS;
                                 }
                             },
+                            Data::ComplexData(_) => todo!()
                         }
                     },
                     Err(err) => {

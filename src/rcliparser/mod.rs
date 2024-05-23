@@ -1,7 +1,9 @@
 pub mod utils {
+    pub mod functions;
     pub mod grammar_reader;
-    pub mod bsftree;
-    pub mod windows_file_attributes;
+    pub mod windows{
+        pub mod windows_file_attributes;
+    }
 }
 
 pub mod objects{

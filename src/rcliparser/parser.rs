@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::Error;
+use std::path::PathBuf;
 
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
@@ -39,7 +40,7 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
                     let command = grammar.get_command(com.get_value());
 
                     if command.is_none(){
-                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Invalid command."));
+                        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid command."));
                     }
                     //if a core command is found, change it with the current core_command
                     //for flag checks
@@ -113,20 +114,29 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
 
 /// Function that recursively parses input stream to call the invoker.
+/// Recursion is needed mainly for piping or redirecting operations
 pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut Terminal)  -> Result<Data, Error>{
     //Core command that is executed
     let core_command = match output_tokens.pop_front().unwrap() {
         Token::InvocationToken(core) => core,
-        //If core command wasn't first we would exited aready
+        //If core command wasn't first we would have exited aready
         _ => unreachable!()
     };
     
 
     //If core object doesn;t exist we assign CWD.
     //The item isnt popped only checked with front()
-    let core_object = match output_tokens.front() {
-        Some(Token::TokenObject(_)) => output_tokens.pop_front().unwrap(),
-        _ => Token::TokenObject(TokenObject::OBJECT(terminal_instance.get_current_directory_to_string()))
+    let data = match output_tokens.front() {
+        Some(Token::TokenObject(_)) => {
+            //safe convertion since all functions accept a path
+            let data_token = output_tokens.pop_front().unwrap();
+            let token_value = data_token.get_value();
+            Data::PathData(PathBuf::from(token_value))
+        },
+        _ => {
+            let path_data = terminal_instance.get_current_directory_to_string();
+            Data::PathData(PathBuf::from(path_data))
+        }
     };
 
     //Flag extraction
@@ -147,21 +157,33 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
             Token::InvocationPipe(_) => {
                 //if pipe is found it means there are more tokens next
                 //call invoker to get result
-                let res = invoker::invoke(core_command.clone(), core_object.clone(), flags.clone(), terminal_instance);
+                let res = invoker::invoke(core_command.clone(), data, flags.clone(), terminal_instance);
 
                 //if result is valid
                 if res.is_ok(){
                     let data_returned = res.unwrap();
                     
                     //if no tokens are after the pipe the syntax is wrong
-                    if output_tokens.len() <= 1{
+                    if output_tokens.len() < 1{
                         return Err(Error::new(std::io::ErrorKind::UnexpectedEof, "Parser error: Cannot pipe with empty right hand arguments."))
                     }
                     
                     //match returned data type, add it to the token vector and invoke
                     match data_returned{
+                        //append to token stream of next invoker call
                         Data::PathData(path) => {
-                            output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(path.display().to_string())));
+                            match output_tokens.get(1) {
+                                //if object exists at index 1, append it to object
+                                Some(Token::TokenObject(obj)) => {
+                                    let new_object = path.join(obj.get_value());
+                                    output_tokens.remove(1);
+                                    output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(new_object.display().to_string())));
+                                },
+                                //else create the object
+                                _ => {
+                                    output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(path.display().to_string())));
+                                }
+                            }
                             let recursive_result = call_invoker(output_tokens.clone(), terminal_instance);
 
                             return recursive_result;
@@ -172,6 +194,7 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                         Data::DirPathData(_) => todo!(),
                         Data::DirEntryData(_) => todo!(),
                         Data::StatusData(_) => todo!(),
+                        Data::ComplexData(_) => todo!(),
                     }
                 }
                 //if result not valid return error
@@ -179,12 +202,13 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                     return res;
                 }
             }
+            //todo! add redirection pipe later
             //This is not required since the syntax is checked at the lexer
             _ => break
         }
     }
     
-    return invoker::invoke(core_command, core_object, flags, terminal_instance);
+    return invoker::invoke(core_command, data, flags, terminal_instance);
 }
 
 

@@ -1,18 +1,26 @@
 use std::{fs::{DirEntry, File}, path::{Path, PathBuf}};
 
-pub enum GenericData<T>{
-    Data(T)
-}
-
 #[derive(Debug)]
+///Data types used by the invoker
 pub enum Data{
+    //Simple data types
     PathData(PathBuf),
     StringData(String),
     VecStringData(Vec<String>),
     FileData(File),
     DirPathData(Vec<PathBuf>),
     DirEntryData(Vec<DirEntry>),
-    StatusData(i32)
+    StatusData(i32),
+
+    //complex data types
+    ComplexData(Box<Vec<Data>>),
+    /*
+        productions steps:
+        read someFile.txt | touch afile.txt
+        StringData(String) | touch Data::PathData::(aFile.txt)
+        touch ComplexData( PathData, StringData)
+    */
+    
 }
 
 impl Data{

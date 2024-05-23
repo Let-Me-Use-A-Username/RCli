@@ -1,15 +1,10 @@
 CurrentProblem:
     RCLi:
-        -parser:
-            -call_invoker:parse data type and add it to the token vector
-                -could also be a token_stream struct or smt
-                    -depends on what parameters the invoker accepts (tokens or streams)
         -invoker:
-            -Change the method parameters to accept Data objects instead of paths and string.
+            -Todo:Change functions to accept different data types(invoker middleware)
+            -Todo:Change parser to parse different data types
+            -Todo:Simplify functions by breaking them down based on the case (copy and move)
             -Implement sub command | to pipeline
-                -ls -h | grep -p *.txt
-                -lexer = [COMMAND(ls), OBJECT(current_dir), FLAG(HIDDEN), PIPE(PIPE), COMMAND(GREP), OBJECT(current_dir), FLAG(PATTERN, *.txt)]
-                    -ls provides paths. Grep will have to iterate everypath to check for regex.
 
     
     lexer/parser/bsftree:
@@ -33,21 +28,22 @@ Project:
     -Todo:Logger to log output
         -parser operations
         -terminal operations
+    -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
 
 invoker:
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
+    -Implement grep -p smt -any also implement recursive
+        -Flag that will match anything (meaning convert names to lowercase, with space or not etc)
+    -Implement ls -r 
+        -Flag for recursive search
     -Implement help
         -Shows available commands and invocation
     -Implement find
         -Searching dataset to match a string loosely
     -Implement shortcut 
         -Adds an alias for a executable (probably) and saves it in a retrievable document
-
-    -Todo:Reformated invoker
-        -Todo:Find a more concrete way to move files/dirs instead of copying
-        -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
 
 terminal:

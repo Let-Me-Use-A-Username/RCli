@@ -8,10 +8,15 @@ This projects aim to be an interoperable command line tool that requires little 
 ### Rust CLI objects:
 <ul>
     <li> <strong>Input Parser</strong> </li>
+	<li> Accepts user input and creates a UserInput struct</li>
 	<li> <strong>Lexical Analyzer</strong></li>
+	<li> Takes the struct, verified the BNF (the order of the commands) syntax and creates a token stream</li>
     <li> <strong>Parser</strong></li>
+	<li> Takes the stream, verified the grammar (what command accepts what flag etc) and creates a token stream understood by the invoker.</li>
     <li> <strong>Invoker</strong></li>
+	<li> Modified the stream into more generic types and calls commands that "get the job done"</li>
 	<li> <strong>Window</strong> - Ratatui </li>
+	<li> TUI</li>
 </ul>
 
 ### Basic Commands of RCli
