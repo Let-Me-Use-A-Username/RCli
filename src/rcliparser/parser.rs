@@ -157,7 +157,7 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
             Token::InvocationPipe(_) => {
                 //if pipe is found it means there are more tokens next
                 //call invoker to get result
-                let res = invoker::invoke(core_command.clone(), data, flags.clone(), terminal_instance);
+                let res = invoker::invoke(core_command.clone(), data.clone(), flags.clone(), terminal_instance);
 
                 //if result is valid
                 if res.is_ok(){
@@ -188,13 +188,13 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
 
                             return recursive_result;
                         },
-                        Data::StringData(_) => todo!(),
+                        Data::StringData(string_data) => {
+                            let new_object = Token::TokenObject(TokenObject::OBJECT(string_data));
+                            output_tokens.insert(1, new_object);
+                        },
                         Data::VecStringData(_) => todo!(),
-                        Data::FileData(_) => todo!(),
                         Data::DirPathData(_) => todo!(),
-                        Data::DirEntryData(_) => todo!(),
-                        Data::StatusData(_) => todo!(),
-                        Data::ComplexData(_) => todo!(),
+                        _ => todo!("no")
                     }
                 }
                 //if result not valid return error

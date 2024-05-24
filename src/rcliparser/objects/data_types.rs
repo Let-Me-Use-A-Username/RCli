@@ -1,26 +1,23 @@
-use std::{fs::{DirEntry, File}, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 ///Data types used by the invoker
 pub enum Data{
     //Simple data types
+    
+    //rest
     PathData(PathBuf),
+    //read
     StringData(String),
+    //grep
     VecStringData(Vec<String>),
-    FileData(File),
+    //list
     DirPathData(Vec<PathBuf>),
-    DirEntryData(Vec<DirEntry>),
+    //cd
     StatusData(i32),
 
     //complex data types
-    ComplexData(Box<Vec<Data>>),
-    /*
-        productions steps:
-        read someFile.txt | touch afile.txt
-        StringData(String) | touch Data::PathData::(aFile.txt)
-        touch ComplexData( PathData, StringData)
-    */
-    
+    DataVector(Box<Vec<Data>>)
 }
 
 impl Data{

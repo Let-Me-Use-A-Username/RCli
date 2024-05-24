@@ -3,8 +3,14 @@ CurrentProblem:
         -invoker:
             -Todo:Change functions to accept different data types(invoker middleware)
             -Todo:Change parser to parse different data types
+
             -Todo:Simplify functions by breaking them down based on the case (copy and move)
-            -Implement sub command | to pipeline
+            -Make grep more generic
+
+            -Fix function return types, everything is fucked
+                -copy should return the top level directory
+                    -copy dirs as well
+                        -copy dirs isnt working properly
 
     
     lexer/parser/bsftree:

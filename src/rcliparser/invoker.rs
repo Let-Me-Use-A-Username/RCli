@@ -141,17 +141,13 @@ fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 fn touch(data: Data) -> Result<Data, Error>{
     match data {
         Data::PathData(path) => {
-            return functions::touch(path.as_path(), None);
+            return functions::touch(path.as_path());
         },
         Data::StringData(string) => {
             todo!("read")
         },
         Data::DirPathData(file_paths) => {
             todo!("list")
-        },
-        //dont know about this one
-        Data::DirEntryData(dir_entries) => {
-            todo!("copy & move")
         },
         Data::VecStringData(string_vec) => {
             todo!("grep")
@@ -236,20 +232,29 @@ fn traverse_directory(data: Data, terminal_instance: &mut Terminal) -> Result<Da
 
 fn grep(data: Data, pattern: &String) -> Result<Data, Error>{
     match data {
+        //normal usage + touch
         Data::PathData(path) => {
             return functions::grep(path.as_path(), pattern)
         },
-        Data::FileData(file) => {
-            todo!("touch")
-        },
+        //read result
         Data::StringData(string) => {
-            todo!("read")
+            let string_input: Vec<String> = vec![string];
+            return functions::grep_from_string(string_input, pattern);
         },
+        //list results
         Data::DirPathData(file_paths) => {
-            todo!("list")
-        },
-        Data::DirEntryData(dir_entries) => {
-            todo!("copy & move")
+            let mut grep_output: Vec<Data> = vec![];
+
+            for path in file_paths{
+                let result = functions::grep(path.as_path(), pattern);
+                if result.is_ok(){
+                    grep_output.push(result.unwrap());
+                }
+                else{
+                    return Err(result.err().unwrap());
+                }
+            }
+            return Ok(Data::DataVector(Box::new(grep_output)))
         }
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path.")),
     }

@@ -21,16 +21,13 @@ pub fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
 
 ///Creates a file at the given path. Returns file.
-pub fn touch(file_path: &Path, data: Option<Data>) -> Result<Data, Error>{
+pub fn touch(file_path: &Path) -> Result<Data, Error>{
     //could not need the open() clause unless pipelining
     let file_operation = OpenOptions::new().write(true).read(true).create(true).open(file_path);
 
     match file_operation{
-        Ok(file) => {
-            if data.is_some(){
-
-            }
-            return Ok(Data::FileData(file));
+        Ok(_) => {
+            return Ok(Data::PathData(file_path.to_path_buf()));
 
         },
         Err(error) => {
@@ -106,7 +103,11 @@ pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -
             }
         }
         else if path.is_dir(){
-            return copy_dir(path, Some(destination));
+            
+            fs::create_dir_all(destination).ok();
+            
+            return new_copy_dir(path, Some(destination))
+            //return copy_dir(path, Some(destination));
         }
         //tricky clause.
         else{
@@ -267,7 +268,7 @@ pub fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Resu
 }
 
 ///For given data returns match.
-///Data can be either a dir or a stream.
+///Data can be either a dir or path.
 ///Therefore matches are either files or Strings.
 pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
     let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
@@ -309,6 +310,22 @@ pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
     Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
 }
 
+///Temporary function until grep becomes generic
+pub fn grep_from_string(input: Vec<String>, regex_string: &String) -> Result<Data, io::Error> {
+    let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
+    let pattern = Regex::new(pattern_string.as_str()).unwrap();
+
+    let mut output: Vec<String> = vec![];
+
+    for item in input{
+        if pattern.is_match(item.as_str()){
+            output.push(item);
+        }
+    }
+
+    return Ok(Data::VecStringData(output))
+}
+
 
 ///Exits RCli
 pub fn exit() -> Result<Data, io::Error> {
@@ -334,33 +351,61 @@ fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Er
         fs::create_dir_all(destination.unwrap()).ok();
     }
 
-    let mut entrybuffer: Vec<DirEntry> = vec![];
+    let entrybuffer: Vec<PathBuf> = vec![];
     
     match fs::read_dir(original_path){
         Ok(dir_paths) => {
-            for path in dir_paths{
-                entrybuffer.push(path.unwrap());
-
-                let path_type = entrybuffer.last().clone().unwrap().path();
-
-                let new_file = path_type.file_name().unwrap();
+            for entry in dir_paths.map(|entry| entry.unwrap()){
+                let path_type = entry.file_type().unwrap();
+                let new_file = entry.file_name();
+                println!("new file {:?}", new_file);
                 let new_path = destination.unwrap().join(new_file);
 
                 if path_type.is_dir(){
                     //recurse
                     if destination.is_some(){
-                        return copy_dir(&path_type, Some(&new_path));
+                        return copy_dir(&entry.path(), Some(&new_path));
                     }
                 }
                 else{
                     //add to stack
-                    let _ = fs::copy(path_type, new_path);
+                    let _ = fs::copy(&entry.path(), new_path);
                 }
             }
-            return Ok(Data::DirEntryData(entrybuffer))
-        },
+            return Ok(Data::DirPathData(entrybuffer))
+        }
         Err(error) => {
             return Err(error)
-        },
+        }
+    }
+}
+
+fn new_copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Error>{
+    let entrybuffer: Vec<PathBuf> = vec![];
+    
+    match fs::read_dir(original_path){
+        Ok(dir_paths) => {
+            for entry in dir_paths.map(|entry| entry.unwrap()){
+                let path_type = entry.file_type().unwrap();
+                let new_file = entry.file_name();
+                println!("new file {:?}", entry);
+                let new_path = destination.unwrap().join(new_file);
+
+                if path_type.is_dir(){
+                    //recurse
+                    if destination.is_some(){
+                        return copy_dir(&entry.path(), Some(&new_path));
+                    }
+                }
+                else{
+                    //add to stack
+                    let _ = fs::copy(&entry.path(), new_path);
+                }
+            }
+            return Ok(Data::DirPathData(entrybuffer))
+        }
+        Err(error) => {
+            return Err(error)
+        }
     }
 }

@@ -49,21 +49,9 @@ pub fn start_terminal() -> ExitCode{
                             Data::VecStringData(string_vec) => {
                                 string_vec.iter().for_each(|x| println!("{x}"));
                             },
-                            Data::FileData(file) => {
-                                let buffer = BufReader::new(file).lines();
-                                
-                                for line in buffer.flatten(){
-                                    println!("{line}");
-                                }
-                            },
                             Data::DirPathData(path_data) => {
                                 for path in path_data{
                                     println!("{}", path.display().to_string());
-                                }
-                            },
-                            Data::DirEntryData(dir_entries) => {
-                                for entry in dir_entries{
-                                    println!("{}", entry.path().display().to_string());
                                 }
                             },
                             Data::StatusData(status_code) => {
@@ -71,7 +59,16 @@ pub fn start_terminal() -> ExitCode{
                                     return ExitCode::SUCCESS;
                                 }
                             },
-                            Data::ComplexData(_) => todo!()
+                            Data::DataVector(boxed_data) => {
+                                let data = *boxed_data;
+                                
+                                if data.len() >= 1{
+                                    data.iter().for_each(|x| println!("{:?}", x));
+                                }
+                                else{
+                                    println!("{:?}", data);
+                                }
+                            },
                         }
                     },
                     Err(err) => {
