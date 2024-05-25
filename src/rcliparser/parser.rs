@@ -124,20 +124,39 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
     };
     
 
-    //If core object doesn;t exist we assign CWD.
-    //The item isnt popped only checked with front()
-    let data = match output_tokens.front() {
-        Some(Token::TokenObject(_)) => {
-            //safe convertion since all functions accept a path
-            let data_token = output_tokens.pop_front().unwrap();
-            let token_value = data_token.get_value();
-            Data::PathData(PathBuf::from(token_value))
-        },
-        _ => {
-            let path_data = terminal_instance.get_current_directory_to_string();
-            Data::PathData(PathBuf::from(path_data))
+    let data: Data;
+    let mut data_vector: Vec<Data> = vec![];
+    
+    /* 
+        Cases:
+            1) no objects 
+                -Assign current working dir
+            2) one object or object vector
+                -Assign a data vector
+    */
+    loop{
+        match output_tokens.front(){
+            //while token objects found push to vector
+            Some(Token::TokenObject(_)) => {
+                let token = output_tokens.pop_front().unwrap();
+                let token_value = token.get_value();
+                data_vector.push(Data::PathData(PathBuf::from(token_value)))
+            },
+            //found flag (probably)
+            _ => {
+                //if vec is empty it means no objects found so add cwd
+                if data_vector.is_empty(){
+                    let path_data = terminal_instance.get_current_directory_to_string();
+                    data = Data::PathData(PathBuf::from(path_data))
+                }
+                //else object vector found
+                else{
+                    data = Data::DataVector(Box::new(data_vector))
+                }
+                break;
+            }
         }
-    };
+    }
 
     //Flag extraction
     let mut flags: HashMap<FlagType, Option<TokenObject>> = HashMap::new();
@@ -146,7 +165,7 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
         if output_tokens.is_empty(){
             break
         }
-
+        
         match output_tokens.pop_front().unwrap() {
             Token::InvocationFlag(sole) => {
                 flags.insert(sole.get_type(), None);
@@ -154,12 +173,13 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
             Token::InvocationPair(pair) => {
                 flags.insert(pair.get_type(), Some(pair.get_object()));
             }
+            //todo! add redirection pipe later
             Token::InvocationPipe(_) => {
                 //if pipe is found it means there are more tokens next
                 //call invoker to get result
                 let res = invoker::invoke(core_command.clone(), data.clone(), flags.clone(), terminal_instance);
 
-                //if result is valid
+                //if result from first invocation is valid
                 if res.is_ok(){
                     let data_returned = res.unwrap();
                     
@@ -170,7 +190,7 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                     
                     //match returned data type, add it to the token vector and invoke
                     match data_returned{
-                        //append to token stream of next invoker call
+                        //if returned type is data add it to next invocation stream
                         Data::PathData(path) => {
                             match output_tokens.get(1) {
                                 //if object exists at index 1, append it to object
@@ -188,21 +208,23 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
 
                             return recursive_result;
                         },
+                        //if returned type is string add it to invocation stream
+                        //todo! do this properly (by checking for existance of object)
                         Data::StringData(string_data) => {
                             let new_object = Token::TokenObject(TokenObject::OBJECT(string_data));
+                            println!("new object {:?}", new_object);
                             output_tokens.insert(1, new_object);
                         },
                         Data::VecStringData(_) => todo!(),
                         Data::DirPathData(_) => todo!(),
-                        _ => todo!("no")
+                        _ => unreachable!()
                     }
                 }
-                //if result not valid return error
+                //if invocation result not valid return
                 else{
                     return res;
                 }
             }
-            //todo! add redirection pipe later
             //This is not required since the syntax is checked at the lexer
             _ => break
         }

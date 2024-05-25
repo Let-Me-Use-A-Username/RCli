@@ -1,14 +1,14 @@
-function 	|input 			|output
+function 	|input 			|output                     |description
 
-home 		|none 			|Pathbuf
-cwd			|none 			|Pathbuf
-touch 		|Path 			|File
-mkdir 		|Path 			|Pathbuf
-remove 		|Path 			|Pathbuf
-copy 		|(Path, Path) 	|Pathbuf or Vec<DirEntry>
-move 		|(Path, Path) 	|Pathbuf or Vec<DirEntry>
-read 		|Path 			|String
-list 		|Path 			|Vec<Pathbuf>
-cd 			|Path 			|Status
-grep 		|Path 			|Vec<String>
+home 		|none 			|Pathbuf                    |returns home path
+cwd			|none 			|Pathbuf                    |returns current working directory path
+touch 		|Path 			|Pathbuf                    |returns path of created file
+mkdir 		|Path 			|Pathbuf                    |returns path of created dir
+remove 		|Path 			|Pathbuf                    |returns path of deleted object
+copy 		|(Path, Path) 	|Pathbuf                    |returns root path of destination
+move 		|(Path, Path) 	|Pathbuf                    |returns path of renamed destination
+read 		|Path 			|String                     |returns string data read
+list 		|Path 			|Vec<Pathbuf>               |returns vector of paths read
+cd 			|Path 			|Status                     |returns status from singlenton
+grep 		|Path 			|Vec<String>                |returns vector of matched strings
     

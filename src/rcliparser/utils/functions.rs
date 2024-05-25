@@ -82,64 +82,31 @@ pub fn remove(path: &Path, recursive: bool) -> Result<Data, Error>{
 }
 
 
-///Copies the content of either a file or a directory. This is move powerful over move
+///Copies the content of either a file or a directory. This is more powerful over move
 ///due to the fact that it can copy without requiring permissions (on Windows) whereas 
 ///move requires.
 ///Returns either the destination file or directory.
 pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
-    let path_exists = path.try_exists()?;
-    let dest_exists = destination.try_exists()?;
 
-    //Destination doesn't exist, so copy the content to a new file/directory
-    if path_exists & !dest_exists{
-        if path.is_file(){
-            match fs::copy(path, destination){
-                Ok(_) => {
-                    return Ok(Data::PathData(destination.to_path_buf()))
-                },
-                Err(error) => {
-                    return Err(error)
-                },
-            }
-        }
-        else if path.is_dir(){
-            
-            fs::create_dir_all(destination).ok();
-            
-            return new_copy_dir(path, Some(destination))
-            //return copy_dir(path, Some(destination));
-        }
-        //tricky clause.
-        else{
-            Err(Error::new(ErrorKind::Other, "Invoker Error: Path not recognized as a file or a directory."))
-        }
+    //if origin doesnt exist error
+    if !path.try_exists()?{
+        return Err(Error::new(ErrorKind::NotFound, "Invoker Error: Path |{path:?}| doesn't exist."))
     }
-    //Destination does exists
-    else if path_exists & dest_exists{
-        if path.is_file() & destination.is_file(){
-            //todo! this overrites the content of to
-            //add flag to merge.. ?
-            match fs::copy(path, destination){
-                Ok(_) => {
-                    return Ok(Data::PathData(destination.to_path_buf()))
-                },
-                Err(error) => {
-                    return Err(error)
-                },
-            }
-        }
-        //create the from dir to destination dir
-        else if path.is_dir() & destination.is_dir(){
+
+    //if destination exists
+    if destination.try_exists()?{
+        //and origin is a directory
+        if path.is_dir(){
             let mut destination_path = terminal_instance.get_current_directory().join(destination);
             destination_path.push(path.components().last().unwrap().as_os_str());
             
             return copy_dir(path, Some(destination_path.as_path()));
         }
-        else if path.is_file() & destination.is_dir(){
-            //create new path
+        //else it can be a file/symlink etc doesn't matter
+        else{
             let mut file_path = terminal_instance.get_current_directory().join(destination);
             file_path.push(path.components().last().unwrap().as_os_str());
-
+    
             //create file in destination
             let _ = OpenOptions::new().write(true).read(true).create(true).open(file_path.clone())?;
             
@@ -153,14 +120,27 @@ pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -
                 },
             }
         }
+    }
+    //if destination doesn't exist
+    else{
+        //if origin is path simply copy it (with data of course)
+        if path.is_file(){
+            match fs::copy(path, destination){
+                Ok(_) => {
+                    return Ok(Data::PathData(destination.to_path_buf()))
+                },
+                Err(error) => {
+                    return Err(error)
+                },
+            }
+        }
+        //if origin is dir copy all
         else{
-            Err(Error::new(ErrorKind::InvalidData, "Invoker Error: Unknown objects."))
+            return copy_dir(path, Some(destination));
         }
     }
-    else{
-        Err(Error::new(ErrorKind::NotFound, "Invoker Error: Path |{path:?}| doesn't exist."))
-    }
 }
+
 
 ///Moves and renames a file or directory.
 ///If destination doesn't exist it renames a file. If it does exist it copies it.
@@ -318,6 +298,7 @@ pub fn grep_from_string(input: Vec<String>, regex_string: &String) -> Result<Dat
     let mut output: Vec<String> = vec![];
 
     for item in input{
+        println!("item: {item}");
         if pattern.is_match(item.as_str()){
             output.push(item);
         }
@@ -343,66 +324,41 @@ pub fn invalid() -> Result<Data, io::Error> {
 */
 
 ///Helper function to recursively copy a directory with its content.
-///Mimics DFS algorithms. Used in cp/copy.
-///Returns ReadDir object.
+///Mimics DFS algorithms. Used in cp/copy and in move.
+///Returns top level path of copied dir.
 fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Error>{
-
+    
     if destination.is_some(){
         fs::create_dir_all(destination.unwrap()).ok();
     }
 
-    let entrybuffer: Vec<PathBuf> = vec![];
+    let mut entries: Vec<DirEntry> = vec![];
     
     match fs::read_dir(original_path){
         Ok(dir_paths) => {
+            //Collect all current dir entries
             for entry in dir_paths.map(|entry| entry.unwrap()){
-                let path_type = entry.file_type().unwrap();
-                let new_file = entry.file_name();
-                println!("new file {:?}", new_file);
-                let new_path = destination.unwrap().join(new_file);
+                entries.push(entry);
+            }
 
-                if path_type.is_dir(){
-                    //recurse
-                    if destination.is_some(){
-                        return copy_dir(&entry.path(), Some(&new_path));
-                    }
+            //Double for loop is needed because some elements are skipped when the matching
+            //is done in parallel with the loop.
+
+            //for every entry found
+            for entry in entries{
+                let new_path = destination.unwrap().join(entry.file_name());
+                    
+                if entry.file_type().unwrap().is_file(){
+                    let _ = fs::copy(&entry.path(), new_path);
+                }
+                else if entry.file_type().unwrap().is_dir(){
+                    let _ = copy_dir(entry.path().as_path(), Some(&new_path));
                 }
                 else{
-                    //add to stack
                     let _ = fs::copy(&entry.path(), new_path);
                 }
             }
-            return Ok(Data::DirPathData(entrybuffer))
-        }
-        Err(error) => {
-            return Err(error)
-        }
-    }
-}
-
-fn new_copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Error>{
-    let entrybuffer: Vec<PathBuf> = vec![];
-    
-    match fs::read_dir(original_path){
-        Ok(dir_paths) => {
-            for entry in dir_paths.map(|entry| entry.unwrap()){
-                let path_type = entry.file_type().unwrap();
-                let new_file = entry.file_name();
-                println!("new file {:?}", entry);
-                let new_path = destination.unwrap().join(new_file);
-
-                if path_type.is_dir(){
-                    //recurse
-                    if destination.is_some(){
-                        return copy_dir(&entry.path(), Some(&new_path));
-                    }
-                }
-                else{
-                    //add to stack
-                    let _ = fs::copy(&entry.path(), new_path);
-                }
-            }
-            return Ok(Data::DirPathData(entrybuffer))
+            return Ok(Data::PathData(destination.unwrap().to_path_buf()))
         }
         Err(error) => {
             return Err(error)

@@ -12,15 +12,31 @@ use super::objects::token_objects::{InvocationToken, TokenObject};
 use super::utils::functions;
 
 
-pub fn invoke(core: InvocationToken, object: Data, flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn invoke(core: InvocationToken, data_object: Data, flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
     //Prints for debug purposes
     // println!("\nCORE: {:?}", core.clone());
     // println!("DATA: {:?}", object.clone());
     // println!("FLAGS: {:?}", flags.clone());
-    
 
     let operation_status: Result<Data, Error>;
+
+    let object = match data_object{
+        Data::DataVector(mut vector) => {
+            if vector.len() == 1{
+                Data::PathData(vector.pop().unwrap().get_path().unwrap().to_path_buf())
+            }
+            else{
+                todo!()
+            }
+        },
+        Data::PathData(path) => {
+            Data::PathData(path.to_path_buf())
+        }
+        //Only types that might come are pathdata and datavector
+        _ => unreachable!()
+    };
+
 
     match core.get_type(){
         CommandType::HOME => {
@@ -200,7 +216,7 @@ fn r#move(origin_data: Data, destination_data: Data, terminal_instance: &mut Ter
 fn read(data: Data) -> Result<Data, Error>{
     match data {
         Data::PathData(path) => {
-            return functions::read(path.as_path())
+            return functions::read(path.as_path());
         }
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path.")),
     }

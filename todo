@@ -1,16 +1,19 @@
 CurrentProblem:
     RCLi:
+        -parser:
+            -call_invoker: pass the rest of the data types
+                -idea:path vector will be like  TokenObject(path1) TokenObject(path2) TokenObject(path3)
+                -idea:string vector or strings.. dont know yet
+                    -idea:since we push objects from the first invocation we have to understand what we are parsing before deciding 
+                    if it is a path, a string or a vector string
+                        -the amount of objects and what they contain miight be of help..?
+                        
+            -loop inside call_invoker only adds PathData objects.. fix this
         -invoker:
-            -Todo:Change functions to accept different data types(invoker middleware)
-            -Todo:Change parser to parse different data types
+            -fix after parser
 
-            -Todo:Simplify functions by breaking them down based on the case (copy and move)
+        -invoker:
             -Make grep more generic
-
-            -Fix function return types, everything is fucked
-                -copy should return the top level directory
-                    -copy dirs as well
-                        -copy dirs isnt working properly
 
     
     lexer/parser/bsftree:
@@ -44,6 +47,9 @@ invoker:
         -Flag that will match anything (meaning convert names to lowercase, with space or not etc)
     -Implement ls -r 
         -Flag for recursive search
+    -Implement ls -a
+        -Flag to show types permissions and date 
+            -Mainly to show types
     -Implement help
         -Shows available commands and invocation
     -Implement find

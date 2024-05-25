@@ -84,7 +84,7 @@
             "next":["OBJECT", "FLAG", "PIPE"]
         },
         "OBJECT": {
-            "next": ["FLAG", "NONE", "PIPE"]
+            "next": ["FLAG", "PIPE", "NONE"]
         },
         "FLAG": {
             "next": ["FLAG", "OBJECT", "PIPE", "NONE"]

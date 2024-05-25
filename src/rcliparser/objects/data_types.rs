@@ -4,8 +4,6 @@ use std::path::{Path, PathBuf};
 ///Data types used by the invoker
 pub enum Data{
     //Simple data types
-    
-    //rest
     PathData(PathBuf),
     //read
     StringData(String),
@@ -25,6 +23,15 @@ impl Data{
         match &self{
             Data::PathData(path) => {
                 return Some(path.as_path())
+            },
+            _ => return None
+        }
+    }
+
+    pub fn get_string(&self) -> Option<&String>{
+        match &self{
+            Data::StringData(string) => {
+                return Some(string)
             },
             _ => return None
         }
