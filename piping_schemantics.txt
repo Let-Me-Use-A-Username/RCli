@@ -11,4 +11,25 @@ read 		|Path 			|String                     |returns string data read
 list 		|Path 			|Vec<Pathbuf>               |returns vector of paths read
 cd 			|Path 			|Status                     |returns status from singlenton
 grep 		|Path 			|Vec<String>                |returns vector of matched strings
-    
+
+
+How piping works in the parser:
+
+The first time the parser is called the stream he produced, will only have TokenObjects(String) inside.
+
+Invoker Data parameter: 
+The first time we simply create a Data type from the following idea:
+    - If no object has been given, then the path we are on is the cwd
+    - If at least one object has been given we create a DataVector
+
+If a piping mechanism is in the token stream then, we call the invoker for the first half of the stream.
+Then depending on the data type it returned (because this tells us what command more or less was issued)
+we assign a new form of TokenObject(String, Datatype). This DataType is used by the invoker so as when 
+commands that can be pipelined such as Touch or Grep, we know what data type we are dealing with.
+
+Example:
+For example, is issuing the command cat someFile.txt | touch aFile.txt
+cat returned a String (StringData type)
+The parser then inserts this data after aFile.txt so the second invocation stream will look like this
+touch aFile.txt "string outputed by cat" 
+Therefore, touch will know where to create a file, and what to insert in it.

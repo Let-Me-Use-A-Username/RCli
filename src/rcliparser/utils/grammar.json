@@ -55,7 +55,7 @@
     },
     "pipe_commands": {
         "PIPE":"|",
-        "PASS":">"
+        "REDIRECT":">"
     },
     "flag_type":{
         "RECURSIVE": {

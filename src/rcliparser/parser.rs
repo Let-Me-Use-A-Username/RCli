@@ -1,14 +1,16 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::Error;
 use std::path::PathBuf;
+use std::vec;
 
+use crate::rcliparser::objects::token_objects::GetType;
 use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::input_reader::accept_input;
 use super::invoker;
 use super::lexical_analyzer::analyze;
-use super::objects::data_types::Data;
-use super::objects::grammar_objects::FlagType;
+use super::objects::data_types::{Data, DataType};
+use super::objects::grammar_objects::{FlagType, PipeType};
 use super::objects::token_objects::{GetValue, InvocationFlag, InvocationPair, InvocationPipe, Token, TokenObject};
 
 /// Function that creates a token stream
@@ -136,12 +138,20 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
     */
     loop{
         match output_tokens.front(){
-            //while token objects found push to vector
-            Some(Token::TokenObject(_)) => {
+            //If simple object is found this is the first recursion
+            Some(Token::TokenObject(TokenObject::OBJECT(_))) => {
                 let token = output_tokens.pop_front().unwrap();
                 let token_value = token.get_value();
-                data_vector.push(Data::PathData(PathBuf::from(token_value)))
+                data_vector.push(Data::PathData(token_value.into()))
             },
+            //if Data object is found, this is some nth iteration
+            Some(Token::TokenObject(TokenObject::DATAOBJECT(_, _))) => {
+                let token = output_tokens.pop_front().unwrap();
+                let token_value = token.get_value();
+                let token_type = token.get_type().unwrap();
+
+                data_vector.push(Data::DataType(token_value.to_string(), token_type.clone()));
+            }
             //found flag (probably)
             _ => {
                 //if vec is empty it means no objects found so add cwd
@@ -151,13 +161,15 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                 }
                 //else object vector found
                 else{
-                    data = Data::DataVector(Box::new(data_vector))
+                    data = Data::DataVector(Box::new(data_vector.clone()))
                 }
                 break;
             }
         }
     }
-
+    // println!("tokens: {:?}", output_tokens);
+    // println!("Data: {:?}", data);
+    // println!("Data vector: {:?}", data_vector.clone());
     //Flag extraction
     let mut flags: HashMap<FlagType, Option<TokenObject>> = HashMap::new();
 
@@ -173,56 +185,99 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
             Token::InvocationPair(pair) => {
                 flags.insert(pair.get_type(), Some(pair.get_object()));
             }
-            //todo! add redirection pipe later
-            Token::InvocationPipe(_) => {
+            Token::InvocationPipe(pipe) => {
                 //if pipe is found it means there are more tokens next
                 //call invoker to get result
                 let res = invoker::invoke(core_command.clone(), data.clone(), flags.clone(), terminal_instance);
 
-                //if result from first invocation is valid
-                if res.is_ok(){
-                    let data_returned = res.unwrap();
-                    
-                    //if no tokens are after the pipe the syntax is wrong
-                    if output_tokens.len() < 1{
-                        return Err(Error::new(std::io::ErrorKind::UnexpectedEof, "Parser error: Cannot pipe with empty right hand arguments."))
-                    }
-                    
-                    //match returned data type, add it to the token vector and invoke
-                    match data_returned{
-                        //if returned type is data add it to next invocation stream
-                        Data::PathData(path) => {
-                            match output_tokens.get(1) {
-                                //if object exists at index 1, append it to object
-                                Some(Token::TokenObject(obj)) => {
-                                    let new_object = path.join(obj.get_value());
-                                    output_tokens.remove(1);
-                                    output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(new_object.display().to_string())));
-                                },
-                                //else create the object
-                                _ => {
-                                    output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(path.display().to_string())));
-                                }
+                match pipe.get_type(){
+                    PipeType::PIPE => {
+                        //if result from first invocation is valid
+                        if res.is_ok(){
+                            let data_returned = res.unwrap();
+                            
+                            //if no tokens are after the pipe the syntax is wrong
+                            if output_tokens.len() < 1{
+                                return Err(Error::new(std::io::ErrorKind::UnexpectedEof, "Parser error: Cannot pipe with empty right hand arguments."))
                             }
-                            let recursive_result = call_invoker(output_tokens.clone(), terminal_instance);
+                            
+                            //match returned data type, add it to the token vector and invoke
+                            match data_returned{
 
-                            return recursive_result;
-                        },
-                        //if returned type is string add it to invocation stream
-                        //todo! do this properly (by checking for existance of object)
-                        Data::StringData(string_data) => {
-                            let new_object = Token::TokenObject(TokenObject::OBJECT(string_data));
-                            println!("new object {:?}", new_object);
-                            output_tokens.insert(1, new_object);
-                        },
-                        Data::VecStringData(_) => todo!(),
-                        Data::DirPathData(_) => todo!(),
-                        _ => unreachable!()
-                    }
-                }
-                //if invocation result not valid return
-                else{
-                    return res;
+                                //If a function returns a path, and the second part of the stream already has one. We join them
+                                //else we add the path from the first half to the second.
+                                Data::PathData(path) => {
+                                    match output_tokens.get(1) {
+                                        //if object exists at index 1, append it to object
+                                        Some(Token::TokenObject(obj)) => {
+                                            let new_object = path.join(obj.get_value());
+                                            output_tokens.remove(1);
+                                            output_tokens.insert(1, Token::TokenObject(TokenObject::OBJECT(new_object.display().to_string())));
+                                        },
+                                        //else create the object
+                                        _ => {
+                                            output_tokens.insert(1, Token::TokenObject(TokenObject::DATAOBJECT(path.display().to_string(), DataType::Path)));
+                                        }
+                                    }
+                                },
+                                Data::DirPathData(paths) => {
+                                    match output_tokens.get(1) {
+                                        //if object exists at index 1, append it to object
+                                        Some(Token::TokenObject(_)) => {
+                                            let old_obj = output_tokens.remove(1).unwrap();
+                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
+                                            output_tokens.insert(1, new_obj);
+                                        },
+                                        //else create the object
+                                        _ => {()}
+                                    }
+                                    
+                                    for dir_path in paths{
+                                        output_tokens.insert(2, Token::TokenObject(TokenObject::DATAOBJECT(dir_path.display().to_string(), DataType::VectorPath)));
+                                    }
+                                },
+                                Data::StringData(string_data) => {
+                                    match output_tokens.get(1) {
+                                        //if object exists at index 1, append it to object
+                                        Some(Token::TokenObject(_)) => {
+                                            let old_obj = output_tokens.remove(1).unwrap();
+                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
+                                            output_tokens.insert(1, new_obj);
+                                        },
+                                        //else create the object
+                                        _ => {()}
+                                    }
+                                    let new_object = Token::TokenObject(TokenObject::DATAOBJECT(string_data, DataType::String));
+                                    output_tokens.insert(2, new_object);
+                                },
+                                Data::VecStringData(vec_strings) => {
+                                    match output_tokens.get(1) {
+                                        //if object exists at index 1, append it to object
+                                        Some(Token::TokenObject(_)) => {
+                                            let old_obj = output_tokens.remove(1).unwrap();
+                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
+                                            output_tokens.insert(1, new_obj);
+                                        },
+                                        //else create the object
+                                        _ => {()}
+                                    }
+                                    for string in vec_strings{
+                                        output_tokens.insert(2, Token::TokenObject(TokenObject::DATAOBJECT(string, DataType::VectorString)));
+                                    }
+                                },
+                                _ => unreachable!()
+                            }
+                        }
+                        //if invocation result not valid return
+                        else{
+                            return res;
+                        }
+
+                        let recursive_result = call_invoker(output_tokens.clone(), terminal_instance);
+
+                        return recursive_result;
+                    },
+                    PipeType::REDIRECT => {todo!()},
                 }
             }
             //This is not required since the syntax is checked at the lexer

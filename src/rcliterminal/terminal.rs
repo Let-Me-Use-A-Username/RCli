@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 use std::{env, io};
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 
 use crate::rcliparser::parser;
 use crate::rcliparser::utils::grammar_reader;
@@ -69,6 +69,8 @@ pub fn start_terminal() -> ExitCode{
                                     println!("{:?}", data);
                                 }
                             },
+                            Data::DataType(_, _) => todo!(),
+                            
                         }
                     },
                     Err(err) => {

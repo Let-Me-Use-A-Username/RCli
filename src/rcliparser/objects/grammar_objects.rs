@@ -117,7 +117,7 @@ impl Command{
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, Hash)]
 pub enum PipeType{
     PIPE,
-    PASS
+    REDIRECT
 }
 
 

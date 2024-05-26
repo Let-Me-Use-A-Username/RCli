@@ -21,12 +21,22 @@ pub fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
 
 ///Creates a file at the given path. Returns file.
-pub fn touch(file_path: &Path) -> Result<Data, Error>{
+pub fn touch(file_path: &Path, data: Option<String>) -> Result<Data, Error>{
     //could not need the open() clause unless pipelining
     let file_operation = OpenOptions::new().write(true).read(true).create(true).open(file_path);
 
     match file_operation{
         Ok(_) => {
+            if data.is_some(){
+                match fs::write(file_path, data.clone().unwrap()){
+                    Ok(_) => {
+                        return Ok(Data::StringData(data.unwrap()))
+                    },
+                    Err(error) => {
+                        return Err(error)
+                    }
+                }
+            }
             return Ok(Data::PathData(file_path.to_path_buf()));
 
         },
@@ -291,20 +301,15 @@ pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
 }
 
 ///Temporary function until grep becomes generic
-pub fn grep_from_string(input: Vec<String>, regex_string: &String) -> Result<Data, io::Error> {
+pub fn match_string(input: String, regex_string: &String) -> Option<String> {
     let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
     let pattern = Regex::new(pattern_string.as_str()).unwrap();
-
-    let mut output: Vec<String> = vec![];
-
-    for item in input{
-        println!("item: {item}");
-        if pattern.is_match(item.as_str()){
-            output.push(item);
-        }
+    
+    if pattern.is_match(input.as_str()){
+        return Some(input)
     }
-
-    return Ok(Data::VecStringData(output))
+    
+    return None
 }
 
 

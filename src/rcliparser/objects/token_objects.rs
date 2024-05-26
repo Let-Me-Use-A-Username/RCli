@@ -1,8 +1,12 @@
-use super::grammar_objects::{CommandType, FlagType, PipeType};
+use super::{data_types::DataType, grammar_objects::{CommandType, FlagType, PipeType}};
 
 ///Trait to get a value from a Token.
 pub trait GetValue{
     fn get_value(&self) -> &String;
+}
+
+pub trait GetType{
+    fn get_type(&self) -> Option<&DataType>;
 }
 
 ///Hieghest hierarchical Token.
@@ -38,6 +42,16 @@ impl GetValue for Token{
         }
     }
 }
+impl GetType for Token{
+    fn get_type(&self) -> Option<&DataType> {
+        match self{
+            Token::TokenObject(TokenObject::DATAOBJECT(_, t)) => {
+                return Some(t)
+            },
+            _ => None
+        }
+    }
+}
 
 
 #[derive(Clone, Debug)]
@@ -56,7 +70,8 @@ impl GetValue for TokenCommand{
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TokenObject{
-    OBJECT(String)
+    OBJECT(String),
+    DATAOBJECT(String, DataType)
 }
 impl GetValue for TokenObject{
     fn get_value(&self) -> &String {
@@ -64,9 +79,24 @@ impl GetValue for TokenObject{
             TokenObject::OBJECT(obj) => {
                 return obj
             },
+            TokenObject::DATAOBJECT(obj, _) => {
+                return obj
+            }
         }
     }
 }
+impl GetType for TokenObject{
+    fn get_type(&self) -> Option<&DataType> {
+        match self{
+            TokenObject::DATAOBJECT(_, t) => {
+                return Some(t)
+            },
+            _ => None
+        }
+    }
+}
+
+
 
 #[derive(Clone, Debug)]
 pub enum TokenFlag{
@@ -168,5 +198,9 @@ pub struct InvocationPipe{
 impl InvocationPipe{
     pub fn new(pipe: PipeType) -> Self{
         return InvocationPipe{ pipe:pipe }
+    }
+
+    pub fn get_type(&self) -> &PipeType{
+        return &self.pipe
     }
 }

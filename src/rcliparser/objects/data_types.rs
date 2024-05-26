@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 ///Data types used by the invoker
 pub enum Data{
     //Simple data types
+    DataType(String, DataType),
+    //most functions
     PathData(PathBuf),
     //read
     StringData(String),
@@ -18,20 +20,19 @@ pub enum Data{
     DataVector(Box<Vec<Data>>)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DataType{
+    String, 
+    Path, 
+    VectorString,
+    VectorPath
+}
+
 impl Data{
     pub fn get_path(&self) -> Option<&Path>{
         match &self{
             Data::PathData(path) => {
                 return Some(path.as_path())
-            },
-            _ => return None
-        }
-    }
-
-    pub fn get_string(&self) -> Option<&String>{
-        match &self{
-            Data::StringData(string) => {
-                return Some(string)
             },
             _ => return None
         }
