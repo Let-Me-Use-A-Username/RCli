@@ -1,6 +1,5 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::Error;
-use std::path::PathBuf;
 use std::vec;
 
 use crate::rcliparser::objects::token_objects::GetType;
@@ -136,12 +135,20 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
             2) one object or object vector
                 -Assign a data vector
     */
-    loop{
-        match output_tokens.front(){
+
+    let binding = output_tokens.clone();
+    let mut obj_iterator = binding.iter();
+
+    'extract_objects: loop{
+        let next_item = obj_iterator.next();
+        println!("obj: {:?}", next_item);
+
+        match next_item{
             //If simple object is found this is the first recursion
             Some(Token::TokenObject(TokenObject::OBJECT(_))) => {
                 let token = output_tokens.pop_front().unwrap();
                 let token_value = token.get_value();
+
                 data_vector.push(Data::PathData(token_value.into()))
             },
             //if Data object is found, this is some nth iteration
@@ -157,25 +164,40 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                 //if vec is empty it means no objects found so add cwd
                 if data_vector.is_empty(){
                     let path_data = terminal_instance.get_current_directory_to_string();
-                    data = Data::PathData(PathBuf::from(path_data))
+                    data_vector.push(Data::PathData(path_data.into()));
                 }
-                //else object vector found
-                else{
-                    data = Data::DataVector(Box::new(data_vector.clone()))
-                }
-                break;
+
+                // let res = output_tokens.iter().any(|token| match token {
+                //     Token::InvocationPipe(_) => {
+                //         false
+                //     }
+                //     Token::TokenObject(_) => {
+                //         //problem is that we iterate but pop front above.
+
+                //         true
+                //     },
+                //     _ => false,
+                // });
+
+                // if !res{
+                //     break 'extract_objects;
+                // }
+                break 'extract_objects;
             }
         }
     }
+    
+    data = Data::DataVector(Box::new(data_vector.clone()));
+
     // println!("tokens: {:?}", output_tokens);
     // println!("Data: {:?}", data);
     // println!("Data vector: {:?}", data_vector.clone());
     //Flag extraction
     let mut flags: HashMap<FlagType, Option<TokenObject>> = HashMap::new();
 
-    loop{
+    'extract_flags: loop{
         if output_tokens.is_empty(){
-            break
+            break 'extract_flags;
         }
         
         match output_tokens.pop_front().unwrap() {
@@ -221,46 +243,15 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                                     }
                                 },
                                 Data::DirPathData(paths) => {
-                                    match output_tokens.get(1) {
-                                        //if object exists at index 1, append it to object
-                                        Some(Token::TokenObject(_)) => {
-                                            let old_obj = output_tokens.remove(1).unwrap();
-                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
-                                            output_tokens.insert(1, new_obj);
-                                        },
-                                        //else create the object
-                                        _ => {()}
-                                    }
-                                    
                                     for dir_path in paths{
                                         output_tokens.insert(2, Token::TokenObject(TokenObject::DATAOBJECT(dir_path.display().to_string(), DataType::VectorPath)));
                                     }
                                 },
                                 Data::StringData(string_data) => {
-                                    match output_tokens.get(1) {
-                                        //if object exists at index 1, append it to object
-                                        Some(Token::TokenObject(_)) => {
-                                            let old_obj = output_tokens.remove(1).unwrap();
-                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
-                                            output_tokens.insert(1, new_obj);
-                                        },
-                                        //else create the object
-                                        _ => {()}
-                                    }
                                     let new_object = Token::TokenObject(TokenObject::DATAOBJECT(string_data, DataType::String));
                                     output_tokens.insert(2, new_object);
                                 },
                                 Data::VecStringData(vec_strings) => {
-                                    match output_tokens.get(1) {
-                                        //if object exists at index 1, append it to object
-                                        Some(Token::TokenObject(_)) => {
-                                            let old_obj = output_tokens.remove(1).unwrap();
-                                            let new_obj = Token::TokenObject(TokenObject::DATAOBJECT(old_obj.get_value().to_string(), DataType::Path));
-                                            output_tokens.insert(1, new_obj);
-                                        },
-                                        //else create the object
-                                        _ => {()}
-                                    }
                                     for string in vec_strings{
                                         output_tokens.insert(2, Token::TokenObject(TokenObject::DATAOBJECT(string, DataType::VectorString)));
                                     }
@@ -281,7 +272,7 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
                 }
             }
             //This is not required since the syntax is checked at the lexer
-            _ => break
+            _ => { break 'extract_flags; }
         }
     }
     

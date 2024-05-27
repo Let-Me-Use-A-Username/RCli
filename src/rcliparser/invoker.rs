@@ -23,23 +23,9 @@ pub fn invoke(core: InvocationToken, data_object: Data, flags: HashMap<FlagType,
     
     //conventions:
     // if vector has only one item, we consider it to be a path object
-    let object = match data_object.clone(){
-        Data::DataVector(vec) => {
-            let vector = *vec;
-            let path = vector.get(0).unwrap();
-                
-            match path{
-                Data::PathData(p) => {
-                    Data::PathData(p.to_path_buf())
-                },
-                _ => Data::PathData(terminal_instance.get_current_directory())
-            }
-            
-        },
-        Data::PathData(path) => {
-            Data::PathData(path.to_path_buf())
-        }
-        //Only types that might come are pathdata and datavector
+    let invocation_path: Data;
+    let mut data_vector = match data_object{
+        Data::DataVector(vector) => *vector,
         _ => unreachable!()
     };
 
@@ -52,68 +38,84 @@ pub fn invoke(core: InvocationToken, data_object: Data, flags: HashMap<FlagType,
             operation_status = cwd(terminal_instance);
         },
         CommandType::TOUCH => {
-            operation_status = touch(object, data_object);
+            invocation_path = data_vector.remove(0);
+            
+            if data_vector.len() > 0{
+                operation_status = touch(invocation_path, Some(data_vector));
+            }
+            else{
+                operation_status = touch(invocation_path, None);
+            }
+            
         },
         CommandType::MKDIR => {
+            invocation_path = data_vector.remove(0);
             let recursive = flags.get(&FlagType::RECURSIVE);
 
             if recursive.is_some(){
-                operation_status = mkdir(object, true);
+                operation_status = mkdir(invocation_path, true);
             }
             else{
-                operation_status = mkdir(object, false);
+                operation_status = mkdir(invocation_path, false);
             }
         },
         CommandType::REMOVE => {
+            invocation_path = data_vector.remove(0);
             let recursive = flags.get(&FlagType::RECURSIVE);
 
             if recursive.is_some(){
-                operation_status = remove(object, true);
+                operation_status = remove(invocation_path, true);
             }
             else{
-                operation_status = remove(object, false);
+                operation_status = remove(invocation_path, false);
             }
         },
         CommandType::COPY => {
+            invocation_path = data_vector.remove(0);
             let destination = flags.get(&FlagType::DESTINATION);
 
             if destination.is_some(){
                 let destination = Data::PathData(PathBuf::from(destination.unwrap().as_ref().unwrap().get_value()));
                 
-                operation_status = copy(object, destination, terminal_instance);
+                operation_status = copy(invocation_path, destination, terminal_instance);
             }
             else{
                 operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide destination."));
             }
         },
         CommandType::MOVE => {
+            invocation_path = data_vector.remove(0);
             let destination = flags.get(&FlagType::DESTINATION);
 
             if destination.is_some(){
                 let destination = Data::PathData(PathBuf::from(destination.unwrap().as_ref().unwrap().get_value()));
                 
-                operation_status = r#move(object, destination, terminal_instance);
+                operation_status = r#move(invocation_path, destination, terminal_instance);
             }
             else{
                 operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide destination."));
             }
         },
         CommandType::READ => {
-            operation_status = read(object);
+            invocation_path = data_vector.remove(0);
+            operation_status = read(invocation_path);
         },
         CommandType::LIST => {
+            invocation_path = data_vector.remove(0);
             let hidden = flags.get(&FlagType::HIDDEN);
 
             if hidden.is_some(){
-                operation_status = list(object, true);
+                operation_status = list(invocation_path, true);
             }
             else{
-                operation_status = list(object, false);
+                operation_status = list(invocation_path, false);
             }
         },
         CommandType::CD => {
+            invocation_path = data_vector.remove(0);
+
             let mut destination_path = PathBuf::from(terminal_instance.get_current_directory());
-            destination_path.push(object.get_path().unwrap());
+            destination_path.push(invocation_path.get_path().unwrap());
 
             let destination_data = Data::PathData(destination_path);
 
@@ -125,7 +127,7 @@ pub fn invoke(core: InvocationToken, data_object: Data, flags: HashMap<FlagType,
             if pattern.is_some(){
                 let pattern_unwraped = pattern.unwrap().as_ref().unwrap().get_value();
                 
-                operation_status = grep(object, pattern_unwraped);
+                operation_status = grep(data_vector, pattern_unwraped);
             }
             else{
                 operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide destination."));
@@ -160,39 +162,29 @@ fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 }
 
 
-fn touch(current_path: Data, data: Data) -> Result<Data, Error>{
+fn touch(current_path: Data, data: Option<Vec<Data>>) -> Result<Data, Error>{
     let mut return_result: Vec<Data> = vec![];
 
-    match data {
-        Data::DataVector(vector) => {
-            let data_vector = *vector;
-            let mut file_path = PathBuf::from(current_path.get_path().unwrap());
-
-            for data in data_vector{
-                match data{
-                    Data::DataType(obj, t) => {
-                        match t{
-                            DataType::String | DataType::VectorString | DataType::VectorPath=> {
-                                return_result.push(functions::touch(file_path.as_path(), Some(obj)).unwrap())
-                            },
-                            //touch requires a path to create a file. First (invoker) we assign the cwd and then the first parameter
-                            //read from the token stream is the path assigned to create. So we assign it and then iterate the rest
-                            //of the data
-                            DataType::Path => {
-                                file_path = PathBuf::from(obj);
-                            }
-                        }
-                    },
-                    Data::PathData(path) => {
-                        return_result.push(functions::touch(path.as_path(), None).unwrap());
-                    },
-                    _ => unreachable!()
-                }
+    if data.is_some(){
+        for data in data.unwrap(){
+            match data{
+                Data::DataType(obj, t) => {
+                    match t{
+                        DataType::String | DataType::VectorString | DataType::VectorPath=> {
+                            return_result.push(functions::touch(current_path.get_path().unwrap(), Some(obj)).unwrap())
+                        },
+                        _ => unreachable!()
+                    }
+                },
+                _ => return Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Invalid data."))
             }
-            return Ok(Data::DataVector(Box::new(return_result)))
-        },
-        _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path.")),
+        }
     }
+    else{
+        return functions::touch(current_path.get_path().unwrap(), None)
+    }
+
+    return Ok(Data::DataVector(return_result.into()))
 }
 
 
@@ -269,55 +261,45 @@ fn traverse_directory(data: Data, terminal_instance: &mut Terminal) -> Result<Da
 
 
 
-fn grep(data: Data, pattern: &String) -> Result<Data, Error>{
+fn grep(data: Vec<Data>, pattern: &String) -> Result<Data, Error>{
     let mut return_result: Vec<Data> = vec![];
 
-    match data {
-        Data::DataVector(vector) => {
-            let data_vector = *vector;
+    for data_item in data{
+        match data_item{
+            Data::DataType(obj, t) => {
+                match t{
+                    //match against strings
+                    DataType::String | DataType::VectorString=> {
+                        let result = functions::match_string(obj, pattern);
 
-            for data in data_vector{
-                match data{
-                    Data::DataType(obj, t) => {
-                        match t{
-                            //match against strings
-                            DataType::String | DataType::VectorString=> {
-                                let result = functions::match_string(obj, pattern);
-
-                                if result.is_some(){
-                                    return_result.push(Data::StringData(result.unwrap()))
-                                }
-
-                            },
-                            //open file and match content
-                            DataType::Path => {
-                                let path = PathBuf::from(obj);
-
-                                return_result.push(functions::grep(path.as_path(), pattern).unwrap())
-                            }
-                            //match against file / dir names
-                            DataType::VectorPath => {
-                                let result = functions::match_string(obj, pattern);
-
-                                if result.is_some(){
-                                    return_result.push(Data::StringData(result.unwrap()))
-                                }
-                            }
+                        if result.is_some(){
+                            return_result.push(Data::StringData(result.unwrap()))
                         }
+
                     },
-                    Data::PathData(path) => {
-                        return_result.push(functions::grep(path.as_path(), pattern).unwrap());
-                    },
-                    _ => unreachable!()
+                    //open file and match content
+                    DataType::Path => {
+                        let path = PathBuf::from(obj);
+
+                        return_result.push(functions::grep(path.as_path(), pattern).unwrap())
+                    }
+                    //match against file / dir names
+                    DataType::VectorPath => {
+                        let result = functions::match_string(obj, pattern);
+
+                        if result.is_some(){
+                            return_result.push(Data::StringData(result.unwrap()))
+                        }
+                    }
                 }
-            }
-            return Ok(Data::DataVector(Box::new(return_result)))
-        },
-        Data::PathData(path) => {
-            return functions::grep(path.as_path(), pattern)
+            },
+            Data::PathData(path) => {
+                return_result.push(functions::grep(path.as_path(), pattern).unwrap());
+            },
+            _ => return Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Invalid data."))
         }
-        _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path.")),
     }
+    return Ok(Data::DataVector(return_result.into()))
 }
 
 

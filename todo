@@ -1,9 +1,12 @@
 CurrentProblem:
     RCLi:
         -parser/invoker:
-            -Try to make simpler
-            -piping to touch works
-            -piping to grep doesnt
+            -Problem is this. 
+                -For certain commands (touch, grep) we require different position for the tokens
+                    -Solution:Either fix it
+                    -Solution2:Change grammar and therefore change (slightly) lexer and (whole) parser/invoker
+                    -Solution3:Implement piping in a different way
+                        -This will also require the parser to work differently, instead of recursive be something else
 
 
     lexer/parser/bsftree:
