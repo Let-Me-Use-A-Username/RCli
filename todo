@@ -2,6 +2,7 @@ CurrentProblem:
     RCLi:
         -parser/invoker:
             -Problem is this. 
+                -Rethink Reader/Lexer/Parser/Invoker(?)
                 -For certain commands (touch, grep) we require different position for the tokens
                     -Solution:Either fix it
                     -Solution2:Change grammar and therefore change (slightly) lexer and (whole) parser/invoker

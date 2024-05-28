@@ -141,7 +141,6 @@ pub fn call_invoker(mut output_tokens: VecDeque<Token>, terminal_instance: &mut 
 
     'extract_objects: loop{
         let next_item = obj_iterator.next();
-        println!("obj: {:?}", next_item);
 
         match next_item{
             //If simple object is found this is the first recursion
