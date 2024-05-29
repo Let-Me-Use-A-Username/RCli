@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::token_objects::InvocationToken;
+use super::token_objects::InvocationCommand;
 
 ///Core object of RCli.s
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq)]
@@ -24,11 +24,11 @@ impl Grammar{
     }
 
     ///If string input matched a command invocation return it else none.
-    pub fn get_command(&self, command: &String) -> Option<InvocationToken>{
+    pub fn get_command(&self, command: &String) -> Option<InvocationCommand>{
         for (command_type, invocation_command) in &self.command_invocations{
             let match_command =  invocation_command.match_string(command);
             if match_command.is_some(){
-                return Some(InvocationToken::new(command_type.clone(), match_command.unwrap().get_flags()))
+                return Some(InvocationCommand::new(command_type.clone(), match_command.unwrap().get_flags()))
             }
         }
         return None

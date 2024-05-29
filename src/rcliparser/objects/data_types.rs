@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 ///Data types used by the invoker
 pub enum Data{
     //Simple data types
-    DataType(String, DataType),
+    SimpleData(String),
     //most functions
     PathData(PathBuf),
     //read

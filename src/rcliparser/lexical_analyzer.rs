@@ -45,6 +45,11 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
         //STEP 1: if name matches, add command
         if command_name.is_some(){
             tokens.push(Token::TokenCommand(COMMAND(command_string.clone())));
+
+            if !grammar.accepts_next(&last_type, &BnfType::CORE){
+                return Err(Error::new(std::io::ErrorKind::InvalidInput, "Lexer error: Incorrect format [CORE]."));
+            }
+
             last_type = BnfType::CORE;
             continue;
         }

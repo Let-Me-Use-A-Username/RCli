@@ -8,11 +8,11 @@ use crate::rcliterminal::terminal_singlenton::Terminal;
 
 use super::objects::data_types::{Data, DataType};
 use super::objects::grammar_objects::FlagType;
-use super::objects::token_objects::{InvocationToken, TokenObject};
+use super::objects::token_objects::{InvocationCommand, InvocationToken, TokenObject};
 use super::utils::functions;
 
 
-pub fn invoke(core: InvocationToken, data_object: Data, flags: HashMap<FlagType, Option<TokenObject>>, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn invoke(invocation: InvocationToken, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
     //Prints for debug purposes
     // println!("\nCORE: {:?}", core.clone());

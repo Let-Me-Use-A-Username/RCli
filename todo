@@ -4,10 +4,15 @@ CurrentProblem:
             -Problem is this. 
                 -Rethink Reader/Lexer/Parser/Invoker(?)
                 -For certain commands (touch, grep) we require different position for the tokens
-                    -Solution:Either fix it
+                    X   -Solution:Either fix it
                     -Solution2:Change grammar and therefore change (slightly) lexer and (whole) parser/invoker
-                    -Solution3:Implement piping in a different way
+                    X   -Solution3:Implement piping in a different way
                         -This will also require the parser to work differently, instead of recursive be something else
+        -parser:
+            -Remake the invocation call with new object
+        -invoker: 
+            -Remake the invocation extraction
+        
 
 
     lexer/parser/bsftree:
@@ -35,6 +40,8 @@ Project:
 
 
 invoker:
+    -Implement echo
+        -Prints to terminal
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
     -Implement grep -p smt -any also implement recursive

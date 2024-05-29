@@ -81,7 +81,7 @@
     },
     "bnf_grammar": {
         "CORE": {
-            "next":["OBJECT", "FLAG", "PIPE"]
+            "next":["CORE", "OBJECT", "FLAG", "PIPE"]
         },
         "OBJECT": {
             "next": ["FLAG", "PIPE", "NONE"]
@@ -90,7 +90,7 @@
             "next": ["FLAG", "OBJECT", "PIPE", "NONE"]
         },
         "PIPE": {
-            "next": ["CORE"]
+            "next": ["CORE", "OBJECT"]
         },
         "NONE":{
             "next": []
