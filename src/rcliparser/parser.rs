@@ -350,7 +350,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
                     match pipe.get_type(){
                         //if pipe found then command is next
                         PipeType::PIPE => {
-                            
+                            return call_invoker(input_tokens, terminal_instance)
                         },
                         //if redirect found then object is next
                         PipeType::REDIRECT => {
@@ -370,6 +370,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
 
     let invocation_token = InvocationToken::new(core_command.get_type(), output_data, flags);
     let invocation_result = invoker::invoke(invocation_token, terminal_instance);
+    
     return invocation_result
 }
 
