@@ -1,4 +1,4 @@
-use std::{fmt::format, fs::{self, DirBuilder, DirEntry, File, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}};
+use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}};
 use regex::Regex;
 
 use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal_singlenton::Terminal};
@@ -17,6 +17,11 @@ pub fn home(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 pub fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let current_path = terminal_instance.get_current_directory();
     Ok(Data::PathData(current_path))
+}
+
+///Prints to terminal
+pub fn echo(input: &String) -> Result<Data, Error>{
+    return Ok(Data::StringData(input.to_string()))
 }
 
 
@@ -159,23 +164,33 @@ pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal)
     let path_exists = path.try_exists()? | path.exists();
     let dest_exists = destination.try_exists()?;
     //simple rename
+    let mut result: Result<Data, Error>= Err(Error::new(ErrorKind::Other, "Invoker Error: Error occured while moving."));
+
     if path_exists & !dest_exists{
-        match fs::rename(path, destination){
-            Ok(_) => {
-                return Ok(Data::PathData(destination.to_path_buf()))
-            },
-            Err(error) => {
-                return Err(error)
-            },
+        let rename_result = fs::rename(path, destination);
+
+        if rename_result.is_ok(){
+            result = Ok(Data::SimpleData(destination.display().to_string()))
         }
     }
     //both paths exists so let copy handle it.
     else if path_exists & dest_exists{
-        return copy(path, destination, terminal_instance);
+        result = copy(path, destination, terminal_instance);
     }
-    else{
-        Err(Error::new(ErrorKind::NotFound, "Invoker Error: Path |{path:?}| doesn't exist."))
+
+    if result.is_ok(){
+        
+        if path.is_file(){
+            let _ = remove(path, false);
+        }
+        else{
+            let _ = remove(path, true);
+        }
+
+        return Ok(result.unwrap())
     }
+
+    return Err(result.unwrap_err())
 }
 
 ///Reads the content of a file to terminal
@@ -185,17 +200,21 @@ pub fn read(path: &Path) -> Result<Data, Error>{
         if path.is_dir(){
             return Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Cannot read directory. Use ls instead."))
         }
-        let file = OpenOptions::new().write(true).read(true).open(path)?;
+        let file = OpenOptions::new().write(true).read(true).open(path);
 
-        match io::read_to_string(file){
-            Ok(content) => {
-                return Ok(Data::StringData(content))
-            },
-            Err(error) => {
-                return Err(error)
-            },
+        if file.is_ok(){
+            let lines = io::BufReader::new(file.unwrap()).lines();
+
+            let mut output_string = Vec::<String>::new();
+            
+            for line in lines.flatten(){
+                output_string.push(format(format_args!("[ {} ]", line)));
+            }
+            return Ok(Data::VecStringData(output_string));
         }
-        
+        return Err(Error::new(ErrorKind::NotFound, "Invoker Error: Error while opening file."));
+
+
     }
     return Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
 }
@@ -284,17 +303,24 @@ pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
         }
         else if path.is_file(){
             //todo! change with read?
-            let file = File::open(path)?;
-            let lines = io::BufReader::new(file).lines();
+            let res = read(path);
 
-            let mut output_string = Vec::<String>::new();
-            
-            for line in lines.flatten(){
-                if pattern.is_match(line.as_str()){
-                    output_string.push(format(format_args!("[ {} ]", line)));
+            if res.is_ok(){
+                let mut output_string = Vec::<String>::new();
+
+                match res.unwrap(){
+                    Data::VecStringData(vector) => {
+                        for line in vector{
+                            if pattern.is_match(line.as_str()){
+                                output_string.push(format(format_args!("[ {} ]", line)));
+                            }
+                        }
+                        return Ok(Data::VecStringData(output_string))
+                    },
+                    _ => unreachable!()
                 }
             }
-            return Ok(Data::VecStringData(output_string))
+            return Err(res.unwrap_err())
         }
     }
     Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
@@ -311,7 +337,6 @@ pub fn match_string(input: String, regex_string: &String) -> Option<String> {
     
     return None
 }
-
 
 ///Exits RCli
 pub fn exit() -> Result<Data, io::Error> {

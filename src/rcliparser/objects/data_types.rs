@@ -1,38 +1,40 @@
-use std::path::{Path, PathBuf};
+use std::{collections::VecDeque, path::{Path, PathBuf}};
+
+use super::grammar_objects::CommandType;
 
 #[derive(Debug, Clone)]
-///Data types used by the invoker
 pub enum Data{
-    //Simple data types
+    /* 
+        Parser objects 
+    */
     SimpleData(String),
-    //most functions
+    CommandData(CommandType),
+    DataVector(Box<VecDeque<Data>>),
+    /* 
+        Invoker commands return types
+    */
     PathData(PathBuf),
-    //read
     StringData(String),
-    //grep
     VecStringData(Vec<String>),
-    //list
     DirPathData(Vec<PathBuf>),
-    //cd
     StatusData(i32),
-
-    //complex data types
-    DataVector(Box<Vec<Data>>)
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum DataType{
-    String, 
-    Path, 
-    VectorString,
-    VectorPath
 }
 
 impl Data{
     pub fn get_path(&self) -> Option<&Path>{
         match &self{
-            Data::PathData(path) => {
-                return Some(path.as_path())
+            Data::SimpleData(path) => {
+                let obj = Path::new(path);
+                return Some(obj)
+            },
+            _ => return None
+        }
+    }
+
+    pub fn get_value(&self) -> Option<&String>{
+        match &self{
+            Data::SimpleData(path) => {
+                return Some(path)
             },
             _ => return None
         }

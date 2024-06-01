@@ -4,9 +4,7 @@ use std::{collections::VecDeque, fmt};
 pub struct UserInput{
     pub vector_input: VecDeque<String>,
     pub vector_length: usize,
-    pub core_command: String,
     pub peek_index: usize,
-    pub consume_index: usize,
     pub analyzed: bool
 }
 
@@ -47,7 +45,7 @@ pub trait Consumable {
 impl Consumable for UserInput{
     //Consumes one command at a time. Does not remove item to optimize performance.
     fn consume(&mut self) -> Option<String>{
-        let con_index = self.consume_index;
+        let con_index = 0;
         let vec_length = self.vector_length;
 
         if con_index < vec_length{
@@ -71,7 +69,7 @@ impl Consumable for UserInput{
 
 impl fmt::Debug for UserInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "UserInput {{ vector_input: {:?}, vector_length: {}, core_command: {}, peek_index: {}, consume_index: {} }}", 
-            self.vector_input, self.vector_length, self.core_command, self.peek_index, self.consume_index)
+        write!(f, "UserInput {{ vector_input: {:?}, vector_length: {}, peek_index: {}}}", 
+            self.vector_input, self.vector_length, self.peek_index)
     }
 }

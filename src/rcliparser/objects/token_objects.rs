@@ -10,7 +10,6 @@ pub trait GetValue{
 ///Hieghest hierarchical Token.
 #[derive(Clone, Debug)]
 pub enum Token{
-    InvocationToken(InvocationToken),
     /* 
         Tokens used by the parser for next step of parsing.
     */
@@ -108,22 +107,8 @@ impl GetValue for TokenPipe{
 
 
 /* 
-    Invocation Tokens
+    Invocation Tokens used by the parser to create Invocator object
 */
-
-
-#[derive(Clone, Debug)]
-pub struct InvocationToken{
-    command: CommandType,
-    data: Data,
-    flags: HashMap<FlagType, Option<InvocationObject>>
-}
-impl InvocationToken{
-    pub fn new(command: CommandType, data: Data, flags: HashMap<FlagType, Option<InvocationObject>>) -> Self{
-        return InvocationToken {command: command, data: data, flags: flags}
-    }
-}
-
 
 ///Token used by invoker to invoke a commadn.
 #[derive(Clone, Debug)]
@@ -156,7 +141,7 @@ impl InvocationObject{
     }
 
     pub fn get_object(&self) -> String{
-        return self.object
+        return self.object.clone()
     }
 }
 
@@ -210,5 +195,33 @@ impl InvocationPipe{
 
     pub fn get_type(&self) -> &PipeType{
         return &self.pipe
+    }
+}
+
+/* 
+    Invocator object used by the invoker
+*/
+
+#[derive(Clone, Debug)]
+pub struct Invocator{
+    command: CommandType,
+    data: Data,
+    flags: HashMap<FlagType, Option<InvocationObject>>
+}
+impl Invocator{
+    pub fn new(command: CommandType, data: Data, flags: HashMap<FlagType, Option<InvocationObject>>) -> Self{
+        return Invocator {command: command, data: data, flags: flags}
+    }
+
+    pub fn get_type(&self) -> &CommandType{
+        return &self.command
+    }
+
+    pub fn get_data(&self) -> Data{
+        return self.data.clone()
+    }
+
+    pub fn get_flags(&self) -> &HashMap<FlagType, Option<InvocationObject>>{
+        return &self.flags
     }
 }

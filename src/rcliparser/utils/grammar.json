@@ -42,7 +42,7 @@
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flags": ["PATTERN"]
+            "flags": []
         },
         "EXIT":{
             "invocation_name": ["exit"],

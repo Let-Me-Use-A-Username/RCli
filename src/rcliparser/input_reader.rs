@@ -14,9 +14,6 @@ pub fn accept_input(input: String) -> Result<UserInput, Error>{
 
     let mut string_parts: VecDeque<String> = VecDeque::new();
 
-    // for part in input_parts.clone(){
-    //     string_parts.push_back(part.trim().to_string())
-    // }
     let mut object_with_quotes = Vec::<&str>::new();
     for part in input_parts{
         if part.starts_with('"'){
@@ -34,15 +31,10 @@ pub fn accept_input(input: String) -> Result<UserInput, Error>{
         }   
     }
 
-    let main: String = string_parts[0].to_lowercase();
-
-
     return Ok(UserInput {
         vector_input:string_parts, 
         vector_length:size, 
-        core_command:main, 
         peek_index:0, 
-        consume_index:0,
         analyzed: false});
 }
 
@@ -61,7 +53,6 @@ mod tests {
         assert_eq!(input.vector_input[2], "-d");
         assert_eq!(input.vector_input[3], "path");
         assert_eq!(input.vector_length, 4);
-        assert_eq!(input.core_command, "create");
     }
 
 
@@ -90,14 +81,8 @@ mod tests {
     fn test_consume(){
         let mut input = accept_input("list --hidden".to_string()).ok().unwrap();
         assert_eq!(input.consume(), Some("list".to_string()));
-        assert_eq!(input.consume_index, 0);
-        assert_ne!(input.consume_index, input.vector_length);
         assert_eq!(input.consume(), Some("--hidden".to_string()));
-        assert_eq!(input.consume_index, 0);
-        assert_eq!(input.consume_index, input.vector_length);
         assert_eq!(input.consume(), None);
-        assert_eq!(input.consume_index, input.vector_length);
-        assert_eq!(input.consume_index, 0);
     }
 }
 

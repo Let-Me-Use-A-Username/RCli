@@ -15,6 +15,5 @@ grep 		|Path 			|Vec<String>                |returns vector of matched strings
 
 Pipe is used to pass output to another program or utility.
 
-
 Redirect is used to pass output to either a file or stream.
 	

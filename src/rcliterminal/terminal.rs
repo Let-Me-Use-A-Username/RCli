@@ -68,9 +68,11 @@ pub fn start_terminal() -> ExitCode{
                                 else{
                                     println!("{:?}", data);
                                 }
+                            }
+                            Data::SimpleData(data) => {
+                                println!("{data}")
                             },
-                            Data::DataType(_, _) => todo!(),
-                            
+                            _ => unreachable!()
                         }
                     },
                     Err(err) => {

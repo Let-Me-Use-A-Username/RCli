@@ -1,19 +1,10 @@
 CurrentProblem:
     RCLi:
-        -parser/invoker:
-            -Problem is this. 
-                -Rethink Reader/Lexer/Parser/Invoker(?)
-                -For certain commands (touch, grep) we require different position for the tokens
-                    X   -Solution:Either fix it
-                    -Solution2:Change grammar and therefore change (slightly) lexer and (whole) parser/invoker
-                    X   -Solution3:Implement piping in a different way
-                        -This will also require the parser to work differently, instead of recursive be something else
-        -parser:
-            -Remake the invocation call with new object
-        -invoker: 
-            -Remake the invocation extraction
-        
-
+        -Implement echo
+            -In invoker
+        -Implement ls -r 
+            -Flag for recursive search
+        -Implement more generic grep
 
     lexer/parser/bsftree:
         -Todo:Rewrite tests
@@ -40,14 +31,10 @@ Project:
 
 
 invoker:
-    -Implement echo
-        -Prints to terminal
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
-    -Implement grep -p smt -any also implement recursive
+    -Implement grep smt -any also implement recursive
         -Flag that will match anything (meaning convert names to lowercase, with space or not etc)
-    -Implement ls -r 
-        -Flag for recursive search
     -Implement ls -a
         -Flag to show types permissions and date 
             -Mainly to show types
@@ -60,9 +47,6 @@ invoker:
 
 
 terminal:
-    -Note:Every terminal instance should be a singlenton.
-        -Therefore when a new terminal is started it is assigned a new singlenton.
-    
     https://docs.rs/crossterm/latest/crossterm/index.html#
     -Note:Accept raw input with Crossterm which is included in ratatui?
         -I.E. newline, CTRL^C etc

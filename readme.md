@@ -10,11 +10,11 @@ This projects aim to be an interoperable command line tool that requires little 
     <li> <strong>Input Parser</strong> </li>
 	<li> Accepts user input and creates a UserInput struct</li>
 	<li> <strong>Lexical Analyzer</strong></li>
-	<li> Takes the struct, verified the BNF (the order of the commands) syntax and creates a token stream</li>
+	<li> Takes the struct, verifies the BNF syntax (the order of the commands) and creates a token stream</li>
     <li> <strong>Parser</strong></li>
-	<li> Takes the stream, verified the grammar (what command accepts what flag etc) and creates a token stream understood by the invoker.</li>
+	<li> Takes the stream provided by the lexer. Verified the accepted flags (what command accepts what flag) and creates a token stream that is then recursively parsed to create an Invocator object that is used by the invoker.</li>
     <li> <strong>Invoker</strong></li>
-	<li> Modified the stream into more generic types and calls commands that "get the job done"</li>
+	<li> Accepts the Invocator object provided by the parser and breaks it down to more usable variables. Variables are passed to a "Middleware" that are interpreted by their order (for example cd command accepts a path as the next object but not a flag). The middleware then calls the functions that return a Result which is either a Data type or an error. This result is passed back to the terminal to print it to the user.</li>
 	<li> <strong>Window</strong> - Ratatui </li>
 	<li> TUI</li>
 </ul>
