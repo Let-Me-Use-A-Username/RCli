@@ -2,15 +2,16 @@ function 	|input 			|output                     |description
 
 home 		|none 			|Pathbuf                    |returns home path
 cwd			|none 			|Pathbuf                    |returns current working directory path
-touch 		|Path 			|Pathbuf                    |returns path of created file
+echo        |String         |String                     |returns string inputed by user
+touch 		|Path 			|Pathbuf / DataVector       |returns path of created file
 mkdir 		|Path 			|Pathbuf                    |returns path of created dir
 remove 		|Path 			|Pathbuf                    |returns path of deleted object
 copy 		|(Path, Path) 	|Pathbuf                    |returns root path of destination
 move 		|(Path, Path) 	|Pathbuf                    |returns path of renamed destination
-read 		|Path 			|String                     |returns string data read
+read 		|Path 			|Vec<String>                |returns vector string data read
 list 		|Path 			|Vec<Pathbuf>               |returns vector of paths read
 cd 			|Path 			|Status                     |returns status from singlenton
-grep 		|Path 			|Vec<String>                |returns vector of matched strings
+grep 		|Path 			|Vec<String> / DataVector   |returns vector of matched strings
 
 
 Pipe is used to pass output to another program or utility.

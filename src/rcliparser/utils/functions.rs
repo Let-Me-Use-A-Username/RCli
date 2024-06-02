@@ -168,9 +168,9 @@ pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal)
 
     if path_exists & !dest_exists{
         let rename_result = fs::rename(path, destination);
-
+        
         if rename_result.is_ok(){
-            result = Ok(Data::SimpleData(destination.display().to_string()))
+            result = Ok(Data::PathData(destination.into()))
         }
     }
     //both paths exists so let copy handle it.
@@ -221,9 +221,9 @@ pub fn read(path: &Path) -> Result<Data, Error>{
 
 
 ///Lists items in a directory
-pub fn list(dir_path: &Path, hidden: bool) -> Result<Data, Error>{
+pub fn list(dir_path: &Path, hidden: bool, recursive: bool) -> Result<Data, Error>{
     let mut outputbuffer: Vec<PathBuf> = vec![];
-
+    
     match fs::read_dir(dir_path) {
         Ok(paths) => {
             for path in paths{
@@ -233,26 +233,35 @@ pub fn list(dir_path: &Path, hidden: bool) -> Result<Data, Error>{
                 match fs::metadata(dir_path.clone()) {
                     Ok(meta) => {
                         let attributes = meta.file_attributes();
-
+                        
                         let entry_attributes = windows_file_attributes::match_attributes(attributes);
                         
-                        //if hidden is true show everything
+                        //if hidden is true push everything
                         if hidden{
-                            //outputbuffer.push(dir_path.display().to_string().replace("\\\\?\\", ""));
-                            outputbuffer.push(dir_path);
+                            outputbuffer.push(dir_path.clone());
                         }
-                        //else hidden flag is false. if dir DOESNT have hidden flag append it
-                        else if !hidden & !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
-                            outputbuffer.push(dir_path);
+                        //else if hidden is false, then append dirs that arent marked as hidden
+                        else if !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
+                            outputbuffer.push(dir_path.clone());
                         }
-
+                        
+                        if recursive{
+                            if dir_path.is_dir(){
+                                let recursive_result = list(&dir_path, hidden, recursive)?;
+                                match recursive_result{
+                                    Data::DirPathData(path_vec) => {
+                                        path_vec.iter().for_each(|y| outputbuffer.push(y.clone()))
+                                    },
+                                    _ => unreachable!()
+                                }
+                            }
+                        }
                     },
                     Err(error) => {
                         return Err(error)
                     }
                 }; 
             }
-    
             return Ok(Data::DirPathData(outputbuffer))
         },
         Err(error) => {
@@ -279,15 +288,15 @@ pub fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Resu
 ///For given data returns match.
 ///Data can be either a dir or path.
 ///Therefore matches are either files or Strings.
-pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
+pub fn grep(path: &Path, regex_string: &String, recursive: bool) -> Result<Data, io::Error> {
     let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
     let pattern = Regex::new(pattern_string.as_str()).unwrap();
     
     if path.try_exists()?{
         if path.is_dir(){
             let mut output_string = Vec::<String>::new();
-
-            let dir_entries = match list(path, true)? {
+            
+            let dir_entries = match list(path, true, recursive)? {
                 Data::DirPathData(entries) => entries,
                 _ => vec![],
             };

@@ -75,6 +75,7 @@ impl Grammar{
 pub enum CommandType{
     HOME,
     CWD,
+    ECHO,
     TOUCH,
     MKDIR,
     REMOVE,

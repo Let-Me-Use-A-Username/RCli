@@ -15,20 +15,34 @@ pub fn accept_input(input: String) -> Result<UserInput, Error>{
     let mut string_parts: VecDeque<String> = VecDeque::new();
 
     let mut object_with_quotes = Vec::<&str>::new();
+    let mut quote_object_found = false;
+
+    //For string in input 
     for part in input_parts{
-        if part.starts_with('"'){
-            object_with_quotes.push(part)
+        //if input part has double quote append to vector
+        if part.starts_with('"') | part.starts_with('\"'){
+            object_with_quotes.push(part);
+            quote_object_found = true;
+            continue;
         }
-        else if part.contains('"'){
+
+        //while we haven't found the end part of the quote keep adding
+        if quote_object_found{
             object_with_quotes.push(" ");
             object_with_quotes.push(part);
             
-            let object_w_quote = object_with_quotes.concat().replace("\"", "").replace("\r\n", "");
-            string_parts.push_back(object_w_quote);
+            if part.contains('"') | part.contains('\"'){
+                let final_object = object_with_quotes.concat().replace("\"", "").replace("\r\n", "");
+                string_parts.push_back(final_object);
+                //when found stop adding
+                quote_object_found = false;
+                object_with_quotes.clear();
+            }
+            
         }
         else{
             string_parts.push_back(part.trim().to_string());
-        }   
+        }
     }
 
     return Ok(UserInput {

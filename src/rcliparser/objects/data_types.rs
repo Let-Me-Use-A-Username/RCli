@@ -36,6 +36,9 @@ impl Data{
             Data::SimpleData(path) => {
                 return Some(path)
             },
+            Data::StringData(string) => {
+                return Some(string)
+            },
             _ => return None
         }
     }

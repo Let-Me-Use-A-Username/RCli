@@ -41,7 +41,7 @@ pub fn start_terminal() -> ExitCode{
                     Ok(data) => {
                         match data {
                             Data::PathData(path) => {
-                                println!("{}", path.display().to_string());
+                                println!("Path: {}", path.display().to_string());
                             },
                             Data::StringData(data) => {
                                 println!("{data}");
@@ -50,9 +50,7 @@ pub fn start_terminal() -> ExitCode{
                                 string_vec.iter().for_each(|x| println!("{x}"));
                             },
                             Data::DirPathData(path_data) => {
-                                for path in path_data{
-                                    println!("{}", path.display().to_string());
-                                }
+                                path_data.iter().for_each(|x| println!("{:?}", x.display().to_string()))
                             },
                             Data::StatusData(status_code) => {
                                 if status_code.eq(&1){
@@ -62,16 +60,8 @@ pub fn start_terminal() -> ExitCode{
                             Data::DataVector(boxed_data) => {
                                 let data = *boxed_data;
                                 
-                                if data.len() >= 1{
-                                    data.iter().for_each(|x| println!("{:?}", x));
-                                }
-                                else{
-                                    println!("{:?}", data);
-                                }
+                                data.iter().for_each(|x| println!("{:?}", x.get_value()));
                             }
-                            Data::SimpleData(data) => {
-                                println!("{data}")
-                            },
                             _ => unreachable!()
                         }
                     },

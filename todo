@@ -1,9 +1,8 @@
 CurrentProblem:
     RCLi:
-        -Implement echo
-            -In invoker
-        -Implement ls -r 
-            -Flag for recursive search
+        -Should grep implement recursion?
+            -It makes it more complicated
+        -Moving to different level of directories (with move) fails the process 
         -Implement more generic grep
 
     lexer/parser/bsftree:
@@ -13,13 +12,13 @@ CurrentProblem:
         
 
 STUDY: 
-    -https://cheats.rs/#macros-attributes
-    -Rust general
+    -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
+    -Macros for logger:https://cheats.rs/#macros-attributes
     
-    http://www.linusakesson.net/programming/tty/
-    https://mally.stanford.edu/~sr/computing/basic-unix.html
-    https://swcarpentry.github.io/shell-novice/reference.html
-    -Note:Read how Unix shell and commands work in order to mimick the functionality
+    Unix terminal:
+        http://www.linusakesson.net/programming/tty/
+        https://mally.stanford.edu/~sr/computing/basic-unix.html
+        https://swcarpentry.github.io/shell-novice/reference.html
 
 
 Project:
@@ -33,8 +32,6 @@ Project:
 invoker:
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
-    -Implement grep smt -any also implement recursive
-        -Flag that will match anything (meaning convert names to lowercase, with space or not etc)
     -Implement ls -a
         -Flag to show types permissions and date 
             -Mainly to show types

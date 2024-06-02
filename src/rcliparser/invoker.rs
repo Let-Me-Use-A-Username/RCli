@@ -31,6 +31,9 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
         CommandType::CWD => {
             operation_status = cwd(terminal_instance);
         },
+        CommandType::ECHO => {
+            operation_status = echo(core_object)
+        }
         CommandType::TOUCH => {
             if data.len() >= 1{
                 operation_status = touch(core_object, Some(data));
@@ -88,14 +91,25 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
             operation_status = read(core_object);
         },
         CommandType::LIST => {
-            let hidden = flags.get(&FlagType::HIDDEN);
+            let hidden: bool = (|| {
+                let flag = flags.get(&FlagType::HIDDEN);
 
-            if hidden.is_some(){
-                operation_status = list(core_object, true);
-            }
-            else{
-                operation_status = list(core_object, false);
-            }
+                if flag.is_some(){ 
+                    return true
+                }
+                return false
+            })();
+            
+            let recursive: bool = (|| {
+                let flag = flags.get(&FlagType::RECURSIVE);
+
+                if flag.is_some(){ 
+                    return true
+                }
+                return false
+            })();
+
+            operation_status = list(core_object, hidden, recursive);
         },
         CommandType::CD => {
             let mut destination_path = PathBuf::from(terminal_instance.get_current_directory());
@@ -106,20 +120,30 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
             operation_status = traverse_directory(destination_data, terminal_instance);
         },
         CommandType::GREP => {
-            let destination = flags.get(&FlagType::DESTINATION);
-            
-            //normal invocation with destination
+            let destination = (|| {
+                let flag = flags.get(&FlagType::DESTINATION);
+
+                if flag.is_some(){
+                    let data = Data::PathData(PathBuf::from(flag.unwrap().as_ref().unwrap().get_object()));
+                    return Some(data)
+                }
+                return None
+            })();
+
+            let recursive: bool = (|| {
+                let flag = flags.get(&FlagType::RECURSIVE);
+
+                if flag.is_some(){ 
+                    return true
+                }
+                return false
+            })();
+
             if destination.is_some(){
-                let destination = Data::PathData(PathBuf::from(destination.unwrap().as_ref().unwrap().get_object()));
-                
-                // operation_status = grep(core_object, data);
-                operation_status = grep_from_path(core_object, destination);
-            }
-            else if data.len() >= 1{
-                operation_status = grep_from_string(core_object, data);
+                operation_status = grep_from_path(core_object, destination.unwrap(), recursive);
             }
             else{
-                operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide valid destination or data."));
+                operation_status = grep_from_string(core_object, data);
             }
         },
         CommandType::EXIT => {
@@ -151,6 +175,16 @@ fn cwd(terminal_instance: &mut Terminal) -> Result<Data, Error>{
 }
 
 
+fn echo(string: Data) -> Result<Data, Error>{
+    match string{
+        Data::SimpleData(simple) => {
+            return functions::echo(&simple)
+        }
+        _ => unreachable!()
+    }
+}
+
+
 fn touch(current_path: Data, data: Option<VecDeque<Data>>) -> Result<Data, Error>{
     let file_path = current_path.get_path();
 
@@ -174,6 +208,7 @@ fn touch(current_path: Data, data: Option<VecDeque<Data>>) -> Result<Data, Error
                 }
                 return Err(touch_result.err().unwrap())
             }
+            return Ok(Data::DataVector(return_result.into()))
         }
         return Ok(functions::touch(file_path.unwrap(), None).unwrap())
     }
@@ -232,10 +267,10 @@ fn read(data: Data) -> Result<Data, Error>{
 
 
 
-fn list(data: Data, hidden: bool) -> Result<Data, Error>{
+fn list(data: Data, hidden: bool, recursive: bool) -> Result<Data, Error>{
     match data {
         Data::SimpleData(path) => {
-            return functions::list(Path::new(&path), hidden)
+            return functions::list(Path::new(&path), hidden, recursive)
         }
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path.")),
     }
@@ -254,11 +289,11 @@ fn traverse_directory(data: Data, terminal_instance: &mut Terminal) -> Result<Da
 
 
 
-fn grep_from_path(pattern: Data, data_path: Data) -> Result<Data, Error>{
+fn grep_from_path(pattern: Data, data_path: Data, recursive: bool) -> Result<Data, Error>{
     let string_pattern = &pattern.get_value().unwrap();
     match data_path{
         Data::PathData(p) => {
-            return functions::grep(p.as_path(), string_pattern)
+            return functions::grep(p.as_path(), string_pattern, recursive)
         },
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Invalid path.")),
     }

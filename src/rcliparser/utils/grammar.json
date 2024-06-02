@@ -12,6 +12,10 @@
             "invocation_name": ["touch"],
             "flags": []
         },
+        "ECHO":{
+            "invocation_name": ["echo"],
+            "flags": []
+        },
         "MKDIR":{
             "invocation_name": ["mkdir"],
             "flags": ["RECURSIVE"]
@@ -34,7 +38,7 @@
         },
         "LIST":{
             "invocation_name": ["list", "ls"],
-            "flags": ["HIDDEN"]
+            "flags": ["HIDDEN", "RECURSIVE"]
         },
         "CD":{
             "invocation_name": ["cd"],
@@ -42,7 +46,7 @@
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flags": []
+            "flags": ["DESTINATION","RECURSIVE"]
         },
         "EXIT":{
             "invocation_name": ["exit"],
