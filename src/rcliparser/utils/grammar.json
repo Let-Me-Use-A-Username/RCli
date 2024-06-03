@@ -46,7 +46,7 @@
         },
         "GREP":{
             "invocation_name": ["grep"],
-            "flags": ["DESTINATION","RECURSIVE"]
+            "flags": ["DESTINATION"]
         },
         "EXIT":{
             "invocation_name": ["exit"],

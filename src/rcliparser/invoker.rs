@@ -130,17 +130,8 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
                 return None
             })();
 
-            let recursive: bool = (|| {
-                let flag = flags.get(&FlagType::RECURSIVE);
-
-                if flag.is_some(){ 
-                    return true
-                }
-                return false
-            })();
-
             if destination.is_some(){
-                operation_status = grep_from_path(core_object, destination.unwrap(), recursive);
+                operation_status = grep_from_path(core_object, destination.unwrap());
             }
             else{
                 operation_status = grep_from_string(core_object, data);
@@ -289,11 +280,11 @@ fn traverse_directory(data: Data, terminal_instance: &mut Terminal) -> Result<Da
 
 
 
-fn grep_from_path(pattern: Data, data_path: Data, recursive: bool) -> Result<Data, Error>{
+fn grep_from_path(pattern: Data, data_path: Data) -> Result<Data, Error>{
     let string_pattern = &pattern.get_value().unwrap();
     match data_path{
         Data::PathData(p) => {
-            return functions::grep(p.as_path(), string_pattern, recursive)
+            return functions::grep(p.as_path(), string_pattern)
         },
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Invalid path.")),
     }

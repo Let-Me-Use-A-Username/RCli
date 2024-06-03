@@ -41,7 +41,7 @@ pub fn start_terminal() -> ExitCode{
                     Ok(data) => {
                         match data {
                             Data::PathData(path) => {
-                                println!("Path: {}", path.display().to_string());
+                                println!("Path: {}", path.display());
                             },
                             Data::StringData(data) => {
                                 println!("{data}");
@@ -50,7 +50,7 @@ pub fn start_terminal() -> ExitCode{
                                 string_vec.iter().for_each(|x| println!("{x}"));
                             },
                             Data::DirPathData(path_data) => {
-                                path_data.iter().for_each(|x| println!("{:?}", x.display().to_string()))
+                                path_data.iter().for_each(|x| println!("{:?}", x.display()))
                             },
                             Data::StatusData(status_code) => {
                                 if status_code.eq(&1){

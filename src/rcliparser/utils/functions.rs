@@ -166,28 +166,34 @@ pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal)
     //simple rename
     let mut result: Result<Data, Error>= Err(Error::new(ErrorKind::Other, "Invoker Error: Error occured while moving."));
 
-    if path_exists & !dest_exists{
-        let rename_result = fs::rename(path, destination);
-        
-        if rename_result.is_ok(){
-            result = Ok(Data::PathData(destination.into()))
-        }
-    }
-    //both paths exists so let copy handle it.
-    else if path_exists & dest_exists{
-        result = copy(path, destination, terminal_instance);
-    }
+    if path_exists{
+        let origin_canonicalized = path.canonicalize()?;
+        let destintion_canonicalized = PathBuf::from(path.canonicalize().unwrap()).join(destination);
 
-    if result.is_ok(){
-        
-        if path.is_file(){
-            let _ = remove(path, false);
+        //Origin and destination are on a different hierarchical level so we copy(because rename has problems)
+        if !destintion_canonicalized.components().last().eq(&origin_canonicalized.components().last()){
+            result = copy(path, destination, terminal_instance);
         }
+        //Origin and destination are on the same hierarchy
         else{
-            let _ = remove(path, true);
+            if !dest_exists{
+                if fs::rename(path, destination).is_ok(){
+                    result = Ok(Data::PathData(destination.into()))
+                }
+            }
+            else{
+                result = copy(path, destination, terminal_instance);
+            }
         }
 
-        return Ok(result.unwrap())
+        if result.is_ok(){
+            //If result is valid, cd to father dir
+            let _ = traverse_directory(Path::new(".."), terminal_instance);
+            //Delete underlying dir
+            let _ = remove(&origin_canonicalized, true);
+            
+            return Ok(result.unwrap())
+        }
     }
 
     return Err(result.unwrap_err())
@@ -227,7 +233,6 @@ pub fn list(dir_path: &Path, hidden: bool, recursive: bool) -> Result<Data, Erro
     match fs::read_dir(dir_path) {
         Ok(paths) => {
             for path in paths{
-
                 let dir_path = path.unwrap().path();
 
                 match fs::metadata(dir_path.clone()) {
@@ -245,16 +250,13 @@ pub fn list(dir_path: &Path, hidden: bool, recursive: bool) -> Result<Data, Erro
                             outputbuffer.push(dir_path.clone());
                         }
                         
-                        if recursive{
-                            if dir_path.is_dir(){
-                                let recursive_result = list(&dir_path, hidden, recursive)?;
-                                match recursive_result{
-                                    Data::DirPathData(path_vec) => {
-                                        path_vec.iter().for_each(|y| outputbuffer.push(y.clone()))
-                                    },
-                                    _ => unreachable!()
-                                }
-                            }
+                        if recursive & dir_path.is_dir(){
+                            match list(&dir_path, hidden, recursive)?{
+                                Data::DirPathData(path_vec) => {
+                                    path_vec.iter().for_each(|y| outputbuffer.push(y.clone()))
+                                },
+                                _ => unreachable!()
+                            } 
                         }
                     },
                     Err(error) => {
@@ -288,7 +290,7 @@ pub fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Resu
 ///For given data returns match.
 ///Data can be either a dir or path.
 ///Therefore matches are either files or Strings.
-pub fn grep(path: &Path, regex_string: &String, recursive: bool) -> Result<Data, io::Error> {
+pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
     let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
     let pattern = Regex::new(pattern_string.as_str()).unwrap();
     
@@ -296,7 +298,7 @@ pub fn grep(path: &Path, regex_string: &String, recursive: bool) -> Result<Data,
         if path.is_dir(){
             let mut output_string = Vec::<String>::new();
             
-            let dir_entries = match list(path, true, recursive)? {
+            let dir_entries = match list(path, true, false)? {
                 Data::DirPathData(entries) => entries,
                 _ => vec![],
             };

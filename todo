@@ -1,24 +1,27 @@
 CurrentProblem:
     RCLi:
-        -Should grep implement recursion?
-            -It makes it more complicated
-        -Moving to different level of directories (with move) fails the process 
+        -Implement conccurency (threads) and locking(mutex?).
+            -Lock stdout when writting from Terminal 
+            -Lock files during usage
+        -Escape slashes when printing directories
+        -Recursive list should be sorted first(by depth)
         -Implement more generic grep
 
-    lexer/parser/bsftree:
+    lexer/parser:
         -Todo:Rewrite tests
-        -Todo:Rewrite bsftree
     
         
 
-STUDY: 
-    -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
-    -Macros for logger:https://cheats.rs/#macros-attributes
+STUDY:
+    Rust general:
+        -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
+        -Macros for logger:https://cheats.rs/#macros-attributes
     
     Unix terminal:
-        http://www.linusakesson.net/programming/tty/
-        https://mally.stanford.edu/~sr/computing/basic-unix.html
-        https://swcarpentry.github.io/shell-novice/reference.html
+        GNU Manual: 
+            https://www.gnu.org/software/coreutils/manual/coreutils.html
+        Terminal: 
+            http://www.linusakesson.net/programming/tty/
 
 
 Project:
@@ -32,15 +35,18 @@ Project:
 invoker:
     -Implement cp ./ -d ../ --clean
         -Flag --clean Removes original files
+        -We have move tho..?
     -Implement ls -a
         -Flag to show types permissions and date 
-            -Mainly to show types
     -Implement help
         -Shows available commands and invocation
     -Implement find
         -Searching dataset to match a string loosely
     -Implement shortcut 
         -Adds an alias for a executable (probably) and saves it in a retrievable document
+    -Implement enable
+        -Enables debug logging from logger (reader, lexer, parser, invoker)
+            -Terminal will use stdout
 
 
 terminal:
