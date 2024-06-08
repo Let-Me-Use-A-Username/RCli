@@ -4,10 +4,10 @@
     Macros cheat sheet:https://cheats.rs/#macros-attributes
     Writting macros: https://dhghomon.github.io/easy_rust/Chapter_61.html 
 
-    -Todo:Logger to log output
-        -parser operations
+    Synchronous Logger to log output
         -terminal operations
-            -When printing paths remove the prefix \\?\ and double slashes \\ from paths
+            -later on parser operations too if debuging
+        -When printing paths remove the prefix \\?\ and double slashes \\ from paths
 */
 use std::sync::mpsc::{sync_channel, Receiver, RecvError, SendError, SyncSender};
 

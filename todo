@@ -1,15 +1,23 @@
-CurrentProblem:
+Current:
     RCLi:
         -Implement basic synchronous logger
+            -Check chatgpt solution
+            -Later on this has to be implemented by using std::sync::mpsc
+                -Should logger be part of the singlenton.. ?
 
-        -Implement conccurency (threads) and locking(mutex?).
-            -Lock stdout when writting from Terminal 
+        -Implement locking(mutex?).
+            -Lock stdout when writting from Terminal
                 -Logger
             -Lock files during usage
+        
+        -implement conccurency (threads) 
+            -This can be achieved in 2 different ways
+                -1. Invoking operation run on different threads (not ideal since terminal is generaly synchronous)
+                -2. Running instances of rcli terminals is a different thread(not sure how this will be implemented since it can be argues that each instance is a process...?)
 
-        -Implement more generic grep
 
     lexer/parser:
+        -Implement more generic grep
         -Todo:Rewrite tests
     
         
@@ -28,6 +36,11 @@ STUDY:
 Project:
     -In unix when providing & the command runs asynchronously, this could be achieved by 
     creating a thread that runs the operation
+
+    -Thoughts:
+        -The running process is RCLi
+        -RCLi can have many instances, each instance contains a TUI and parser
+        -Each of these instances is one-thread
     
     -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
@@ -51,6 +64,7 @@ invoker:
 
 terminal:
     https://docs.rs/crossterm/latest/crossterm/index.html#
+    -Basic TUI
     -Note:Accept raw input with Crossterm which is included in ratatui?
         -I.E. newline, CTRL^C etc
         -Handle with lexer or parser?
