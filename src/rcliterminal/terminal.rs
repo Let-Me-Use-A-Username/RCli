@@ -26,7 +26,7 @@ pub fn start_terminal() -> ExitCode{
         println!("============RCLI TERMINAL============\n");
         let mut input = String::new();
 
-        let dir_display = instance.get_current_directory_to_string().replace("\\\\?\\", "");
+        let dir_display = instance.get_current_directory_to_string().replace(r"\\", r"\").replace(r"\?\", r"");
         print!("RCli {}>", dir_display);
         io::stdout().flush().unwrap();
 
@@ -41,7 +41,7 @@ pub fn start_terminal() -> ExitCode{
                     Ok(data) => {
                         match data {
                             Data::PathData(path) => {
-                                println!("Path: {}", path.display());
+                                println!("{}", path.display().to_string().replace(r"\\", r"\").replace(r"\?\", r""));
                             },
                             Data::StringData(data) => {
                                 println!("{data}");
@@ -50,7 +50,10 @@ pub fn start_terminal() -> ExitCode{
                                 string_vec.iter().for_each(|x| println!("{x}"));
                             },
                             Data::DirPathData(path_data) => {
-                                path_data.iter().for_each(|x| println!("{:?}", x.display()))
+                                path_data.iter().for_each(|x| {
+                                    let path_to_string = x.display().to_string();
+                                    println!("{}", path_to_string.replace(r"\\", r"\").replace(r"\?\", r""))
+                                })
                             },
                             Data::StatusData(status_code) => {
                                 if status_code.eq(&1){

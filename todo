@@ -1,10 +1,12 @@
 CurrentProblem:
     RCLi:
+        -Implement basic synchronous logger
+
         -Implement conccurency (threads) and locking(mutex?).
             -Lock stdout when writting from Terminal 
+                -Logger
             -Lock files during usage
-        -Escape slashes when printing directories
-        -Recursive list should be sorted first(by depth)
+
         -Implement more generic grep
 
     lexer/parser:
@@ -15,7 +17,6 @@ CurrentProblem:
 STUDY:
     Rust general:
         -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
-        -Macros for logger:https://cheats.rs/#macros-attributes
     
     Unix terminal:
         GNU Manual: 
@@ -25,10 +26,9 @@ STUDY:
 
 
 Project:
-    https://dhghomon.github.io/easy_rust/Chapter_61.html 
-    -Todo:Logger to log output
-        -parser operations
-        -terminal operations
+    -In unix when providing & the command runs asynchronously, this could be achieved by 
+    creating a thread that runs the operation
+    
     -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
 
