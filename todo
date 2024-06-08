@@ -12,8 +12,17 @@ Current:
         
         -implement conccurency (threads) 
             -This can be achieved in 2 different ways
-                -1. Invoking operation run on different threads (not ideal since terminal is generaly synchronous)
-                -2. Running instances of rcli terminals is a different thread(not sure how this will be implemented since it can be argues that each instance is a process...?)
+                -1. Invoking operation (parsing) run on different threads (not ideal since terminal is generaly synchronous)
+                -2. Running instances of rcli terminals is a different thread(not sure how this will be implemented since it can be 
+                argued that each instance is a process...?)
+            
+            -NewIdea:When a new terminal instance is created, essencially a new TUI is created, however the parser is effectively still 
+            a single instance.
+            This means that a father operations spawns terminal TUIs but the parser and logger are always a single instance.
+                This means that concurrency could be 2 things.
+                    When a terminal instance accepts the input and calls the parser it spawns a new thread
+                    When the parser or terminal wants to output to stdout this action is performed by the logger whom also spawns a new thread
+                        This means that the logger might have to be asynchronous
 
 
     lexer/parser:
@@ -34,15 +43,11 @@ STUDY:
 
 
 Project:
-    -In unix when providing & the command runs asynchronously, this could be achieved by 
-    creating a thread that runs the operation
-
-    -Thoughts:
-        -The running process is RCLi
-        -RCLi can have many instances, each instance contains a TUI and parser
-        -Each of these instances is one-thread
+    -Asynchronous:
+        -In unix when providing & the command runs asynchronously, this could be achieved by 
+        creating a thread that runs the operation
     
-    -Note:When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
+    -Note: When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
 
 
 invoker:
