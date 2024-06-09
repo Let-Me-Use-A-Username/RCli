@@ -1,83 +1,67 @@
-use std::process::ExitCode;
-use std::{env, io};
-use std::io::Write;
+use std::env;
+use std::io::Error;
+use std::path::PathBuf;
+use std::sync::Mutex;
 
-use crate::rcliparser::parser;
-use crate::rcliparser::utils::grammar_reader;
 use crate::rcliparser::objects::data_types::Data;
-use crate::rcliterminal::terminal_singlenton;
-use crate::rcliterminal::terminal_singlenton::Terminal;
+use crate::rcliparser::objects::grammar_objects::Grammar;
+use crate::rcliparser::utils::grammar_reader;
 
-pub fn start_terminal() -> ExitCode{
-    //load grammar
-    let grammar = grammar_reader::load_grammar();
-    //current dir
-    let current_dir = env::current_dir().unwrap();
-    //get home dir
-    let home_dir = dirs::home_dir().unwrap_or(current_dir);
-    //load singlenton
-    let instance: &mut Terminal = terminal_singlenton::singlenton(home_dir.clone(), grammar);
 
-    //set the current directory in case the core command is on local dir and full path isnt specified
-    let _ = instance.set_current_directory(home_dir);
+///Singlenton terminal
+pub struct Terminal{
+    user_home_directory: Mutex<PathBuf>,
+    current_directory: Mutex<PathBuf>,
+    grammar: Mutex<Grammar>
+}
 
-    //singlenton loop
-    'terminal: loop  {
-        println!("============RCLI TERMINAL============\n");
-        let mut input = String::new();
+impl Terminal{
+    pub fn new() -> Self{
+        Terminal {
+            user_home_directory: Mutex::new(dirs::home_dir().unwrap()), 
+            current_directory: Mutex::new(env::current_dir().unwrap()), 
+            grammar: Mutex::new(grammar_reader::load_grammar()) 
+        }
+    }
 
-        let dir_display = instance.get_current_directory_to_string().replace(r"\\", r"\").replace(r"\?\", r"");
-        print!("RCli {}>", dir_display);
-        io::stdout().flush().unwrap();
-
-        let user_input = std::io::stdin().read_line(&mut input);
-
-        //accept input
-        match user_input {
-            Ok(_) => {
-                let operation_result = parser::parse(input, instance);
-
-                match operation_result{
-                    Ok(data) => {
-                        match data {
-                            Data::PathData(path) => {
-                                println!("{}", path.display().to_string().replace(r"\\", r"\").replace(r"\?\", r""));
-                            },
-                            Data::StringData(data) => {
-                                println!("{data}");
-                            },
-                            Data::VecStringData(string_vec) => {
-                                string_vec.iter().for_each(|x| println!("{x}"));
-                            },
-                            Data::DirPathData(path_data) => {
-                                path_data.iter().for_each(|x| {
-                                    let path_to_string = x.display().to_string();
-                                    println!("{}", path_to_string.replace(r"\\", r"\").replace(r"\?\", r""))
-                                })
-                            },
-                            Data::StatusData(status_code) => {
-                                if status_code.eq(&1){
-                                    return ExitCode::SUCCESS;
-                                }
-                            },
-                            Data::DataVector(boxed_data) => {
-                                let data = *boxed_data;
-                                
-                                data.iter().for_each(|x| println!("{:?}", x.get_value()));
-                            }
-                            _ => unreachable!()
-                        }
+    pub fn set_current_directory(&mut self, path: PathBuf) -> Result<Data, Error>{
+        let mut current_dir = self.current_directory.lock().unwrap();
+        match path.canonicalize() {
+            //check if path is valid
+            Ok(new_path) => {
+                //set it as current directory
+                let operation_results = env::set_current_dir(new_path.clone());
+                //todo! handle error in case the operation fails
+                match operation_results {
+                    Ok(_) => {
+                        *current_dir = env::current_dir().unwrap();
+                        return Ok(Data::StatusData(100));
                     },
-                    Err(err) => {
-                        println!("Error:{}", err.to_string());
+                    Err(error) => {
+                        return Err(Error::new(error.kind(), error.to_string()));
                     },
                 }
             },
-            Err(input_error) => {
-                eprintln!("Error: {}", input_error.to_string());
-                break 'terminal;
+            //path not found
+            Err(error) => {
+                return Err(Error::new(error.kind(), error.to_string()));
             },
-        }
+        };
     }
-    return ExitCode::FAILURE;
+
+    pub fn get_home_directory(&self) -> PathBuf{
+        return self.user_home_directory.lock().unwrap().to_path_buf()
+    }
+
+    pub fn get_instance_grammar(&self) -> Grammar{
+        return self.grammar.lock().unwrap().clone();
+    }
+
+    pub fn get_current_directory_formatted(&self) -> String{
+        return self.current_directory.lock().unwrap().display().to_string().replace(r"\\", r"\").replace(r"\?\", r"")
+    }
+
+    pub fn get_current_directory(&self) -> PathBuf{
+        return self.current_directory.lock().unwrap().to_path_buf()
+    }
 }

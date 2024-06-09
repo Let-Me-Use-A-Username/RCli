@@ -1,28 +1,12 @@
 Current:
     RCLi:
-        -Implement basic synchronous logger
-            -Check chatgpt solution
-            -Later on this has to be implemented by using std::sync::mpsc
-                -Should logger be part of the singlenton.. ?
-
         -Implement locking(mutex?).
-            -Lock stdout when writting from Terminal
-                -Logger
             -Lock files during usage
         
-        -implement conccurency (threads) 
-            -This can be achieved in 2 different ways
-                -1. Invoking operation (parsing) run on different threads (not ideal since terminal is generaly synchronous)
-                -2. Running instances of rcli terminals is a different thread(not sure how this will be implemented since it can be 
-                argued that each instance is a process...?)
-            
-            -NewIdea:When a new terminal instance is created, essencially a new TUI is created, however the parser is effectively still 
-            a single instance.
-            This means that a father operations spawns terminal TUIs but the parser and logger are always a single instance.
-                This means that concurrency could be 2 things.
-                    When a terminal instance accepts the input and calls the parser it spawns a new thread
-                    When the parser or terminal wants to output to stdout this action is performed by the logger whom also spawns a new thread
-                        This means that the logger might have to be asynchronous
+        -implement conccurency (threads)
+            -Changed implementation so now Shell instance has a terminal and a logger.
+            -Teminal will hold the TUI (most likely)
+            -Parsing operations will be threaded(???)
 
 
     lexer/parser:
@@ -32,9 +16,12 @@ Current:
         
 
 STUDY:
+    Macros cheat sheet: https://cheats.rs/#macros-attributes
+    Writting macros: https://dhghomon.github.io/easy_rust/Chapter_61.html
+
     Rust general:
         -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
-    
+
     Unix terminal:
         GNU Manual: 
             https://www.gnu.org/software/coreutils/manual/coreutils.html

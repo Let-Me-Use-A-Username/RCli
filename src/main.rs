@@ -1,7 +1,9 @@
 mod rcliparser;
 mod rcliterminal;
 mod rclilogger;
+mod rclishell;
 
 fn main() {
-    rcliterminal::terminal::start_terminal();
+    let shell = rclishell::shell::Shell::new();
+    shell.run();
 }

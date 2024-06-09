@@ -1,7 +1,7 @@
 use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}};
 use regex::Regex;
 
-use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal_singlenton::Terminal};
+use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal::Terminal};
 
 use crate::rcliparser::utils::windows::windows_file_attributes;
 
@@ -241,19 +241,32 @@ pub fn list(dir_path: &Path, hidden: bool, recursive: bool) -> Result<Data, Erro
                         
                         let entry_attributes = windows_file_attributes::match_attributes(attributes);
                         
+                        let canonicalized_path = match dir_path.canonicalize() {
+                            Ok(path) => path,
+                            Err(_) => dir_path.clone(),
+                        };
+
                         //if hidden is true push everything
                         if hidden{
-                            outputbuffer.push(dir_path.clone());
+                            outputbuffer.push(canonicalized_path);
                         }
                         //else if hidden is false, then append dirs that arent marked as hidden
                         else if !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::HIDDEN){
-                            outputbuffer.push(dir_path.clone());
+                            outputbuffer.push(canonicalized_path);
                         }
                         
                         if recursive & dir_path.is_dir(){
                             match list(&dir_path, hidden, recursive)?{
                                 Data::DirPathData(path_vec) => {
-                                    path_vec.iter().for_each(|y| outputbuffer.push(y.clone()))
+                                    path_vec.iter().for_each(|y| {
+
+                                        let normalized_path = match y.canonicalize() {
+                                            Ok(path) => path,
+                                            Err(_) => y.to_path_buf(),
+                                        };
+
+                                        outputbuffer.push(normalized_path)
+                                    })
                                 },
                                 _ => unreachable!()
                             } 

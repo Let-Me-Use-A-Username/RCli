@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::io::Error;
 use regex::Regex;
 
-use crate::rcliterminal::terminal_singlenton::Terminal;
+use crate::rcliterminal::terminal::Terminal;
 
 use super::objects::grammar_objects::{Grammar, BnfType};
 use super::objects::token_objects::{Token, TokenCommand::COMMAND, TokenObject::OBJECT, TokenFlag::FLAG, TokenPipe::PIPE};

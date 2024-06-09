@@ -3,7 +3,7 @@ use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
 use crate::rcliparser::objects::grammar_objects::CommandType;
-use crate::rcliterminal::terminal_singlenton::Terminal;
+use crate::rcliterminal::terminal::Terminal;
 
 use super::objects::data_types::Data;
 use super::objects::grammar_objects::FlagType;

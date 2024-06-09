@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::io::Error;
 use std::vec;
 
-use crate::rcliterminal::terminal_singlenton::Terminal;
+use crate::rcliterminal::terminal::Terminal;
 
 use super::input_reader::accept_input;
 use super::invoker;
@@ -158,7 +158,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
                 Token::InvocationPipe(pipe) => {
                     //if vec is empty it means no objects found so add cwd
                     if data_vector.is_empty(){
-                        let path_data = terminal_instance.get_current_directory_to_string();
+                        let path_data = terminal_instance.get_current_directory().display().to_string();
                         data_vector.push(Data::SimpleData(path_data));
                     }
                     
@@ -215,7 +215,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
     }  
     
     if data_vector.is_empty(){
-        let path_data = terminal_instance.get_current_directory_to_string();
+        let path_data = terminal_instance.get_current_directory().display().to_string();
         data_vector.push(Data::SimpleData(path_data));
     }
 
