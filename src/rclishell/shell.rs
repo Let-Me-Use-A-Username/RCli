@@ -21,7 +21,7 @@ impl Shell{
         let logger = self.logger.lock().unwrap();
         'run: loop  {
             let mut input = String::new();
-            let dir_display = terminal_instance.get_current_directory_formatted();
+            let dir_display = terminal_instance.get_current_directory().display().to_string().replace(r"\\", r"\").replace(r"\?\", r"");
 
             logger.log("============RCLI TERMINAL============\n");
             logger.lognn(String::from(format!("RCli {}>", dir_display)));

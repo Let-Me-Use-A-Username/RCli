@@ -137,6 +137,18 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
                 operation_status = grep_from_string(core_object, data);
             }
         },
+        CommandType::FIND => {
+            let destination: Data = (|| {
+                let flag = flags.get(&FlagType::DESTINATION);
+
+                if flag.is_some(){ 
+                    return data.pop_front().unwrap()
+                }
+                return Data::SimpleData(terminal_instance.get_current_directory().display().to_string())
+            })();
+
+            operation_status = find(core_object, destination)
+        }
         CommandType::EXIT => {
             operation_status = exit();
         },
@@ -312,6 +324,26 @@ fn grep_from_string(pattern: Data, data: VecDeque<Data>) -> Result<Data, Error>{
     }
 
     return Ok(Data::DataVector(return_result.into()))
+}
+
+
+fn find(data: Data, target: Data) -> Result<Data, Error>{
+    match data{
+        Data::SimpleData(object) => {
+            let result = functions::find(&object, target.get_path().unwrap());
+            
+            if result.is_ok(){
+                if result.as_ref().unwrap().is_some(){
+                    return Ok(result.unwrap().unwrap())
+                }
+
+                return Ok(Data::StringData("No object found".to_string()))
+            }
+
+            return Err(result.unwrap_err())
+        },
+        _ => unreachable!()
+    }
 }
 
 

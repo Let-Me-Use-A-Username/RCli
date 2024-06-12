@@ -48,6 +48,10 @@
             "invocation_name": ["grep"],
             "flags": ["DESTINATION"]
         },
+        "FIND":{
+            "invocation_name": ["find"],
+            "flags": ["DESTINATION"]
+        },
         "EXIT":{
             "invocation_name": ["exit"],
             "flags": ["HIDDEN"]

@@ -1,5 +1,9 @@
 Current:
     RCLi:
+        -Implement find
+            -Searching dataset to match a string loosely
+            -functions. Match only first part of item (if extention exists??)
+        
         -Implement locking(mutex?).
             -Lock files during usage
         
@@ -8,6 +12,8 @@ Current:
             -Teminal will hold the TUI (most likely)
             -Parsing operations will be threaded(???)
 
+    terminal:
+        -Terminal doesn't start at home dir but at cwd
 
     lexer/parser:
         -Implement more generic grep
@@ -45,8 +51,6 @@ invoker:
         -Flag to show types permissions and date 
     -Implement help
         -Shows available commands and invocation
-    -Implement find
-        -Searching dataset to match a string loosely
     -Implement shortcut 
         -Adds an alias for a executable (probably) and saves it in a retrievable document
     -Implement enable

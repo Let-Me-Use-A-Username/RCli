@@ -57,10 +57,6 @@ impl Terminal{
         return self.grammar.lock().unwrap().clone();
     }
 
-    pub fn get_current_directory_formatted(&self) -> String{
-        return self.current_directory.lock().unwrap().display().to_string().replace(r"\\", r"\").replace(r"\?\", r"")
-    }
-
     pub fn get_current_directory(&self) -> PathBuf{
         return self.current_directory.lock().unwrap().to_path_buf()
     }

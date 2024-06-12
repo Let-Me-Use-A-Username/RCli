@@ -86,6 +86,7 @@ pub enum CommandType{
     CD,
     GREP,
     EXIT,
+    FIND,
     INVALID
 }
 

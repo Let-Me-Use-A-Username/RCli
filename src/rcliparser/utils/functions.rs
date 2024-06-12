@@ -1,4 +1,4 @@
-use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}};
+use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, ops::Deref, os::windows::fs::MetadataExt, path::{Path, PathBuf}, vec};
 use regex::Regex;
 
 use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal::Terminal};
@@ -361,6 +361,46 @@ pub fn match_string(input: String, regex_string: &String) -> Option<String> {
     
     return None
 }
+
+///Searches the given (or current) directory for an object
+pub fn find(object_name: &String, target_directory: &Path) -> Result<Option<Data>, Error>{
+    match fs::read_dir(target_directory) {
+        Ok(paths) => {
+            let mut lower_level: Vec<PathBuf> = vec![];
+
+            for object in paths{
+                let dir_path = object.unwrap();
+
+                //todo!
+                let dir_items = dir_path.file_name().into_string().unwrap().split(".").for_each(|x| {
+                    x.to_string();
+                });
+                
+
+                if dir_path.file_name().to_string_lossy().eq(object_name){
+                    return Ok(Some(Data::PathData(dir_path.path())))
+                }
+
+                if dir_path.path().is_dir(){
+                    lower_level.push(dir_path.path())
+                }
+            }
+            
+            if lower_level.len() > 0{
+                for object in lower_level{
+                    return find(object_name, &object)
+                }
+            }
+            return Ok(None)
+
+        },
+        Err(error) => {
+            return Err(error)
+        }
+    }
+
+}
+
 
 ///Exits RCli
 pub fn exit() -> Result<Data, io::Error> {
