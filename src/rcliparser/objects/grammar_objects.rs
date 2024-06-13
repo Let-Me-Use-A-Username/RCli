@@ -129,7 +129,6 @@ pub enum PipeType{
 pub enum FlagType{
     RECURSIVE,
     DESTINATION,
-    FORCE,
     HIDDEN,
     PATTERN
 }

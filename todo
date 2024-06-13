@@ -1,25 +1,43 @@
 Current:
     RCLi:
-        -Implement find
-            -Searching dataset to match a string loosely
-            -functions. Match only first part of item (if extention exists??)
-        
         -Implement locking(mutex?).
             -Lock files during usage
         
         -implement conccurency (threads)
-            -Changed implementation so now Shell instance has a terminal and a logger.
             -Teminal will hold the TUI (most likely)
             -Parsing operations will be threaded(???)
-
-    terminal:
-        -Terminal doesn't start at home dir but at cwd
 
     lexer/parser:
         -Implement more generic grep
         -Todo:Rewrite tests
     
         
+
+Project:
+    -Asynchronous:
+        -In unix when providing & the command runs asynchronously, this could be achieved by 
+        creating a thread that runs the operation
+
+
+invoker:
+    -Implement cp --force
+        -Flag --force overwrites data if file exists at location
+    -Implement ls -a
+        -Flag to show types additional information
+            -User permissions, data created, data modified
+    -Implement help
+        -Shows available commands and invocation
+    -Implement shortcut 
+        -Adds an alias for a executable (probably) and saves it in a retrievable document
+
+
+terminal:
+    https://docs.rs/crossterm/latest/crossterm/index.html#
+    -Basic TUI
+    -Note:Accept raw input with Crossterm which is included in ratatui?
+        -I.E. newline, CTRL^C etc
+        -Handle with lexer or parser?
+
 
 STUDY:
     Macros cheat sheet: https://cheats.rs/#macros-attributes
@@ -33,34 +51,3 @@ STUDY:
             https://www.gnu.org/software/coreutils/manual/coreutils.html
         Terminal: 
             http://www.linusakesson.net/programming/tty/
-
-
-Project:
-    -Asynchronous:
-        -In unix when providing & the command runs asynchronously, this could be achieved by 
-        creating a thread that runs the operation
-    
-    -Note: When trying to cd in D:(Daddy) it instnaly goes to RCli project folder
-
-
-invoker:
-    -Implement cp ./ -d ../ --clean
-        -Flag --clean Removes original files
-        -We have move tho..?
-    -Implement ls -a
-        -Flag to show types permissions and date 
-    -Implement help
-        -Shows available commands and invocation
-    -Implement shortcut 
-        -Adds an alias for a executable (probably) and saves it in a retrievable document
-    -Implement enable
-        -Enables debug logging from logger (reader, lexer, parser, invoker)
-            -Terminal will use stdout
-
-
-terminal:
-    https://docs.rs/crossterm/latest/crossterm/index.html#
-    -Basic TUI
-    -Note:Accept raw input with Crossterm which is included in ratatui?
-        -I.E. newline, CTRL^C etc
-        -Handle with lexer or parser?

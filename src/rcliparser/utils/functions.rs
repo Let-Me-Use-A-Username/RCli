@@ -1,4 +1,4 @@
-use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, ops::Deref, os::windows::fs::MetadataExt, path::{Path, PathBuf}, vec};
+use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}, vec};
 use regex::Regex;
 
 use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal::Terminal};
@@ -363,34 +363,60 @@ pub fn match_string(input: String, regex_string: &String) -> Option<String> {
 }
 
 ///Searches the given (or current) directory for an object
-pub fn find(object_name: &String, target_directory: &Path) -> Result<Option<Data>, Error>{
+pub fn find(target: &String, target_directory: &Path) -> Result<Option<Data>, Error>{
+    let pattern_string = format!(r"\b\w*{}\w*\b", target.to_lowercase());
+    let pattern = Regex::new(pattern_string.as_str()).unwrap();
+
     match fs::read_dir(target_directory) {
         Ok(paths) => {
             let mut lower_level: Vec<PathBuf> = vec![];
 
             for object in paths{
-                let dir_path = object.unwrap();
-
-                //todo!
-                let dir_items = dir_path.file_name().into_string().unwrap().split(".").for_each(|x| {
-                    x.to_string();
-                });
+                let object_path = object.unwrap();
+                let object_parts: Vec<String> = object_path.file_name().into_string().unwrap().split(".").map(|x| x.to_string()).collect();
                 
-
-                if dir_path.file_name().to_string_lossy().eq(object_name){
-                    return Ok(Some(Data::PathData(dir_path.path())))
+                if pattern.is_match(object_parts.first().unwrap().to_lowercase().as_str()){
+                    return Ok(Some(Data::PathData(object_path.path())))
                 }
 
-                if dir_path.path().is_dir(){
-                    lower_level.push(dir_path.path())
+
+                match fs::metadata(object_path.path()) {
+                    Ok(meta) => {
+                        let attributes = meta.file_attributes();
+                        
+                        let entry_attributes = windows_file_attributes::match_attributes(attributes);
+
+                        if entry_attributes.contains(&windows_file_attributes::WindowsAttributes::DIRECTORY) && 
+                        !entry_attributes.contains(&windows_file_attributes::WindowsAttributes::FILE_SYSTEM){
+                            
+                            lower_level.push(object_path.path())
+                        }
+                    },
+                    Err(error) => {
+                        return Err(error)
+                    }
+                }
+            }
+            let mut results : Vec<Option<Data>> = vec![];
+            
+            for object in lower_level{
+
+                match find(target, &object) {
+                    Ok(res) => {
+                        results.push(res)
+                    },
+                    Err(error) => {
+                        return Err(error)
+                    },
+                };
+            }
+
+            for res in results{
+                if res.is_some(){
+                    return Ok(Some(res.as_ref().unwrap().clone()))
                 }
             }
             
-            if lower_level.len() > 0{
-                for object in lower_level{
-                    return find(object_name, &object)
-                }
-            }
             return Ok(None)
 
         },

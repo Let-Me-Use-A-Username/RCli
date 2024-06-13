@@ -31,6 +31,7 @@ This projects aim to be an interoperable command line tool that requires little 
     <li> list </li>
     <li> cd </li>
 	<li> grep </li>
+	<li> find </li>
 </ul>
 
 ### Future additions
@@ -38,6 +39,5 @@ This projects aim to be an interoperable command line tool that requires little 
 	<li> shortcut </li>
 	<li> todo </li>
 	<li> ai </li>
-	<li> pipeline | or > </li>
-	<li> find </li>
+	<li> pipeline with |</li>
 </ul>

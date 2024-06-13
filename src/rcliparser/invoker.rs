@@ -142,7 +142,7 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
                 let flag = flags.get(&FlagType::DESTINATION);
 
                 if flag.is_some(){ 
-                    return data.pop_front().unwrap()
+                    return Data::SimpleData(flag.unwrap().as_ref().unwrap().get_object());
                 }
                 return Data::SimpleData(terminal_instance.get_current_directory().display().to_string())
             })();

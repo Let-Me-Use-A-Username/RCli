@@ -26,7 +26,7 @@
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["DESTINATION", "FORCE"]
+            "flags": ["DESTINATION"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
@@ -54,11 +54,11 @@
         },
         "EXIT":{
             "invocation_name": ["exit"],
-            "flags": ["HIDDEN"]
+            "flags": []
         },
         "INVALID":{
             "invocation_name": ["invalid"],
-            "flags": ["HIDDEN"]
+            "flags": []
         }
     },
     "pipe_commands": {
@@ -74,17 +74,9 @@
             "flag_values": ["-d", "-destination"],
             "has_obj": true
         },
-        "FORCE": {
-            "flag_values": ["-f", "-force"],
-            "has_obj": false
-        },
         "HIDDEN": {
             "flag_values": ["-h", "-hidden"],
             "has_obj": false
-        },
-        "PATTERN": {
-            "flag_values": ["-p", "-pattern"],
-            "has_obj": true
         }
     },
     "bnf_grammar": {

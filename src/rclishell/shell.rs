@@ -60,7 +60,7 @@ impl Shell{
                                 Data::DataVector(boxed_data) => {
                                     let data = *boxed_data;
                                     
-                                    data.iter().for_each(|x| logger.log(x.get_value().unwrap()));
+                                    data.iter().for_each(|x| logger.format_log(x.get_value().unwrap().to_string()));
                                 }
                                 _ => unreachable!()
                             }
