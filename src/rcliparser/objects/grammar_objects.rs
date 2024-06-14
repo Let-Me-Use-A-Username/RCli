@@ -130,7 +130,7 @@ pub enum FlagType{
     RECURSIVE,
     DESTINATION,
     HIDDEN,
-    PATTERN
+    FORCE
 }
 
 ///All available invocations for a given flag. Can be followed by an object.

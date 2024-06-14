@@ -100,8 +100,8 @@ pub fn remove(path: &Path, recursive: bool) -> Result<Data, Error>{
 ///Copies the content of either a file or a directory. This is more powerful over move
 ///due to the fact that it can copy without requiring permissions (on Windows) whereas 
 ///move requires.
-///Returns either the destination file or directory.
-pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+///Returns the destination file or directory.
+pub fn copy(path: &Path, destination: &Path, force: bool, terminal_instance: &mut Terminal) -> Result<Data, Error>{
 
     //if origin doesnt exist error
     if !path.try_exists()?{
@@ -117,23 +117,28 @@ pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -
             
             return copy_dir(path, Some(destination_path.as_path()));
         }
-        //else it can be a file/symlink etc doesn't matter
+        //else origin is file/symlink/hardlink
         else{
-            let mut file_path = terminal_instance.get_current_directory().join(destination);
-            file_path.push(path.components().last().unwrap().as_os_str());
-    
-            //create file in destination
-            let _ = OpenOptions::new().write(true).read(true).create(true).open(file_path.clone())?;
-            
-            //copy data
-            match fs::copy(path, file_path.clone()){
-                Ok(_) => {
-                    return Ok(Data::PathData(file_path))
-                },
-                Err(error) => {
-                    return Err(error)
-                },
+            if force{
+                let file_path = terminal_instance.get_current_directory().join(destination);
+                
+                //create file in destination
+                let _ = OpenOptions::new().write(true).read(true).create(true).open(file_path.clone())?;
+                
+                //copy data
+                match fs::copy(path, file_path.clone()){
+                    Ok(_) => {
+                        return Ok(Data::PathData(file_path))
+                    },
+                    Err(error) => {
+                        return Err(error)
+                    },
+                }
             }
+            else{
+                return Err(Error::new(ErrorKind::PermissionDenied, "Invoker Error: Destination object exists, use -force to overwrite."))
+            }
+        
         }
     }
     //if destination doesn't exist
@@ -160,7 +165,7 @@ pub fn copy(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -
 ///Moves and renames a file or directory.
 ///If destination doesn't exist it renames a file. If it does exist it copies it.
 ///Returns destination path.
-pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+pub fn r#move(path: &Path, destination: &Path, force: bool, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     let path_exists = path.try_exists()? | path.exists();
     let dest_exists = destination.try_exists()?;
     //simple rename
@@ -172,7 +177,7 @@ pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal)
 
         //Origin and destination are on a different hierarchical level so we copy(because rename has problems)
         if !destintion_canonicalized.components().last().eq(&origin_canonicalized.components().last()){
-            result = copy(path, destination, terminal_instance);
+            result = copy(path, destination, force, terminal_instance);
         }
         //Origin and destination are on the same hierarchy
         else{
@@ -182,7 +187,7 @@ pub fn r#move(path: &Path, destination: &Path, terminal_instance: &mut Terminal)
                 }
             }
             else{
-                result = copy(path, destination, terminal_instance);
+                result = copy(path, destination, force, terminal_instance);
             }
         }
 
@@ -350,18 +355,6 @@ pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
     Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
 }
 
-///Temporary function until grep becomes generic
-pub fn match_string(input: String, regex_string: &String) -> Option<String> {
-    let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
-    let pattern = Regex::new(pattern_string.as_str()).unwrap();
-    
-    if pattern.is_match(input.as_str()){
-        return Some(input)
-    }
-    
-    return None
-}
-
 ///Searches the given (or current) directory for an object
 pub fn find(target: &String, target_directory: &Path) -> Result<Option<Data>, Error>{
     let pattern_string = format!(r"\b\w*{}\w*\b", target.to_lowercase());
@@ -484,4 +477,16 @@ fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Er
             return Err(error)
         }
     }
+}
+
+///Temporary function until grep becomes generic to match operation results to a pattern
+pub fn match_string(input: String, regex_string: &String) -> Option<String> {
+    let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
+    let pattern = Regex::new(pattern_string.as_str()).unwrap();
+    
+    if pattern.is_match(input.as_str()){
+        return Some(input)
+    }
+    
+    return None
 }

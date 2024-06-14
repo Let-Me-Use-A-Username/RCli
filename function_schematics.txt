@@ -12,6 +12,7 @@ read 		|Path 			|Vec<String>                |returns vector string data read
 list 		|Path 			|Vec<Pathbuf>               |returns vector of paths read
 cd 			|Path 			|Status                     |returns status from singlenton
 grep 		|Path 			|Vec<String> / DataVector   |returns vector of matched strings
+find        |String         |Pathbuf                    |returns path to object 
 
 
 Pipe is used to pass output to another program or utility.

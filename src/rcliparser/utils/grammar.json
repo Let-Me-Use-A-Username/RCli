@@ -26,11 +26,11 @@
         },
         "COPY":{
             "invocation_name": ["copy", "cp"],
-            "flags": ["DESTINATION"]
+            "flags": ["DESTINATION", "FORCE"]
         },
         "MOVE":{
             "invocation_name": ["move", "mv"],
-            "flags": ["DESTINATION"]
+            "flags": ["DESTINATION", "FORCE"]
         },
         "READ":{
             "invocation_name": ["read", "cat"],
@@ -76,6 +76,10 @@
         },
         "HIDDEN": {
             "flag_values": ["-h", "-hidden"],
+            "has_obj": false
+        },
+        "FORCE":{
+            "flag_values": ["-f", "-force"],
             "has_obj": false
         }
     },

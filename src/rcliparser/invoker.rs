@@ -65,11 +65,19 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
         },
         CommandType::COPY => {
             let destination = flags.get(&FlagType::DESTINATION);
+            let force: bool = (|| {
+                let flag = flags.get(&FlagType::FORCE);
+
+                if flag.is_some(){ 
+                    return true
+                }
+                return false
+            })();
 
             if destination.is_some(){
-                let destination = Data::SimpleData(destination.unwrap().as_ref().unwrap().get_object());
+                let destination_path = Data::SimpleData(destination.unwrap().as_ref().unwrap().get_object());
                 
-                operation_status = copy(core_object, destination, terminal_instance);
+                operation_status = copy(core_object, destination_path, force, terminal_instance);
             }
             else{
                 operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide destination."));
@@ -77,11 +85,19 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
         },
         CommandType::MOVE => {
             let destination = flags.get(&FlagType::DESTINATION);
+            let force: bool = (|| {
+                let flag = flags.get(&FlagType::FORCE);
+
+                if flag.is_some(){ 
+                    return true
+                }
+                return false
+            })();
 
             if destination.is_some(){
                 let destination = Data::SimpleData(destination.unwrap().as_ref().unwrap().get_object());
                 
-                operation_status = r#move(core_object, destination, terminal_instance);
+                operation_status = r#move(core_object, destination, force, terminal_instance);
             }
             else{
                 operation_status = Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide destination."));
@@ -239,20 +255,20 @@ fn remove(data: Data, recursive: bool) -> Result<Data, Error>{
 }
 
 
-fn copy(origin_data: Data, destination_data: Data, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+fn copy(origin_data: Data, destination_data: Data, force: bool, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     match (origin_data, destination_data) {
         (Data::SimpleData(origin), Data::SimpleData(destination)) => {
-            return functions::copy(Path::new(&origin), Path::new(&destination), terminal_instance)
+            return functions::copy(Path::new(&origin), Path::new(&destination), force, terminal_instance)
         },
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path."))
     }
 }
 
 
-fn r#move(origin_data: Data, destination_data: Data, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+fn r#move(origin_data: Data, destination_data: Data, force: bool, terminal_instance: &mut Terminal) -> Result<Data, Error>{
     match (origin_data, destination_data) {
         (Data::SimpleData(origin), Data::SimpleData(destination)) => {
-            return functions::r#move(Path::new(&origin), Path::new(&destination), terminal_instance)
+            return functions::r#move(Path::new(&origin), Path::new(&destination), force, terminal_instance)
         },
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Didn't provide a path."))
     }
