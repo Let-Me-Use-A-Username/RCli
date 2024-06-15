@@ -1,4 +1,4 @@
-use std::{fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind}, os::windows::fs::MetadataExt, path::{Path, PathBuf}, vec};
+use std::{any::Any, fmt::format, fs::{self, DirBuilder, DirEntry, OpenOptions}, io::{self, BufRead, Error, ErrorKind, Write}, os::windows::fs::MetadataExt, path::{Path, PathBuf}, vec};
 use regex::Regex;
 
 use crate::{rcliparser::objects::data_types::Data, rcliterminal::terminal::Terminal};
@@ -26,19 +26,21 @@ pub fn echo(input: &String) -> Result<Data, Error>{
 
 
 ///Creates a file at the given path. Returns file.
-pub fn touch(file_path: &Path, data: Option<String>) -> Result<Data, Error>{
+pub fn touch(file_path: &Path, data: Option<Vec<String>>) -> Result<Data, Error>{
     //could not need the open() clause unless pipelining
     let file_operation = OpenOptions::new().write(true).read(true).create(true).open(file_path);
 
     match file_operation{
-        Ok(_) => {
+        Ok(mut file) => {
             if data.is_some(){
-                match fs::write(file_path, data.clone().unwrap()){
-                    Ok(_) => {
-                        return Ok(Data::StringData(data.unwrap()))
-                    },
-                    Err(error) => {
-                        return Err(error)
+                for line in data.unwrap(){
+                    match file.write_all(line.as_bytes()){
+                        Ok(_) => {
+                            continue;
+                        },
+                        Err(error) => {
+                            return Err(error)
+                        }
                     }
                 }
             }
@@ -219,7 +221,7 @@ pub fn read(path: &Path) -> Result<Data, Error>{
             let mut output_string = Vec::<String>::new();
             
             for line in lines.flatten(){
-                output_string.push(format(format_args!("[ {} ]", line)));
+                output_string.push(line);
             }
             return Ok(Data::VecStringData(output_string));
         }
@@ -308,52 +310,66 @@ pub fn traverse_directory(path: &Path, terminal_instance: &mut Terminal) -> Resu
 ///For given data returns match.
 ///Data can be either a dir or path.
 ///Therefore matches are either files or Strings.
-pub fn grep(path: &Path, regex_string: &String) -> Result<Data, io::Error> {
+pub fn global_regex(input: &dyn Any, regex_string: &String)  -> Result<Option<Data>, io::Error> {
     let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
     let pattern = Regex::new(pattern_string.as_str()).unwrap();
     
-    if path.try_exists()?{
-        if path.is_dir(){
-            let mut output_string = Vec::<String>::new();
-            
-            let dir_entries = match list(path, true, false)? {
-                Data::DirPathData(entries) => entries,
-                _ => vec![],
-            };
-
-            for entry in dir_entries{
-                let entry_name = entry.as_path().to_str().unwrap();
-                if pattern.is_match(entry_name){
-                    output_string.push(format(format_args!("[ {} ]", entry_name)));
-                }
-            }
-
-            return Ok(Data::VecStringData(output_string))
+    if let Some(text_input) = input.downcast_ref::<String>() {
+        
+        if pattern.is_match(text_input.as_str()){
+            return Ok(Some(Data::StringData(text_input.to_string())))
         }
-        else if path.is_file(){
-            //todo! change with read?
-            let res = read(path);
-
-            if res.is_ok(){
+        
+        return Ok(None)
+    } else if let Some(path_input) = input.downcast_ref::<PathBuf>() {
+        
+        if path_input.try_exists()?{
+            if path_input.is_dir(){
                 let mut output_string = Vec::<String>::new();
-
-                match res.unwrap(){
-                    Data::VecStringData(vector) => {
-                        for line in vector{
-                            if pattern.is_match(line.as_str()){
-                                output_string.push(format(format_args!("[ {} ]", line)));
-                            }
-                        }
-                        return Ok(Data::VecStringData(output_string))
-                    },
-                    _ => unreachable!()
+                
+                let dir_entries = match list(path_input.as_path(), true, false)? {
+                    Data::DirPathData(entries) => entries,
+                    _ => vec![],
+                };
+    
+                for entry in dir_entries{
+                    let entry_name = entry.as_path().to_str().unwrap();
+                    if pattern.is_match(entry_name){
+                        output_string.push(format(format_args!("[ {} ]", entry_name)));
+                    }
                 }
+    
+                return Ok(Some(Data::VecStringData(output_string)))
             }
-            return Err(res.unwrap_err())
+            else if path_input.is_file(){
+                //todo! change with read?
+                let res = read(path_input);
+    
+                if res.is_ok(){
+                    let mut output_string = Vec::<String>::new();
+    
+                    match res.unwrap(){
+                        Data::VecStringData(vector) => {
+                            for line in vector{
+                                if pattern.is_match(line.as_str()){
+                                    output_string.push(format(format_args!("[ {} ]", line)));
+                                }
+                            }
+                            return Ok(Some(Data::VecStringData(output_string)))
+                        },
+                        _ => unreachable!()
+                    }
+                }
+                return Err(res.unwrap_err())
+            }
         }
+        Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
+    } 
+    else {
+        return Err(Error::new(ErrorKind::InvalidData, "Invoker Error: Invalid data type."))
     }
-    Err(Error::new(ErrorKind::NotFound, "Invoker Error: Invalid path."))
 }
+
 
 ///Searches the given (or current) directory for an object
 pub fn find(target: &String, target_directory: &Path) -> Result<Option<Data>, Error>{
@@ -477,16 +493,4 @@ fn copy_dir(original_path: &Path, destination: Option<&Path>) -> Result<Data, Er
             return Err(error)
         }
     }
-}
-
-///Temporary function until grep becomes generic to match operation results to a pattern
-pub fn match_string(input: String, regex_string: &String) -> Option<String> {
-    let pattern_string = format!(r"\b\w*{}\w*\b", regex_string);
-    let pattern = Regex::new(pattern_string.as_str()).unwrap();
-    
-    if pattern.is_match(input.as_str()){
-        return Some(input)
-    }
-    
-    return None
 }

@@ -1,11 +1,9 @@
 Current:
     RCLi:
-        -ls command
-            -Implement ls -v -verbose
-                -Flag to show types additional information
-                    -User permissions, data created, data modified
-            -Implement -p (pattern) ??? dont know
-            
+        -input reader
+            if quote has a space "a simple line " it doens't recognize the string
+        -function touch
+            -doesnt write new lines
 
         -Implement redirect
             -Probably by using touch
@@ -18,15 +16,13 @@ Current:
             -Parsing operations will be threaded(???)
         
         -Write extensive tests for all modules
-
-
-    parser:
-        -Implement more generic grep
-        -Make sure parser is 100% good to go before implementing UI
     
         
 
 Project Consideration and Ideas:
+    -Implement then
+        -Provide additional commands, for example
+            home | cd then cd Desktop
 
     -I/O in C:
         -Due to Rust not having implemented Window calls to a low (enough) degree, consider 
@@ -47,6 +43,11 @@ Project Consideration and Ideas:
 
 
 invoker:
+    -ls command
+        -Implement ls -v -verbose
+            -Flag to show types additional information
+                -User permissions, data created, data modified
+        -Implement -p (pattern) ??? dont know
     -Implement dir
         -List dirs in a directory
     -Implement link
@@ -65,6 +66,7 @@ invoker:
         -Pipes stdin to space separated files 
     -Implement help
         -Shows available commands and invocation
+            -Probably from hardcoded messages that match against the command name
     -Implement shortcut 
         -Adds an alias for a executable (probably) and saves it in a retrievable document
 

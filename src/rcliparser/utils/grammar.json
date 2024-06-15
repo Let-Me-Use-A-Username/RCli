@@ -84,19 +84,22 @@
         }
     },
     "bnf_grammar": {
+        "START": {
+            "next": ["CORE", "END"]
+        },
         "CORE": {
-            "next":["CORE", "OBJECT", "FLAG", "PIPE"]
+            "next": ["OBJECT", "FLAG", "PIPE", "END"]
         },
         "OBJECT": {
-            "next": ["FLAG", "PIPE", "NONE"]
+            "next": ["FLAG", "PIPE", "END"]
         },
         "FLAG": {
-            "next": ["FLAG", "OBJECT", "PIPE", "NONE"]
+            "next": ["FLAG", "OBJECT", "PIPE", "END"]
         },
         "PIPE": {
             "next": ["CORE", "OBJECT"]
         },
-        "NONE":{
+        "END":{
             "next": []
         }
     }

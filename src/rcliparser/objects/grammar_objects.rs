@@ -151,11 +151,12 @@ impl Flags{
 ///Bnf grammar object types.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq, Hash, Copy)]
 pub enum BnfType{
+    START,
     CORE,
     PIPE,
     OBJECT,
     FLAG,
-    NONE
+    END
 }
 
 ///Next object that can exist after current.

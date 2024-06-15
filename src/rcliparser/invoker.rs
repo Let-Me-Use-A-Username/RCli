@@ -209,25 +209,18 @@ fn touch(current_path: Data, data: Option<VecDeque<Data>>) -> Result<Data, Error
 
     if file_path.is_some(){
         if data.is_some(){
-            let mut return_result: VecDeque<Data> = vec![].into();
+            
+            let mut touch_buffer: Vec<String> = Vec::new();
 
             for data_type in data.unwrap(){
-                let touch_result: Result<Data, Error>;
-
                 match data_type{
                     Data::SimpleData(simple) => {
-                        touch_result = functions::touch(file_path.unwrap(), Some(simple))
+                        touch_buffer.push(simple) 
                     }
                     _ => continue
                 }
-
-                if touch_result.is_ok(){
-                    return_result.push_back(touch_result.unwrap());
-                    continue;
-                }
-                return Err(touch_result.err().unwrap())
             }
-            return Ok(Data::DataVector(return_result.into()))
+            return functions::touch(file_path.unwrap(), Some(touch_buffer))
         }
         return Ok(functions::touch(file_path.unwrap(), None).unwrap())
     }
@@ -312,7 +305,13 @@ fn grep_from_path(pattern: Data, data_path: Data) -> Result<Data, Error>{
     let string_pattern = &pattern.get_value().unwrap();
     match data_path{
         Data::PathData(p) => {
-            return functions::grep(p.as_path(), string_pattern)
+            let res = functions::global_regex(&p, string_pattern);
+
+            match res{
+                Ok(ok_res) => return Ok(ok_res.unwrap()),
+                Err(err) => return Err(err),
+            }
+            
         },
         _ => Err(Error::new(ErrorKind::InvalidInput, "Invoker Error: Invalid path.")),
     }
@@ -321,21 +320,19 @@ fn grep_from_path(pattern: Data, data_path: Data) -> Result<Data, Error>{
 
 fn grep_from_string(pattern: Data, data: VecDeque<Data>) -> Result<Data, Error>{
     let string_pattern = &pattern.get_value().unwrap();
-
     let mut return_result: VecDeque<Data> = vec![].into();
 
     for data_type in data{
-        let match_result: Option<String>;
-
         match data_type{
             Data::SimpleData(simple) => {
-                match_result = functions::match_string(simple, string_pattern)
+                let res = functions::global_regex(&simple, string_pattern)?;
+
+                if res.is_some(){
+                    return_result.push_front(res.unwrap());
+                }
+                
             },
             _ => continue
-        }
-
-        if match_result.is_some(){
-            return_result.push_back(Data::StringData(match_result.unwrap()))
         }
     }
 

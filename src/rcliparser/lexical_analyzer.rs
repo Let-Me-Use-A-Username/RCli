@@ -21,7 +21,7 @@ pub fn analyze(input: &mut UserInput, terminal_instance: &Terminal) -> Result<Ve
     let mut next_command : Option<String>;
     let mut command_string : String;
 
-    let mut last_type: BnfType = BnfType::CORE;
+    let mut last_type: BnfType = BnfType::START;
     loop{
         //if input analyzed break
         if input.analyzed{

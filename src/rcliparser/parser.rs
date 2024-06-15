@@ -135,11 +135,6 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
         
         if next_item.is_some(){
             match input_tokens.pop_front().unwrap(){
-                //If core command is found add it as a data type
-                Token::InvocationCommand(command) => {
-                    let command_type = command.get_type();
-                    data_vector.push(Data::CommandData(command_type));
-                },
                 //Object found
                 Token::InvocationObject(object) => {
                     let token_value = object.get_object();

@@ -1,17 +1,15 @@
 use std::{collections::VecDeque, path::{Path, PathBuf}};
 
-use super::grammar_objects::CommandType;
-
 #[derive(Debug, Clone)]
 pub enum Data{
     /* 
-        Parser objects 
+        Parser objects. Invoker input data types.
+        DataVector may be Invoker output in specific functions.
     */
     SimpleData(String),
-    CommandData(CommandType),
     DataVector(Box<VecDeque<Data>>),
     /* 
-        Invoker commands return types
+        Invoker output types
     */
     PathData(PathBuf),
     StringData(String),
