@@ -1,12 +1,9 @@
 Current:
     RCLi:
         -ls command
-            -change hidden to -a
             -Implement ls -v -verbose
                 -Flag to show types additional information
                     -User permissions, data created, data modified
-            -Implement ls -l (literal?)
-                -Dereferences symlinks
             -Implement -p (pattern) ??? dont know
             
 
@@ -43,9 +40,29 @@ Project Consideration and Ideas:
     -Asynchronous command calls:
         -In unix when providing & the command runs asynchronously, this could be achieved by 
         creating a thread that runs the operation
+    
+    -Flag usages
+            -Implement ls -l to dereference symlink, hardlink and junctions(windows) would also like shortcuts
+                -Dropped the idea for now
 
 
 invoker:
+    -Implement dir
+        -List dirs in a directory
+    -Implement link
+        -Create hard / soft link
+        -link creates hard links with no error checlk
+        -ln creates soft links with error checking
+            -Concatenate these two functions??
+    -Implement readlink
+        -Displays soft/hard link target
+    -Implement realpath
+        -Canonicalized a path
+            -I.E. removes . , .. and /
+    -Implement kill
+        -Stops a process
+    -Implement tee
+        -Pipes stdin to space separated files 
     -Implement help
         -Shows available commands and invocation
     -Implement shortcut 

@@ -75,7 +75,7 @@
             "has_obj": true
         },
         "HIDDEN": {
-            "flag_values": ["-h", "-hidden"],
+            "flag_values": ["-a", "-all"],
             "has_obj": false
         },
         "FORCE":{

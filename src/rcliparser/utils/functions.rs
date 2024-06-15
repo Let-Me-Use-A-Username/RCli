@@ -243,7 +243,7 @@ pub fn list(dir_path: &Path, hidden: bool, recursive: bool) -> Result<Data, Erro
                 match fs::metadata(dir_path.clone()) {
                     Ok(meta) => {
                         let attributes = meta.file_attributes();
-                        
+
                         let entry_attributes = windows_file_attributes::match_attributes(attributes);
                         
                         let canonicalized_path = match dir_path.canonicalize() {

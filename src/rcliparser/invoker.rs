@@ -12,6 +12,7 @@ use super::utils::functions;
 
 
 pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result<Data, Error>{
+
     let operation_status: Result<Data, Error>;
     
     let core_command = invocation.get_type();
@@ -124,7 +125,6 @@ pub fn invoke(invocation: Invocator, terminal_instance: &mut Terminal) -> Result
                 }
                 return false
             })();
-
             operation_status = list(core_object, hidden, recursive);
         },
         CommandType::CD => {
