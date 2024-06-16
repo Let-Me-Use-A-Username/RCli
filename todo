@@ -1,7 +1,5 @@
 Current:
     RCLi:
-        -input reader
-            if quote has a space "a simple line " it doens't recognize the string
         -function touch
             -doesnt write new lines
 
@@ -87,6 +85,8 @@ STUDY:
         -Generics, Traits, Lifetimes, Closures, SmartPointers, Iterators, Advanced Rust
 
     Unix terminal:
+        Shell operation:
+            https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html
         GNU Manual: 
             https://www.gnu.org/software/coreutils/manual/coreutils.html
         Terminal: 

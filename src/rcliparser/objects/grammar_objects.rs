@@ -8,7 +8,7 @@ use super::token_objects::InvocationCommand;
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq)]
 pub struct Grammar{
     command_invocations: HashMap<CommandType, Command>,
-    pipe_commands: HashMap<PipeType, String>,
+    pipe_commands: HashMap<PipeliningType, String>,
     flag_type: HashMap<FlagType, Flags>,
     bnf_grammar: HashMap<BnfType, BnfSyntax>
 }
@@ -44,7 +44,7 @@ impl Grammar{
         return None
     }
 
-    pub fn get_pipe(&self, pipe: &String) -> Option<PipeType>{
+    pub fn get_pipe(&self, pipe: &String) -> Option<PipeliningType>{
         for(pipe_type, pipe_string) in &self.pipe_commands{
             if pipe_string.eq(pipe){
                 return Some(pipe_type.clone())
@@ -117,7 +117,7 @@ impl Command{
 
 ///Pipe commands type
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, Hash)]
-pub enum PipeType{
+pub enum PipeliningType{
     PIPE,
     REDIRECT
 }
@@ -153,9 +153,10 @@ impl Flags{
 pub enum BnfType{
     START,
     CORE,
-    PIPE,
     OBJECT,
     FLAG,
+    PIPE,
+    REDIRECT,
     END
 }
 

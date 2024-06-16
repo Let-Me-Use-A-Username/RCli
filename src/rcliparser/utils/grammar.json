@@ -97,7 +97,10 @@
             "next": ["FLAG", "OBJECT", "PIPE", "END"]
         },
         "PIPE": {
-            "next": ["CORE", "OBJECT"]
+            "next": ["CORE"]
+        },
+        "REDIRECT":{
+            "next": ["OBJECT"]
         },
         "END":{
             "next": []

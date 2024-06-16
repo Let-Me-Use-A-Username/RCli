@@ -8,28 +8,15 @@ use super::input_reader::accept_input;
 use super::invoker;
 use super::lexical_analyzer::analyze;
 use super::objects::data_types::Data;
-use super::objects::grammar_objects::{FlagType, PipeType};
-use super::objects::token_objects::{GetValue, InvocationFlag, InvocationObject, InvocationPair, InvocationPipe, Invocator, Token};
+use super::objects::grammar_objects::{FlagType, PipeliningType};
+use super::objects::token_objects::{GetValue, InvocationCommand, InvocationFlag, InvocationObject, InvocationPair, InvocationPipe, Invocator, Token};
 
 /// Function that creates a token stream
 pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut Terminal) -> Result<VecDeque<Token>, Error>{
     let grammar = terminal_instance.get_instance_grammar();
 
     let mut output_tokens = VecDeque::<Token>::new();
-
-    //pop first item, should be command
-    let command_token = input_tokens.pop_front().unwrap();
-    //check if exists 
-    let mut core_command = grammar.get_command(command_token.get_value());
-
-    //if core command is none exit
-    if core_command.is_none(){
-        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid command."));
-    }
-
-    //core command
-    output_tokens.push_front(Token::InvocationCommand(core_command.clone().unwrap()));
-
+    let mut command: Option<InvocationCommand> = None;
     
     'parse: loop{
         //If tokens are consumed break, else consume.
@@ -37,15 +24,15 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
             match input_tokens.pop_front().unwrap(){
                 Token::TokenCommand(com) => {
-                    let command = grammar.get_command(com.get_value());
+                    let token_command = grammar.get_command(com.get_value());
 
-                    if command.is_none(){
+                    if token_command.is_none(){
                         return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid command."));
                     }
                     //if a core command is found, change it with the current core_command
                     //for flag checks
-                    output_tokens.push_back(Token::InvocationCommand(command.clone().unwrap()));
-                    core_command = command;
+                    output_tokens.push_back(Token::InvocationCommand(token_command.clone().unwrap()));
+                    command = token_command;
                 }
                 //if an object is found then simply push it to stream
                 Token::TokenObject(obj) => {
@@ -58,8 +45,12 @@ pub fn create_stream(mut input_tokens: VecDeque<Token>, terminal_instance: &mut 
 
                     //flag as a string exists in some FlagType
                     if flag_exists.is_some(){
+                        
+                        if command.is_none(){
+                            return Err(Error::new(std::io::ErrorKind::InvalidInput, "Parser error: Invalid command."));
+                        }
                         //core command accepts this flag at current iteration
-                        let accepts_flag = core_command.clone().unwrap().get_flags().contains(&flag_exists.unwrap().0);
+                        let accepts_flag = command.as_ref().unwrap().get_flags().contains(&flag_exists.unwrap().0);
 
                         if accepts_flag{
                             //flag accepts object so pop next as well as a pair
@@ -169,7 +160,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
                     
                     match pipe.get_type(){
                         //append invoker return type to end of tokens and call parser again
-                        PipeType::PIPE => {
+                        PipeliningType::PIPE => {
                             match invocation_result.unwrap(){
                                 Data::SimpleData(data) | Data::StringData(data)=> {
                                     input_tokens.push_back(Token::InvocationObject(InvocationObject::new(data)));
@@ -195,7 +186,7 @@ pub fn call_invoker(mut input_tokens: VecDeque<Token>, terminal_instance: &mut T
                             return call_invoker(input_tokens, terminal_instance)
                         },
                         //if redirect found then object is next
-                        PipeType::REDIRECT => {
+                        PipeliningType::REDIRECT => {
                             todo!("redirect to file")
                         },
                     }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
-use super::{data_types::Data, grammar_objects::{CommandType, FlagType, PipeType}};
+use super::{data_types::Data, grammar_objects::{CommandType, FlagType, PipeliningType}};
 
 ///Trait to get a value from a Token.
 pub trait GetValue{
@@ -186,14 +186,14 @@ impl InvocationPair{
 //Used by invoker to invoke piping
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InvocationPipe{
-    pipe: PipeType
+    pipe: PipeliningType
 }
 impl InvocationPipe{
-    pub fn new(pipe: PipeType) -> Self{
+    pub fn new(pipe: PipeliningType) -> Self{
         return InvocationPipe{ pipe:pipe }
     }
 
-    pub fn get_type(&self) -> &PipeType{
+    pub fn get_type(&self) -> &PipeliningType{
         return &self.pipe
     }
 }

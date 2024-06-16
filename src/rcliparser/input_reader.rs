@@ -1,52 +1,67 @@
-use std::{collections::VecDeque, io::Error};
+use std::io::Error;
 
 use super::objects::user_input::UserInput;
 
 //Accepts user input and vectorizes
 pub fn accept_input(input: String) -> Result<UserInput, Error>{
-    let input_parts: Vec<&str> = input.split(' ').collect();
 
-    let size = input_parts.len();
+    let mut words = Vec::<String>::new();
+    let mut iterator = input.chars();
 
-    if size < 1 {
-        return Err(Error::new(std::io::ErrorKind::InvalidInput, "Input reader error: No arguments provided."));
-    }
+    let mut word = Vec::<char>::new();
 
-    let mut string_parts: VecDeque<String> = VecDeque::new();
+    let mut quoted_word = Vec::<char>::new();
+    let mut found_quotes = false;
 
-    let mut object_with_quotes = Vec::<&str>::new();
-    let mut quote_object_found = false;
+    //for char in part
+    'chars: loop{
+        match iterator.next(){
+            Some('\"') | Some('\'')=> {
+                found_quotes = !found_quotes;
 
-    //For string in input 
-    for part in input_parts{
-        //if input part has double quote append to vector
-        if part.starts_with('"') | part.starts_with('\"'){
-            object_with_quotes.push(part);
-            quote_object_found = true;
-            continue;
-        }
+                quoted_word.push('\"');
 
-        //while we haven't found the end part of the quote keep adding
-        if quote_object_found{
-            object_with_quotes.push(" ");
-            object_with_quotes.push(part);
-            
-            if part.contains('"') | part.contains('\"'){
-                let final_object = object_with_quotes.concat().replace("\"", "").replace("\r\n", "");
-                string_parts.push_back(final_object);
-                //when found stop adding
-                quote_object_found = false;
-                object_with_quotes.clear();
+                if !found_quotes{
+                    let out = quoted_word.iter().collect();
+                    quoted_word.clear();
+
+                    words.push(out)
+                }
+            },
+            Some('\r') => {
+                continue;
+            },
+            Some('\n') => {
+                let out = word.iter().collect();
+                word.clear();
+
+                words.push(out)
             }
-            
-        }
-        else{
-            string_parts.push_back(part.trim().to_string());
+            Some(' ') => {
+                if found_quotes{
+                    quoted_word.push(' ');
+                    continue;
+                }
+                let out = word.iter().collect();
+                word.clear();
+
+                words.push(out)
+            },
+            Some(character) => {
+                if found_quotes{
+                    quoted_word.push(character);
+                    continue;
+                }
+                word.push(character);
+            },
+            None => break 'chars,
         }
     }
+
+    let size = words.len();
 
     return Ok(UserInput {
-        vector_input:string_parts, 
+        vector_input:words.into(), 
         vector_length:size, 
         peek_index:0, 
         analyzed: false});

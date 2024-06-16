@@ -3,8 +3,8 @@ use std::{collections::VecDeque, fmt};
 #[derive(PartialEq)]
 pub struct UserInput{
     pub vector_input: VecDeque<String>,
-    pub vector_length: usize,
-    pub peek_index: usize,
+    pub(crate) vector_length: usize,
+    pub(crate) peek_index: usize,
     pub analyzed: bool
 }
 
