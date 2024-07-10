@@ -1,9 +1,8 @@
-mod rcliparser;
-mod rcliterminal;
-mod rclilogger;
-mod rclishell;
+
+mod lexer;
+mod token;
+mod look_tables;
 
 fn main() {
-    let shell = rclishell::shell::Shell::new();
-    shell.run();
+
 }
