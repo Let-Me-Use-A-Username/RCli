@@ -8,20 +8,25 @@
 #RULE 2: A pipe can only exist if both AND and OR aren't included in the sequence.
 <pipe_sequence> ::= <command> | <command> '|' <pipe_sequence>
 
-<command> ::= <simple_command>
+<command> ::= <simple_command> | <compound_command>
 
 #RULE 1: First term is always a reserved or alias command
 <simple_command> ::= <COMMAND> <wordlist> <suffix> | <COMMAND> <wordlist> | <COMMAND> <suffix> | <COMMAND>
 #RULE 3: If only one WORD in wordlist and WORD matches a command it is wrapped with quotes.
-<wordlist> ::= <WORD> <wordlist> | <WORD>
+<wordlist> ::= <WORD> <wordlist> | <WORD> | <EXPANDING_WORD>
 <suffix> ::= '-' <CHAR> <suffix> | '--' <WORD> <suffix> | <redirect>
+
+<compound_command> ::= <subshell> 
+<subshell> ::= '(' <list> ')'
 
 <sequence_operator> ::= '&' | ';'
 
 <redirect> ::= '>' <FILE> | '<' <FILE> | '>>' <FILE> | '<>' <FILE>
 
 <COMMAND> ::= <BUILTIN_COMMAND> | <ALIAS_COMMAND> | <SHORTCUT>
-
-<WORD> ::= /*string sequence*/ | <REGEX_WORD>
+#RULE 5: Brace expansions occurs only in WORD and only in the parameters of commands.
+<EXPANDING_WORD> ::= '{' <WORD> '}'
+<WORD> ::= /*string sequence*/ | <REGEX_WORD> | <QUOTES_WORD>
 #RULE 4: REGEX_WORD can not contain space and must be in a form accepted by the Rust compiler. 
 <REGEX_WORD> ::= /*string sequence that contains regex*/
+<QUOTES_WORD> ::= /*string sequence with single or double quote*/
