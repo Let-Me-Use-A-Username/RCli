@@ -16,9 +16,10 @@ pub fn parse(input_string: String){
     //Todo : 1)Parse Word to Command, Variable etc. 
     //Todo : 2)Parse Token slice as some Command struct.
     //Todo : 2.1) Parse flags
-    //Todo : Create AST.
+    //Todo : 3)Create AST.
     //Todo : Expansion happens when.. ?
 
+    // Note : Commands will return Status struct. With the status code we wil implemenet && and ||
     // Idea : Command will have a Vec<Flag> (HashSet?) that shows what flags they accept.
-    // Idea : Commands will return Status struct. With the status code we wil implemenet && and ||
+    // Idea : Instead of Command structs, create a builder that creates Commands
 }

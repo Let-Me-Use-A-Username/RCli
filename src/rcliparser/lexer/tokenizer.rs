@@ -6,6 +6,7 @@ use crate::structures::look_tables::LookupTable;
 ///First stage tokenization. Parse string into tokens.
 pub fn tokenize(input_string: String) -> VecDeque<Token>{
     let table = LookupTable::new();
+
     let mut word = Vec::<char>::new();
     let mut tokens = VecDeque::<Token>::new();
     let mut char_iter = input_string.chars();
@@ -67,7 +68,10 @@ pub fn create_intermediate_stream(token_stream: VecDeque<Token>) -> VecDeque<Tok
                     (Token::Pipe, Token::Pipe) => {
                         intermediate_tokens.push_back(Token::Or);
                     },
-                    _ => {}
+                    _ => {
+                        intermediate_tokens.push_back(l_token.to_owned());
+                        intermediate_tokens.push_back(r_token.to_owned());
+                    }
                 }
             },
             _ => {

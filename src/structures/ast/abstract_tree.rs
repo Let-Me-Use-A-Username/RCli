@@ -1,22 +1,15 @@
-use std::process::Command;
-
-
 pub struct AbstractSyntaxTree{
     root: Node
 }
 
-pub enum Node{
-    CommandNode(CommandNode),
-    OperationNode(OperationNode),
-}
-
-
-pub struct CommandNode{
-    command: Command
-}
-
-pub struct OperationNode{
-    operation: String,
+pub struct Node{
+    node_type: NodeType,
+    parent: Box<Node>,
     left: Box<Node>,
     right: Box<Node>,
+}
+
+pub enum NodeType{
+    Command,
+    Operation,
 }
