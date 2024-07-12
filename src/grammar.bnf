@@ -11,10 +11,10 @@
 <command> ::= <simple_command> | <compound_command>
 
 #RULE 1: First term is always a reserved or alias command
-<simple_command> ::= <COMMAND> <wordlist> <suffix> | <COMMAND> <wordlist> | <COMMAND> <suffix> | <COMMAND>
-#RULE 3: If only one WORD in wordlist and WORD matches a command it is wrapped with quotes.
-<wordlist> ::= <WORD> <wordlist> | <WORD> | <EXPANDING_WORD>
-<suffix> ::= '-' <CHAR> <suffix> | '--' <WORD> <suffix> | <redirect>
+<simple_command> ::= <COMMAND> <worditem> <suffix> | <COMMAND> <worditem> | <COMMAND> <suffix> | <COMMAND>
+#RULE 3: If WORD matches a command it is wrapped with quotes.
+<worditem> ::= <WORD> | <EXPANDING_WORD>
+<suffix> ::= '-' <WORD> <suffix> | '--' <WORD> <suffix> | <redirect>
 
 <compound_command> ::= <subshell> 
 <subshell> ::= '(' <list> ')'
@@ -24,9 +24,10 @@
 <redirect> ::= '>' <FILE> | '<' <FILE> | '>>' <FILE> | '<>' <FILE>
 
 <COMMAND> ::= <BUILTIN_COMMAND> | <ALIAS_COMMAND> | <SHORTCUT>
-#RULE 5: Brace expansions occurs only in WORD and only in the parameters of commands.
-<EXPANDING_WORD> ::= '{' <WORD> '}'
+#RULE 5: RULE 5: Brace expansions is the only way to have multiple inputs in a command.
+<EXPANDING_WORD> ::= '{' <WORDLIST> '}'
+<WORDLIST> ::= <WORD> <WORDLIST> | <WORD>
 <WORD> ::= /*string sequence*/ | <REGEX_WORD> | <QUOTES_WORD>
-#RULE 4: REGEX_WORD can not contain space and must be in a form accepted by the Rust compiler. 
+#RULE 4: REGEX_WORD can not contain whitespace. 
 <REGEX_WORD> ::= /*string sequence that contains regex*/
 <QUOTES_WORD> ::= /*string sequence with single or double quote*/

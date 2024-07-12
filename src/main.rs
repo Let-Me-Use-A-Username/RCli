@@ -1,11 +1,10 @@
 use std::io::stdin;
 
-mod token;
-mod tokenizer;
-mod look_tables;
+mod structures;
+mod rcliparser;
 
 fn main() {
     let mut input = String::new();
     let _ = stdin().read_line(&mut input);
-    tokenizer::tokenize(input);
+    rcliparser::lexer::tokenizer::tokenize(input);
 }
