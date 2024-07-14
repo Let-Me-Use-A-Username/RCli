@@ -1,4 +1,6 @@
-use crate::rcliparser::lexer::tokenizer;
+use std::collections::VecDeque;
+
+use crate::{rcliparser::lexer::tokenizer, structures::token::Token};
 
 /* 
     # Note RULE 1: First term is always a reserved or alias command
@@ -11,8 +13,8 @@ pub fn parse(input_string: String){
     //Rule 1.
     let first_word = true;
     //Intermediate token stream 
-    let intermediate_stream = tokenizer::tokenize(input_string);
-
+    let mut intermediate_stream = tokenizer::tokenize(input_string).into_iter().peekable();
+    
     //Todo : 1)Parse Word to Command, Variable etc. 
     //Todo : 2)Parse Token slice as some Command struct.
     //Todo : 2.1) Parse flags

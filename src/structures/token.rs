@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Token{
     //Variables
     DollarSign,     //$
@@ -37,7 +37,7 @@ pub enum Token{
     Word(String),   //Any word
     Command(String),    //First word of every command object. See RULE 1.
     Variable(String),   //Any word like $<word>
-    Shortflag(String),    // -<char>
+    Shortflag(String),  // -<char>
     Longflag(String),   // --<word>
     Regex(String),      //Any word containing *, ?, ^, ., (+, -, in certain cases)
     Brace(String)       //Any word starting and ending with {word, word}
