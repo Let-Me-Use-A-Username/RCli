@@ -1,5 +1,6 @@
 pub struct AbstractSyntaxTree{
-    root: Node
+    root: Node,
+    current: Node
 }
 
 pub struct Node{

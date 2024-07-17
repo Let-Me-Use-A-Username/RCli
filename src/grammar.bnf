@@ -16,7 +16,7 @@
 <worditem> ::= <WORD> | <EXPANDING_WORD>
 <suffix> ::= '-' <WORD> <suffix> | '--' <WORD> <suffix> | <redirect>
 
-<compound_command> ::= <subshell> 
+<compound_command> ::= <subshell>
 <subshell> ::= '(' <list> ')'
 
 <sequence_operator> ::= '&' | ';'
