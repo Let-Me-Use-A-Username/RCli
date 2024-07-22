@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::structures::token::Token;
 
 use super::{flag::Flag, status::Status};

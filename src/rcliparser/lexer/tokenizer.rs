@@ -230,6 +230,9 @@ pub fn contains_regex(word: &String) -> bool {
     return contains;
 }
 
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

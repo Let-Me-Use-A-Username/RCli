@@ -18,13 +18,8 @@ pub fn parse(input_string: String){
     //Todo : 1)Parse Word to Command.
     //Todo : 2)Parse Token slice as some Command struct.
     //Todo : 2.1) Parse flags
-    //Idea 1, pass structs to nodes.
-    // Idea : Match Word to CommandType (currently command), collect all parameters and options
-    // Idea : then match the CommandType to structs, create a struct and continue
-
-    //Idea 2 create node types and pass to AST
-    // Idea : Parser will create nodes that can either be a command (commandtype: CommandType, parameter: Vec<Token>, options: Vec<Flag>)
-    // Idea : or an operation. Then the commandtype will be matched at the engine, and the operation will also be handled there.
+    //Idea : Create nodes with types that either contains Command, Parameter(token), Flag or Operator.
+    //Idea : Create the AST and let the engine create command structs.
     'parse: loop{
         match token_iter.next(){
             Some(token) => {

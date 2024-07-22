@@ -1,6 +1,7 @@
+#[derive(Clone)]
 pub enum Flag{
-    Backup,         //--backup | copy
-    Force,          //--force | copy
-    Interactice,    //--interactive | copy
-    Regex,          //--regex | copy
+    Backup,         //--backup
+    Force,          //--force
+    Interactice,    //--interactive
+    Regex,          //--regex
 }
