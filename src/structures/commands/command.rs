@@ -4,7 +4,7 @@ use crate::structures::token::Token;
 
 use super::{flag::Flag, status::Status};
 
-#[derive(Eq, PartialEq, Hash, Clone)]
+#[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Command{
     Cd,                     //change working directory
     Pwd,                    //print working directory 

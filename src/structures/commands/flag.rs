@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Flag{
     Backup,         //--backup
     Force,          //--force
